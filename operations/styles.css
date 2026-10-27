@@ -19,3 +19,5 @@
 .sidebar .nav a.active,.sidebar .nav a.active span{color:#fff}
 
 .ops-voice-panel{padding:12px 15px;background:#fcf2ff;border:1px solid #ecd5f6;border-radius:10px;margin:12px 0 18px}#ops-voice-status{font-size:13px;color:#7d24b6;margin:0 0 8px}#ops-voice-playback{display:flex;align-items:center;gap:10px;flex-wrap:wrap}#ops-voice-playback audio{max-width:100%;margin:10px 0}.ops-voice-panel .ops-muted{margin:9px 0 0}
+
+.ops-scene-analysis{margin:14px 0 20px;border:1px solid var(--line);padding:14px;border-radius:10px;background:#fffcff}.ops-scene-analysis summary{font-size:13px;font-weight:600;color:var(--purple);cursor:pointer}.ops-scene-analysis textarea{display:block;width:100%;min-height:180px;resize:vertical;padding:12px;font:13px/1.8 'Microsoft YaHei',sans-serif;color:var(--ink);border:1px solid #e5ccef;border-radius:8px;background:white;margin-top:10px}
