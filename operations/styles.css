@@ -16,3 +16,4 @@
 .btn.primary{background:#9634d6;border-color:#9634d6;color:#fff}.btn:not(.primary){border-color:#e5ccef;color:#805094;background:#fff}.btn:hover{border-color:#b75be2}.kpi{border-color:#ecd8f5}.kpi-value{color:#8b2dc5}.section-head{border-color:#ecd5f6}.bar-fill{background:linear-gradient(90deg,#c97aed,#9c35d8)}
 .ops-paste-zone{background:#fcf2ff;border-color:#c47ce6;color:#8434b0}.ops-ledger-grid>div,#ops-ledger-text{background:#fcf3ff}.ops-message{background:#fffcff}
 @media(max-width:760px){.sidebar{background:#fff7fdf5}.nav a{font-size:13px;padding:8px 10px}.nav-no{font-size:10px}.view-modes button{font-size:12px!important}.archive-fields select{font-size:13px}}
+.sidebar .nav a.active,.sidebar .nav a.active span{color:#fff}
