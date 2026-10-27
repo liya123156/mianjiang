@@ -17,3 +17,5 @@
 .ops-paste-zone{background:#fcf2ff;border-color:#c47ce6;color:#8434b0}.ops-ledger-grid>div,#ops-ledger-text{background:#fcf3ff}.ops-message{background:#fffcff}
 @media(max-width:760px){.sidebar{background:#fff7fdf5}.nav a{font-size:13px;padding:8px 10px}.nav-no{font-size:10px}.view-modes button{font-size:12px!important}.archive-fields select{font-size:13px}}
 .sidebar .nav a.active,.sidebar .nav a.active span{color:#fff}
+
+.ops-voice-panel{padding:12px 15px;background:#fcf2ff;border:1px solid #ecd5f6;border-radius:10px;margin:12px 0 18px}#ops-voice-status{font-size:13px;color:#7d24b6;margin:0 0 8px}#ops-voice-playback{display:flex;align-items:center;gap:10px;flex-wrap:wrap}#ops-voice-playback audio{max-width:100%;margin:10px 0}.ops-voice-panel .ops-muted{margin:9px 0 0}
