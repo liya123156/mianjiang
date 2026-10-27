@@ -18,7 +18,7 @@
  async function login(code){const data=await request('wb_code_login',{p_code:validateCode(code)});session={token:data.token,expires_at:data.expires_at};member=data.member;remember();return member;}
  async function membership(){if(!session)return null;try{member=await api('member');return member;}catch(e){session=null;member=null;remember();throw e;}}
  async function logout(){try{if(session)await api('logout');}finally{session=null;member=null;remember();}}
- async function load(month){const data=member?await api('load',{p_month:month}):await request('wb_public_daily',{p_month:month});return {...data,loadedAt:new Date().toISOString()};}
+ async function load(month){const data=member?await api('load',{p_month:month}):await request('wb_public_daily',{p_month:month});const directory=member?await api('load',{p_month:'2000-01'}):null;return {...data,directory:(directory?.items||[]).filter(x=>x.kind==='review'&&x.payload.recordType==='leadership'),loadedAt:new Date().toISOString()};}
  const rpc=(name,body)=>api(name,body);
  const saveItem=(month,kind,id,region,store,payload,expected)=>rpc('wb_save_item',{p_month:month,p_kind:kind,p_id:id,p_region:region,p_store:store,p_payload:payload,p_expected_updated_at:expected||null});
  async function uploadProof(file,month,region,store){
