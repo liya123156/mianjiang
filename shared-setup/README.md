@@ -12,8 +12,8 @@
 ## 一次性连接
 
 1. 在自己的 Supabase 项目 SQL Editor 依次执行 `database-setup.sql`、`database-upgrade.sql`。
-2. 在 Authentication 中开通负责人及BP账号。账号创建与首次密码由账号所有人完成；不要在聊天或仓库中粘贴密码、secret/service_role key。
-3. 在 `wb_members` 中配置实际登录邮箱、角色和负责范围。`project` 是负责人，`region` 是单大区，`store` 是单店或多店BP。多店BP的主门店填 region/store，额外门店填 stores，例如 `[{"region":"花木大区","store":"碧云店"}]`。
+2. 在 Authentication 中通过管理员工具预建成员账号，员工使用“工号后4位＋个人密码”登录，不收集真实邮箱。后台认证标识统一为 `staff-四位工号@accounts.mianjiang.invalid`，预建时通过管理员服务确认标识，禁止使用匿名注册绕过授权。成员密码通过安全流程设置；不要在聊天或仓库中粘贴密码、secret/service_role key。
+3. 在 `wb_members` 中配置与认证用户相同的内部标识 email、四位字符串 login_id、完整工号 employee_no、姓名 display_name，以及角色和负责范围。工号开头的0必须保留；login_id 唯一索引会拒绝重复。成员名单与实际角色配置保存在私有数据库，不写入公开仓库。`project` 是负责人，`region` 是单大区，`store` 是单店或多店BP。多店BP的主门店填 region/store，额外门店填 stores，例如 `[{"region":"花木大区","store":"碧云店"}]`。
 4. 把项目 URL 和公开 publishable/anon key 填入 `operations/cloud-config.js`，通过 GitHub 发布。公开 key 的权限由数据库 RLS 限制，绝不使用管理员密钥。
 5. 负责人登录原链接，进入数据管理，导入一组真实数据；用BP账号在另一个浏览器验证仅能读取授权组织、记录刷新后仍保留，再开放协作。
 

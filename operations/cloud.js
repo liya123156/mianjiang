@@ -19,8 +19,9 @@
     if(!response.ok)throw Error(data?.message||data?.msg||data?.error_description||data?.error||('连接失败：'+response.status));return data;
   }
   async function refresh(){if(!session?.refresh_token)throw Error('请重新登录');try{const x=await request('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:{refresh_token:session.refresh_token}});session={...x,expires_at:Date.now()/1000+x.expires_in};remember();}catch(e){session=null;member=null;remember();throw e;}}
-  async function login(email,password){const data=await request('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:{email,password}});session={...data,expires_at:Date.now()/1000+data.expires_in};remember();try{await membership();}catch(e){await logout();throw e;}return member;}
-  async function membership(){if(!session)return null;await request('/auth/v1/user');const rows=await request('/rest/v1/wb_members?select=email,role,region,store,stores,enabled');member=rows.find(x=>x.enabled&&x.email.toLowerCase()===session.user?.email?.toLowerCase());if(!member)throw Error('当前账号尚未获工作台授权，请联系项目负责人');return member;}
+  function accountEmail(loginId){const id=String(loginId??'').trim();if(!/^[0-9]{4}$/.test(id))throw Error('请输入工号后4位，开头的0也需要保留');return 'staff-'+id+'@accounts.mianjiang.invalid';}
+  async function login(loginId,password){const email=accountEmail(loginId),data=await request('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:{email,password}});session={...data,expires_at:Date.now()/1000+data.expires_in};remember();try{await membership();}catch(e){await logout();throw e;}return member;}
+  async function membership(){if(!session)return null;await request('/auth/v1/user');const rows=await request('/rest/v1/wb_members?select=email,role,region,store,stores,enabled,login_id,employee_no,display_name');member=rows.find(x=>x.enabled&&x.email.toLowerCase()===session.user?.email?.toLowerCase());if(!member)throw Error('当前账号尚未获工作台授权，请联系项目负责人');return member;}
   async function logout(){try{if(session)await request('/auth/v1/logout',{method:'POST'});}finally{session=null;member=null;remember();}}
   const rpc=(name,body)=>request('/rest/v1/rpc/'+name,{method:'POST',body});
   async function list(table,query=''){
@@ -40,5 +41,5 @@
     return {path,name:file.name,size:file.size,type:file.type};
   }
   async function proofUrl(path){const data=await request('/storage/v1/object/sign/wb-evidence/'+path.split('/').map(encodeURIComponent).join('/'),{method:'POST',body:{expiresIn:120}});return url+'/storage/v1'+data.signedURL;}
-  root.WBCloud={configured,login,membership,logout,load,rpc,saveItem,uploadProof,proofUrl,get member(){return member;},get hasSession(){return !!session;},get project(){return member?.role==='project';}};
+  root.WBCloud={configured,accountEmail,login,membership,logout,load,rpc,saveItem,uploadProof,proofUrl,get member(){return member;},get hasSession(){return !!session;},get project(){return member?.role==='project';}};
 })(window);

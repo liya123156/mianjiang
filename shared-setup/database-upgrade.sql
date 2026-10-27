@@ -1,5 +1,9 @@
 -- Apply after database-setup.sql. Schema supports daily snapshots, durable records and locked ledgers.
 ALTER TABLE public.wb_members ADD COLUMN IF NOT EXISTS stores jsonb NOT NULL DEFAULT '[]';
+ALTER TABLE public.wb_members ADD COLUMN IF NOT EXISTS login_id text CHECK(login_id IS NULL OR login_id ~ '^[0-9]{4}$');
+ALTER TABLE public.wb_members ADD COLUMN IF NOT EXISTS employee_no text;
+ALTER TABLE public.wb_members ADD COLUMN IF NOT EXISTS display_name text;
+CREATE UNIQUE INDEX IF NOT EXISTS wb_members_login_id_unique ON public.wb_members(login_id) WHERE login_id IS NOT NULL;
 CREATE OR REPLACE FUNCTION public.wb_can_read_scope(p_region text,p_store text)
 RETURNS boolean LANGUAGE sql SECURITY DEFINER STABLE SET search_path='' AS $$
  SELECT EXISTS(SELECT 1 FROM public.wb_members m
