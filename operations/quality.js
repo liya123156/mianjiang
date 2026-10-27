@@ -1,6 +1,7 @@
 /* Quality uses the same monthly active/met cohort as progress. Raw evidence stays private. */
 (function(root){
  'use strict';
+ const F=root.WBFeedback||(typeof require==='function'?require('./quality-feed.js'):null);
  const M=root.WBModel||(typeof require==='function'?require('./core.js'):null);
  const labels={P:'价格／底价／交易条件',M:'业主心态／真实出售动机',R:'关系粘合／客户反馈',E:'钥匙／委托／独家／挂牌',V:'看房方式／配合',C:'核实房源情况',O:'其他需求',U:'暂未形成明确结果'};
  const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.entries(v).sort(([a],[b])=>a.localeCompare(b))):v);
@@ -23,15 +24,15 @@
    const houseId=clean(h['房源编号']),raw=(byHouse.get(houseId)||[]).sort((a,b)=>clean(a['面见时间']).localeCompare(clean(b['面见时间']))),feedbacks=raw.filter(r=>clean(r['面见反馈'])&&!/^(无|暂无|无反馈|暂无反馈|无内容|—|-)$/.test(clean(r['面见反馈']))),sourceSignature=signature(raw),text=feedbacks.map(r=>clean(r['面见反馈'])).join('\n');
    const review=reviews.get(houseId),seed=seeds.get(houseId),saved=review?.sourceSignature===sourceSignature?review:seed?.sourceSignature===sourceSignature?seed:null,suggestion=suggest(text);
    const category=feedbacks.length?(saved&&labels[saved.category]?saved.category:suggestion.category):'U';
-   return {houseId,region:h['大区'],store:h['门店'],group:h['店组'],advisor:h['维护人姓名'],project:h['分盘']||h['总盘']||'',room:h['房间号']||'',feedbacks,sourceSignature,category,tags:suggestion.tags,missing:!feedbacks.length,reviewed:!!(saved&&saved.confirmed),basis:saved?.basis||'',nextAction:saved?.nextAction||'',method:saved?(saved.confirmed?'已核对':'沿用复盘归类'):'规则建议，待核对',changed:!!review&&review.sourceSignature!==sourceSignature};
+   return {houseId,region:h['大区'],store:h['门店'],group:h['店组'],advisor:h['维护人姓名'],project:h['分盘']||h['总盘']||'',room:h['房间号']||'',events:raw,feedbacks,sourceSignature,category,tags:suggestion.tags,missing:!feedbacks.length,reviewed:!!(saved&&saved.confirmed),basis:saved?.basis||'',nextAction:saved?.nextAction||'',method:saved?(saved.confirmed?'已核对':'沿用复盘归类'):'规则建议，待核对',changed:!!review&&review.sourceSignature!==sourceSignature};
   });
  }
- function summary(rows){const counts=Object.fromEntries(Object.keys(labels).map(k=>[k,0]));for(const r of rows)counts[r.category]++;return {total:rows.length,feedback:rows.filter(r=>!r.missing).length,missing:rows.filter(r=>r.missing).length,unclear:rows.filter(r=>r.category==='U'&&!r.missing).length,information:rows.filter(r=>!['U','R'].includes(r.category)).length,relationship:counts.R,reviewed:rows.filter(r=>r.reviewed).length,counts};}
+ function summary(rows){const counts=Object.fromEntries(Object.keys(labels).map(k=>[k,0]));for(const r of rows)counts[r.category]++;return {total:rows.length,feedback:rows.filter(r=>!r.missing).length,missing:rows.filter(r=>r.missing).length,unclear:rows.filter(r=>r.category==='U'&&!r.missing).length,information:rows.filter(r=>!['U','R'].includes(r.category)).length,relationship:counts.R,reviewed:rows.filter(r=>r.reviewed).length,counts,topics:F.counts(rows)};}
  const scoped=(rows,s)=>rows.filter(r=>(!s.region||r.region===s.region)&&(!s.store||r.store===s.store)&&(!s.group||r.group===s.group));
  function publicSummary(rows,asOf,sourceVersion){
   const groups=[{scope:'company',region:'',store:'',group:'',...summary(rows)}];
   for(const region of M.unique(rows.map(r=>r.region))){const rr=scoped(rows,{region});groups.push({scope:'region',region,store:'',group:'',...summary(rr)});for(const store of M.unique(rr.map(r=>r.store))){const ss=scoped(rr,{store});groups.push({scope:'store',region,store,group:'',...summary(ss)});for(const group of M.unique(ss.map(r=>r.group)))groups.push({scope:'group',region,store,group,...summary(scoped(ss,{group}))});}}
-  return {recordType:'public-quality',version:1,asOf,sourceVersion,groups};
+  return {recordType:'public-quality',version:2,asOf,sourceVersion,groups};
  }
  root.WBQuality={canonical,labels,signature,suggest,records,summary,scoped,publicSummary};if(typeof module==='object')module.exports=root.WBQuality;
 })(typeof window==='object'?window:globalThis);
