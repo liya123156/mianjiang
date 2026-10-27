@@ -4,3 +4,15 @@
 @media print{.ops-connection,.ops-actions,.ops-dialog,form,.view-modes{display:none!important}.ops-panel{border:0;padding:0}.ops-columns{display:block}.ops-message{border:0;min-height:0}#ops-ledger-text{background:#fff}}
 
 .ops-paste-zone{border:1px dashed #b9a3cc;border-radius:10px;padding:16px;margin-top:10px;background:#f7f3fa;color:#5a426b;cursor:text}.ops-paste-zone:focus{outline:2px solid #9872b2;outline-offset:2px}.ops-paste-zone span{display:block;font-size:12px;margin-top:6px;color:#776b80}[data-proof-preview]{display:flex;gap:12px;align-items:flex-start;flex-direction:column;margin-top:10px}[data-proof-preview] img{max-width:100%;max-height:240px;border-radius:8px;object-fit:contain}.ops-proof-field>label{display:flex;flex-direction:column;gap:8px}
+
+/* Bright warm violet theme and readable workbench navigation. */
+:root{--paper:#fffaff;--white:#ffffff;--ink:#35243f;--muted:#796782;--purple:#9634d6;--purple-dark:#7d24b6;--purple-light:#f7e9ff;--gold:#a8764e;--line:#edddf4;--shadow:0 7px 25px #a23be00b}
+.sidebar{background:linear-gradient(165deg,#fff8fd 0%,#f9edff 100%);border-right-color:#ead5f4}
+.brand-title{color:#7d24b6}.brand-sub,.nav-label{color:#9773a6}.nav-label{font-size:12px;letter-spacing:.06em}
+.nav a{font-size:16px;line-height:1.55;padding:12px 10px;gap:10px;color:#775486;border-radius:10px}.nav-no{font-size:12px;min-width:18px}.nav a:hover{background:#f2dfff;color:#7d24b6}.nav a.active{background:linear-gradient(110deg,#9b35de,#b248dd);color:#fff;box-shadow:0 5px 16px #a535df24}.nav a.active .nav-no{color:#f7dfff}
+.archive-panel{border-color:#ead5f4}.archive-title{font-size:14px}.archive-fields label{font-size:12px}.archive-fields select{font-size:14px;background:#fff;border-color:#e0c1ed;min-height:39px}
+.view-modes{background:#f3e2fc;border:1px solid #ecd4f8}.view-modes button{font-size:15px;color:#8a629b}.view-modes button[aria-pressed="true"]{background:#a035dc;color:#fff;box-shadow:0 4px 12px #9f32d92b}.view-modes button:hover:not([aria-pressed="true"]){background:#fbf2ff;color:#842ab7}
+.plan-hero{background:linear-gradient(115deg,#fff 30%,#fbeeff 100%);border-color:#ead5f4}.plan-theme{color:#9634d6}.plan-note,.ops-connection{background:#faf0ff;border-color:#ecd5f8}.scope-panel{background:#fff;border-color:#ead5f4}.scope-badge,.plan-role{background:#f5e3ff;color:#8524bd}
+.btn.primary{background:#9634d6;border-color:#9634d6;color:#fff}.btn:not(.primary){border-color:#e5ccef;color:#805094;background:#fff}.btn:hover{border-color:#b75be2}.kpi{border-color:#ecd8f5}.kpi-value{color:#8b2dc5}.section-head{border-color:#ecd5f6}.bar-fill{background:linear-gradient(90deg,#c97aed,#9c35d8)}
+.ops-paste-zone{background:#fcf2ff;border-color:#c47ce6;color:#8434b0}.ops-ledger-grid>div,#ops-ledger-text{background:#fcf3ff}.ops-message{background:#fffcff}
+@media(max-width:760px){.sidebar{background:#fff7fdf5}.nav a{font-size:13px;padding:8px 10px}.nav-no{font-size:10px}.view-modes button{font-size:12px!important}.archive-fields select{font-size:13px}}
