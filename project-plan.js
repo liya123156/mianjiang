@@ -83,7 +83,8 @@ function applyProjectPlans(archive) {
 function planAvailable() { return ['2026-10','2026-11'].includes(currentMonth); }
 function modeFromUrl() {
   const requested = new URLSearchParams(location.search).get('tab');
-  return requested === 'plan' && planAvailable() ? 'plan' : requested === 'review' ? 'review' : DATA?.planOnly ? 'plan' : 'review';
+  if (['daily','expense','admin'].includes(requested)) return requested;
+  return requested === 'plan' && planAvailable() ? 'plan' : requested === 'review' ? 'review' : DATA?.planOnly ? 'plan' : ['#goals','#quality','#organizations','#week','#candidate-detail','#results'].includes(location.hash) ? 'review' : 'daily';
 }
 function renderModeControls() {
   const root = document.getElementById('view-modes'); root.hidden = !DATA;
@@ -91,14 +92,15 @@ function renderModeControls() {
     b.setAttribute('aria-pressed',String(b.dataset.viewMode === currentMode));
     b.disabled = b.dataset.viewMode === 'plan' && !planAvailable();
   });
-  document.getElementById('copy-report').textContent = currentMode === 'plan' ? '复制当前计划' : '复制当前复盘';
-  document.getElementById('copy-progress-image').hidden = currentMode === 'plan' || !!DATA?.planOnly;
-  document.querySelector('.nav-label').textContent = currentMode === 'plan' ? 'CONTENTS / 项目计划' : 'CONTENTS / 结果复盘';
+  document.getElementById('copy-report').textContent = currentMode === 'plan' ? '复制当前计划' : currentMode === 'daily' ? '复制推动话术' : '复制当前复盘';
+  document.getElementById('copy-progress-image').hidden = !['daily','review'].includes(currentMode) || (!!DATA?.planOnly && currentMode==='review');
+  document.querySelector('.nav-label').textContent = 'CONTENTS / '+({plan:'项目计划',review:'结果复盘',daily:'日常推动',expense:'费用核账',admin:'数据管理'}[currentMode]||'项目工作台');
 }
 function setViewMode(mode) {
   currentMode = mode;
+  DATA = ARCHIVE.months[currentMonth] || (typeof WBOperations!=='undefined' && WBOperations.isMode(mode) ? WBOperations.emptyData(currentMonth) : undefined);
   const url = new URL(location.href); url.searchParams.set('tab',mode); url.hash = ''; history.replaceState(null,'',url);
-  render(viewFromUrl(),true); window.scrollTo({top:0,behavior:'smooth'});
+  DATA ? render(viewFromUrl(),true) : renderEmptyMonth(); window.scrollTo({top:0,behavior:'smooth'});
 }
 function syncPlanScope(view) {
   document.getElementById('region-filter').innerHTML = '<option value="">全司 · 全部大区</option>'+DATA.regions.map(r=>`<option value="${esc(r.name)}">${esc(r.name)}</option>`).join('');
@@ -215,3 +217,4 @@ function attachProjectEvents() {
     }
   });
 }
+
