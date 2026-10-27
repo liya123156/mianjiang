@@ -5,7 +5,7 @@
  const get=id=>document.getElementById(id);
  function status(message){const el=get('ops-voice-status');if(el)el.textContent=message;}
  function controls(recording,pending=false){const start=document.querySelector('[data-ops="voice"]'),stop=document.querySelector('[data-ops="voice-stop"]');if(start){start.disabled=recording||pending;start.textContent=pending?'正在申请麦克风…':'语音补充';}if(stop){stop.hidden=!recording;stop.disabled=pending;}}
- function release(s){if(s.released)return;s.released=true;clearInterval(s.timer);clearTimeout(s.limit);clearTimeout(s.recognitionTimer);s.stream?.getTracks().forEach(t=>t.stop());}
+ function release(s){clearInterval(s.timer);clearTimeout(s.limit);clearTimeout(s.recognitionTimer);if(s.stream&&!s.released){s.stream.getTracks().forEach(t=>t.stop());s.released=true;}}
  function reset(){sequence++;const s=active;active=null;if(s){s.cancelled=true;try{s.recognition?.abort();}catch{}try{if(s.recorder?.state!=='inactive')s.recorder?.stop();}catch{}release(s);}if(clipUrl){URL.revokeObjectURL(clipUrl);clipUrl=null;}}
  function note(s){const elapsed=Math.floor((Date.now()-s.started)/1000),time=Math.floor(elapsed/60)+':'+String(elapsed%60).padStart(2,'0');status('● 正在录音 '+time+' · '+(s.speechNote||'正在连接转文字服务…')+'。说完请点“停止录音”。');}
  function field(){return `<div class="ops-voice-panel"><p id="ops-voice-status" role="status" aria-live="polite">点击“语音补充”并允许麦克风，开始后会显示录音时间。</p><p id="ops-voice-interim" class="ops-muted" aria-live="off"></p><div id="ops-voice-playback"></div><p class="ops-muted">录音仅在当前页面回听／下载，不自动上传或共享；转文字使用浏览器语音服务，可能受网络或浏览器支持影响。无法转写时，可在上方输入框使用输入法语音（Windows：Win+H）。切换页面前请先保存文字或下载录音。</p></div>`;}
