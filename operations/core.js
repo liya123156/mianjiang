@@ -12,11 +12,13 @@
   function metrics(rows,meetings=[]){
     const a=active(rows), met=a.filter(r=>flag(r['本月是否面见'])), gift=met.filter(r=>flag(r['本月是否送礼物']));
     const top=a.filter(r=>flag(r['门店top户数'])),unit=a.filter(r=>flag(r['户型top户数']));
-    const ids=new Set(a.map(r=>text(r['房源编号']))), topIds=new Set(top.map(r=>text(r['房源编号']))), unitIds=new Set(unit.map(r=>text(r['房源编号'])));
-    const validMeetings=(meetings||[]).filter(r=>ids.has(text(r['房源编号'])));
-    const meetingCount=validMeetings.length||met.length;
-    const topMeetingCount=(meetings||[]).filter(r=>topIds.has(text(r['房源编号']))).length||top.filter(r=>flag(r['本月是否面见'])).length;
-    const unitMeetingCount=(meetings||[]).filter(r=>unitIds.has(text(r['房源编号']))).length||unit.filter(r=>flag(r['本月是否面见'])).length;
+    const houseKey=value=>text(value).replace(/[\s\u00a0]/g,'');
+    const ids=new Set(a.map(r=>houseKey(r['房源编号']))), topIds=new Set(top.map(r=>houseKey(r['房源编号']))), unitIds=new Set(unit.map(r=>houseKey(r['房源编号'])));
+    const hasMeetingRows=Array.isArray(meetings)&&meetings.length>0;
+    const validMeetings=(meetings||[]).filter(r=>ids.has(houseKey(r['房源编号'])));
+    const meetingCount=hasMeetingRows?(validMeetings.length||met.length):met.length;
+    const topMeetingCount=hasMeetingRows?((meetings||[]).filter(r=>topIds.has(houseKey(r['房源编号']))).length||top.filter(r=>flag(r['本月是否面见'])).length):top.filter(r=>flag(r['本月是否面见'])).length;
+    const unitMeetingCount=hasMeetingRows?((meetings||[]).filter(r=>unitIds.has(houseKey(r['房源编号']))).length||unit.filter(r=>flag(r['本月是否面见'])).length):unit.filter(r=>flag(r['本月是否面见'])).length;
     return {stock:a.length,met:met.length,met_count:meetingCount,gift:gift.length,met_rate:pct(met.length,a.length),gift_rate:pct(gift.length,met.length),store_top_stock:top.length,store_top_met:top.filter(r=>flag(r['本月是否面见'])).length,store_top_met_count:topMeetingCount,store_top_rate:pct(top.filter(r=>flag(r['本月是否面见'])).length,top.length),unit_top_stock:unit.length,unit_top_met:unit.filter(r=>flag(r['本月是否面见'])).length,unit_top_met_count:unitMeetingCount,unit_top_rate:pct(unit.filter(r=>flag(r['本月是否面见'])).length,unit.length),metIds:met.map(r=>text(r['房源编号'])),giftIds:gift.map(r=>text(r['房源编号']))};
   }
   function target(rows,level,name,goals){
