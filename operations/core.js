@@ -29,7 +29,7 @@
   }
   function table(rows,scope,goals,month,meetings=[]){
     const scoped=inScope(rows,scope), output=[];
-    function add(g,level,name,identity){const houseIds=new Set(g.map(r=>text(r['房源编号'])));const m=metrics(g,(meetings||[]).filter(x=>houseIds.has(text(x['房源编号'])))),t=target(g,level,name,goals);output.push({...identity,...m,target:t??'—',target_rate:t==null?'—':pct(t,m.stock),_level:level,_target:t,_tone:level==='company'||level==='region'?'purple':''});}
+    function add(g,level,name,identity){const houseIds=new Set(g.map(r=>text(r['房源编号']).replace(/[\s\u00a0]/g,'')));const m=metrics(g,(meetings||[]).filter(x=>houseIds.has(text(x['房源编号']).replace(/[\s\u00a0]/g,'')))),t=target(g,level,name,goals);output.push({...identity,...m,target:t??'—',target_rate:t==null?'—':pct(t,m.stock),_level:level,_target:t,_tone:level==='company'||level==='region'?'purple':''});}
     if(!scope.region&&!scope.store)add(scoped,'company','全司',{region:'全司',store:'/',group:'/',name:'—'});
     const regions=unique(active(scoped).map(r=>r['大区']));
     for(const region of regions){const r=scoped.filter(x=>x['大区']===region);if(!scope.store)add(r,'region',region,{region,store:'/',group:'/',name:'—'});
