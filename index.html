@@ -168,7 +168,9 @@ let progressImageBusy = false;
 
 function progressImagePlan(view, block, month, meta) {
   const width = 2000, padding = 28, tableWidth = width - padding * 2;
-  const proportions = [.07,.10,.11,.06,...Array(13).fill(.66 / 13)];
+  const fixed = [.07,.10,.11,.06];
+  const rest = Math.max(1, (block.columns || []).length - fixed.length);
+  const proportions = [...fixed,...Array(rest).fill(.66 / rest)];
   const widths = proportions.map(x => x * tableWidth);
   const x = [padding]; widths.forEach(w => x.push(x[x.length-1] + w));
   return {width,padding,tableWidth,widths,x,title:monthLabel(month) + '在售业主面见及礼物进展',scope:view.name,subtitle:meta.cutoff,columns:block.columns,groups:block.columnGroups,rows:block.rows,kpis:view.kpis};
@@ -236,12 +238,12 @@ async function copyProgressImage() {
   const block=view.sections.flatMap(s=>s.blocks).find(b=>b.variant==='progress');if(!block)return;
   progressImageBusy=true;document.querySelectorAll('#copy-progress-image,[data-copy-progress]').forEach(b=>{b.disabled=true;});
   try{
-    const png=createProgressImage(view,block,month,meta);
+    const png=await createProgressImage(view,block,month,meta);
     const filename=month+'_'+view.name+'_面见及礼物进展.png';
     if(navigator.clipboard?.write&&window.ClipboardItem&&window.isSecureContext){
       try{await navigator.clipboard.write([new ClipboardItem({'image/png':png})]);notify('进展图片已复制，可直接粘贴到微信');return;}catch{}
     }
-    const blob=await png;showProgressImage(blob,filename);notify('完整图片已生成，可下载或长按保存');
+    showProgressImage(png,filename);notify('完整图片已生成，可下载或长按保存');
   }catch{notify('图片暂未生成，请重试');}
   finally{progressImageBusy=false;document.querySelectorAll('#copy-progress-image,[data-copy-progress]').forEach(b=>{b.disabled=!currentView;});}
 }
