@@ -192,8 +192,12 @@ function createProgressImage(view, block, month, meta) {
     lines.push(line); return lines;
   }
   function textIn(text,x,y,w,h,size,color,bold=false) {
-    if (/^\d+(\.\d+)?%$/.test(String(text ?? '').trim())) {
-      fontStyle(Math.min(size,16),bold); ctx.fillStyle=color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(text).trim(),x+w/2,y+h/2);return;
+    const compact = String(text ?? '').replace(/\s+/g,'');
+    if (/^\d+(\.\d+)?%$/.test(compact)) {
+      let percentSize = Math.min(size,15);
+      fontStyle(percentSize,bold);
+      while (percentSize > 10 && ctx.measureText(compact).width > w - 8) { percentSize -= 1; fontStyle(percentSize,bold); }
+      ctx.fillStyle=color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(compact,x+w/2,y+h/2);return;
     }
     const lines = wrapped(text,w-14,size,bold), lineHeight = size*1.25;
     ctx.fillStyle=color;ctx.textAlign='center';ctx.textBaseline='middle';
