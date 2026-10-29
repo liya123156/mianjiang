@@ -138,7 +138,8 @@ function scopeFocus(view) {
   if (view.scope==='region') return `${view.name}：大区BP汇总各店目标与变化，和区域管理者共同确认重点支持门店；具体邀约与面见质量由销售中心负责。`;
   return `${view.name}：店总确认本店目标与节奏，经理落实到组和顾问；BP做好启动、礼物、周度反馈和真实案例支持。本店11月目标套数待与店总共识。`;
 }
-function nl2br(value) { return esc(value).replace(/\\n/g, '<br><br>'); }\nfunction renderNovemberPlan(view) {
+function nl2br(value) { return esc(value).replace(/\\n/g, '<br><br>'); }
+function renderNovemberPlan(view) {
   const p=NOVEMBER_PLAN;
   const targets = [
     {title:'线上表达覆盖',value:'100%',text:'客户和业主有效名单完成线上感恩表达；物业、保安、管家等对象单独纳入行动。'},
