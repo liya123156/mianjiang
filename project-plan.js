@@ -138,7 +138,7 @@ function scopeFocus(view) {
   if (view.scope==='region') return `${view.name}：大区BP汇总各店目标与变化，和区域管理者共同确认重点支持门店；具体邀约与面见质量由销售中心负责。`;
   return `${view.name}：店总确认本店目标与节奏，经理落实到组和顾问；BP做好启动、礼物、周度反馈和真实案例支持。本店11月目标套数待与店总共识。`;
 }
-function renderNovemberPlan(view) {
+function nl2br(value) { return esc(value).replace(/\\n/g, '<br><br>'); }\nfunction renderNovemberPlan(view) {
   const p=NOVEMBER_PLAN;
   const targets = [
     {title:'线上表达覆盖',value:'100%',text:'客户和业主有效名单完成线上感恩表达；物业、保安、管家等对象单独纳入行动。'},
@@ -146,7 +146,7 @@ function renderNovemberPlan(view) {
     {title:'TOP/重点房源',value:'≥40%',text:'重点房源线下面见率目标；以10月名单和可触达资源校准。'},
     {title:'单店目标',value:'店总定标',text:'结合10月名单、历史达成和团队资源，形成单店目标与首周计划。'}
   ];
-  const total = `<div class="plan-goal"><div class="plan-overline">项目背景</div><p>${esc(p.background)}</p><div class="plan-overline">项目定位</div><p>${esc(p.positioning)}</p><h3>总目标</h3><p class="plan-main-goal">${esc(p.goal)}</p><div class="goal-labeled"><h4>通过做什么：</h4><p>${esc(p.through)}</p><h4>解决什么问题：</h4><p>${esc(p.problem)}</p><h4>最终达成什么效果：</h4><p>${esc(p.effect)}</p><h4>文化升华：</h4><p>${esc(p.culture)}</p></div></div>`;
+  const total = `<div class="plan-goal"><div class="plan-overline">项目背景</div><p>${nl2br(p.background)}</p><div class="plan-overline">项目定位</div><p>${nl2br(p.positioning)}</p><h3>总目标</h3><p class="plan-main-goal">${nl2br(p.goal)}</p><div class="goal-labeled"><h4>通过做什么：</h4><p>${nl2br(p.through)}</p><h4>解决什么问题：</h4><p>${nl2br(p.problem)}</p><h4>最终达成什么效果：</h4><p>${nl2br(p.effect)}</p><h4>文化升华：</h4><p>${nl2br(p.culture)}</p></div></div>`;
   const objectMatrix = '<h3 class="block-title">顾客对象与行动优先级</h3>'+planTable(['执行优先级','对象分类','主要行动','目标与记录'],p.objects);
   const resultMatrix = '<h3 class="block-title">三层结果结构</h3>'+planTable(['结果层级','观察内容'],p.results);
   const subgoals = `<div class="plan-goal-grid">${p.goals.map((g,i)=>`<article class="plan-goal-card"><span class="plan-overline">子目标 0${i+1}</span><h3>${esc(g.title)}</h3><p class="plan-result">${esc(g.result)}</p><p>${esc(g.why)}</p><details><summary>关键支撑 · 为什么 · 怎么做</summary>${g.supports.map(s=>`<div class="plan-support"><h4>${esc(s.name)}</h4><dl>${[['为什么',s.why],['具体包含',s.what],['如何落地',s.how],['谁来负责',s.owner],['交付标准',s.output]].map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></div>`).join('')}</details></article>`).join('')}</div>`;
