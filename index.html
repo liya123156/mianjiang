@@ -167,13 +167,15 @@ let progressImageUrl = '';
 let progressImageBusy = false;
 
 function progressImagePlan(view, block, month, meta) {
+  const identityCount = view.scope === 'company' ? 2 : 4;
+  const columns = (block.columns || []).filter((c,i) => !(view.scope === 'company' && i >= 2 && i < 4));
   const width = 2000, padding = 28, tableWidth = width - padding * 2;
-  const fixed = [.07,.10,.11,.06];
-  const rest = Math.max(1, (block.columns || []).length - fixed.length);
+  const fixed = identityCount === 2 ? [.12,.15] : [.07,.10,.11,.06];
+  const rest = Math.max(1, columns.length - identityCount);
   const proportions = [...fixed,...Array(rest).fill(.66 / rest)];
   const widths = proportions.map(x => x * tableWidth);
   const x = [padding]; widths.forEach(w => x.push(x[x.length-1] + w));
-  return {width,padding,tableWidth,widths,x,title:monthLabel(month) + '在售业主面见及礼物进展',scope:view.name,subtitle:meta.cutoff,columns:block.columns,groups:block.columnGroups,rows:block.rows,kpis:view.kpis};
+  return {width,padding,tableWidth,widths,x,title:monthLabel(month) + '在售业主面见及礼物进展',scope:view.name,subtitle:meta.cutoff,columns,identityCount,groups:block.columnGroups,rows:block.rows,kpis:view.kpis};
 }
 function createProgressImage(view, block, month, meta) {
   const plan = progressImagePlan(view,block,month,meta);
@@ -212,9 +214,9 @@ function createProgressImage(view, block, month, meta) {
   const summary=plan.kpis.map(k => k.label+' '+k.value).join('     ｜     ');
   fontStyle(20,true);ctx.fillStyle='#5e3873';ctx.fillText(summary,plan.padding,124);
   const headFills={target:'#f6d5dc',whole:'#dce8f8','store-top':'#dcefe5','unit-top':'#edf3dc'};
-  for(let i=0;i<4;i++)cell(plan.columns[i].label,plan.x[i],headerTop,plan.widths[i],groupHeight+leafHeight,'#eae1f0','#5b3d6e',20,true);
+  for(let i=0;i<plan.identityCount;i++)cell(plan.columns[i].label,plan.x[i],headerTop,plan.widths[i],groupHeight+leafHeight,'#eae1f0','#5b3d6e',20,true);
   for(const group of plan.groups){
-    const indices=group.keys.map(key=>plan.columns.findIndex(c=>c.key===key));const start=indices[0];const w=indices.reduce((a,i)=>a+plan.widths[i],0);const fill=headFills[group.tone]||'#ece5f1';
+    const indices=group.keys.map(key=>plan.columns.findIndex(c=>c.key===key)).filter(i=>i>=plan.identityCount);if(!indices.length)continue;const start=indices[0];const w=indices.reduce((a,i)=>a+plan.widths[i],0);const fill=headFills[group.tone]||'#ece5f1';
     cell(group.label,plan.x[start],headerTop,w,groupHeight,fill,'#44334e',21,true);
     for(const i of indices)cell(plan.columns[i].label,plan.x[i],headerTop+groupHeight,plan.widths[i],leafHeight,fill,'#44334e',18,true);
   }
@@ -422,28 +424,30 @@ function renderTable(block) {
     return match ? Math.min(100,Math.max(0,Number(match[1]))) : null;
   }
   const panels = tabs.map((tab,i) => {
-    const cols = arr(tab.columns || block.columns).filter(c => !String(c.key).startsWith('_'));
-    const progress = isProgress && (cols.length === 17 || cols.length === 20);
+    const hideCompanyIdentity = currentView?.scope === 'company';
+    const cols = arr(tab.columns || block.columns).filter((c,j) => !String(c.key).startsWith('_') && !(hideCompanyIdentity && j >= 2 && j < 4));
+    const progress = isProgress && (cols.length >= 15);
     const headers = cols.map((c,j) => `${id}-p${i}-h${j}`);
     const groups = arr(tab.columnGroups || block.columnGroups).length ? arr(tab.columnGroups || block.columnGroups) : defaultGroups;
+    const identityCount = hideCompanyIdentity ? 2 : 4;
     const groupByKey = new Map();
     groups.forEach((g,gi) => arr(g.keys).forEach(k => groupByKey.set(k,{...g,index:gi})));
     function columnClass(c,j) {
       if (!progress) return '';
       const group = groupByKey.get(c.key);
-      return ['progress-col', j < 4 ? 'progress-identity' : 'progress-metric', j < 2 ? `progress-fixed-${j}` : '', rateKeys.has(c.key) ? 'progress-rate' : '', group ? 'progress-section-' + groupTone(group.tone) : ''].filter(Boolean).join(' ');
+      return ['progress-col', j < identityCount ? 'progress-identity' : 'progress-metric', j < 2 ? `progress-fixed-${j}` : '', rateKeys.has(c.key) ? 'progress-rate' : '', group ? 'progress-section-' + groupTone(group.tone) : ''].filter(Boolean).join(' ');
     }
     let head;
     if (progress) {
       // All 17 leaf columns remain in block.columns for text and Word exports.
       // The first four identities span both header rows; metadata groups the rest.
-      const identity = cols.slice(0,4).map((c,j) => `<th id="${headers[j]}" scope="col" rowspan="2" class="${columnClass(c,j)}">${esc(c.label)}</th>`).join('');
+      const identity = cols.slice(0,identityCount).map((c,j) => `<th id="${headers[j]}" scope="col" rowspan="2" class="${columnClass(c,j)}">${esc(c.label)}</th>`).join('');
       const groupHeads = groups.map((g,gi) => {
-        const keys = arr(g.keys).filter(k => cols.slice(4).some(c => c.key === k));
+        const keys = arr(g.keys).filter(k => cols.slice(identityCount).some(c => c.key === k));
         const span = keys.length || Math.max(1,Number(g.colspan) || 1);
         return `<th id="${id}-p${i}-g${gi}" scope="colgroup" colspan="${span}" class="progress-group-head progress-section-${groupTone(g.tone)}">${esc(g.label)}</th>`;
       }).join('');
-      const leaves = cols.slice(4).map((c,j) => `<th id="${headers[j+4]}" scope="col" class="${columnClass(c,j+4)}">${esc(c.label)}</th>`).join('');
+      const leaves = cols.slice(identityCount).map((c,j) => `<th id="${headers[j+identityCount]}" scope="col" class="${columnClass(c,j+identityCount)}">${esc(c.label)}</th>`).join('');
       head = `<thead><tr class="progress-group-row">${identity}${groupHeads}</tr><tr class="progress-leaf-row">${leaves}</tr></thead>`;
     } else {
       head = `<thead><tr>${cols.map(c => `<th scope="col">${esc(c.label)}</th>`).join('')}</tr></thead>`;
@@ -464,7 +468,7 @@ function renderTable(block) {
       }).join('');
       return `<tr class="${classes}" data-row="${j}" ${progress ? `data-level="${level}"` : ''} ${max > 0 && j >= max ? 'hidden' : ''}>${cells}</tr>`;
     }).join('');
-    const colgroup = progress ? `<colgroup>${cols.map((c,j) => `<col class="${j < 4 ? 'progress-identity-col progress-identity-col-' + j : 'progress-metric-col'}">`).join('')}</colgroup>` : '';
+    const colgroup = progress ? `<colgroup>${cols.map((c,j) => `<col class="${j < identityCount ? 'progress-identity-col progress-identity-col-' + j : 'progress-metric-col'}">`).join('')}</colgroup>` : '';
     return `<div class="tab-panel" id="${id}-panel-${i}" ${i ? 'hidden' : ''} ${tabs.length > 1 ? `role="tabpanel" aria-labelledby="${id}-tab-${i}"` : ''}><div class="table-scroll${progress ? ' progress-scroll' : ''}"${progress ? ' role="region" tabindex="0" aria-label="' + esc((block.title || '进展表') + '，完整展示' + cols.length + '个字段') + '"' : ''}><table${progress ? ' class="progress-table"' : ''}>${colgroup}${head}<tbody>${rows}${!arr(tab.rows).length ? `<tr class="empty-row"><td colspan="${Math.max(1,cols.length)}">当前范围暂无记录</td></tr>` : ''}</tbody></table></div></div>`;
   }).join('');
   const mobile = isProgress ? `<div class="progress-mobile">${arr(block.rows).map(row => {
