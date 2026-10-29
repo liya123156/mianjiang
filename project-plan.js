@@ -138,7 +138,17 @@ function scopeFocus(view) {
   if (view.scope==='region') return `${view.name}：大区BP汇总各店目标与变化，和区域管理者共同确认重点支持门店；具体邀约与面见质量由销售中心负责。`;
   return `${view.name}：店总确认本店目标与节奏，经理落实到组和顾问；BP做好启动、礼物、周度反馈和真实案例支持。本店11月目标套数待与店总共识。`;
 }
-function nl2br(value) { return esc(value).replace(/\\n/g, '<br>'); }
+function nl2br(value) {
+  const lines = String(value ?? '').replace(/\\n/g, '\n').split(/[\r\n]+/).map(line => line.trim()).filter(Boolean);
+  return lines.map(line => {
+    const heading = line.match(/^[①②③④⑤⑥⑦⑧⑨⑩].*?[。！？]/) || line.match(/^对(?:顾客|伙伴|平台)：/);
+    let html = heading
+      ? '<strong style="font-weight:700;color:#67458a">' + esc(heading[0]) + '</strong>' + esc(line.slice(heading[0].length))
+      : esc(line);
+    html = html.replace(/(100%|≥20%|≥40%)/g, '<strong style="font-weight:700;color:#67458a">$1</strong>');
+    return '<span style="display:block;margin:0;padding:0">' + html + '</span>';
+  }).join('');
+}
 function renderNovemberPlan(view) {
   const p=NOVEMBER_PLAN;
   const targets = [
