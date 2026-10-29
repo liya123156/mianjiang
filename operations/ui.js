@@ -29,7 +29,7 @@
  function qualityData(view=currentView){const d=data(),s={region:view.region||'',store:view.scope==='store'?(view.store||view.name):''};if(!d?.housing.length)return null;
   if(C.member){const records=Q.scoped(Q.records(d.housing,d.meetings,d.items,currentMonth,d.imports[0]?.as_of),s);return {summary:Q.summary(records),records,asOf:d.imports[0]?.as_of,private:true};}
   const publicItem=d.items.find(x=>x.kind==='goals'&&x.payload.recordType==='public-quality'),pub=publicItem?.payload;
-  if(!pub||pub.sourceVersion!==d.imports[0]?.created_at)return {pending:true};
+  if(!pub)return {summary:Q.summary([]),asOf:d.imports[0]?.as_of||'',generatedAt:'',private:false};
   const wantedStore=view.scope==='store'?(view.store||view.name):'';
   const exact=pub.groups.find(x=>x.scope===view.scope&&x.region===(view.region||'')&&x.store===wantedStore);
   const byStore=view.scope==='store'&&wantedStore?pub.groups.find(x=>x.scope==='store'&&x.store===wantedStore):null;
