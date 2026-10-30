@@ -454,7 +454,11 @@ function setViewMode(mode) {
   const url = new URL(location.href); url.search = ''; url.hash = ''; history.replaceState(null,'',url);
   // Preserve the currently selected organization when switching modules. The
   // canonical URL stays clean; scope lives in the current page session.
-  const selected = DATA ? resolveView(selectedRegion, selectedStore) : null;
+  const selected = !DATA ? null : selectedStore ? {
+    scope:'store',role:'店总',name:selectedStore,region:selectedRegion,store:selectedStore,sections:[],kpis:[],title:selectedStore
+  } : selectedRegion ? {
+    scope:'region',role:'大区总',name:selectedRegion,region:selectedRegion,store:null,sections:[],kpis:[],title:selectedRegion
+  } : DATA.views.company;
   DATA ? render(selected,true) : renderEmptyMonth(); window.scrollTo({top:0,behavior:'smooth'});
 }
 function syncPlanScope(view) {
