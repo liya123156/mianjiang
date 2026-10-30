@@ -447,8 +447,8 @@ function setViewMode(mode) {
   // Capture the scope before replacing DATA. Operational views add live
   // sections to currentView, so object-key lookups after DATA replacement are
   // less reliable than resolving from the explicit region/store values.
-  const selectedRegion = currentView?.region || '';
-  const selectedStore = currentView?.scope === 'store' ? (currentView.store || currentView.name || '') : '';
+  const selectedRegion = document.getElementById('region-filter')?.value || currentView?.region || '';
+  const selectedStore = document.getElementById('store-filter')?.value || (currentView?.scope === 'store' ? (currentView.store || currentView.name || '') : '');
   currentMode = mode;
   DATA = ARCHIVE.months[currentMonth] || (typeof WBOperations!=='undefined' && WBOperations.isMode(mode) ? WBOperations.emptyData(currentMonth) : undefined);
   const url = new URL(location.href); url.search = ''; url.hash = ''; history.replaceState(null,'',url);
