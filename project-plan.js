@@ -444,12 +444,17 @@ function renderModeControls() {
   document.querySelector('.nav-label').textContent = 'CONTENTS / '+({plan:'项目计划',review:'结果复盘',daily:'日常推动',expense:'费用核账',admin:'数据管理'}[currentMode]||'项目工作台');
 }
 function setViewMode(mode) {
+  // Capture the scope before replacing DATA. Operational views add live
+  // sections to currentView, so object-key lookups after DATA replacement are
+  // less reliable than resolving from the explicit region/store values.
+  const selectedRegion = currentView?.region || '';
+  const selectedStore = currentView?.scope === 'store' ? (currentView.store || currentView.name || '') : '';
   currentMode = mode;
   DATA = ARCHIVE.months[currentMonth] || (typeof WBOperations!=='undefined' && WBOperations.isMode(mode) ? WBOperations.emptyData(currentMonth) : undefined);
   const url = new URL(location.href); url.search = ''; url.hash = ''; history.replaceState(null,'',url);
   // Preserve the currently selected organization when switching modules. The
   // canonical URL stays clean; scope lives in the current page session.
-  const selected = currentView && DATA?.views?.[viewKey(currentView)] ? DATA.views[viewKey(currentView)] : viewFromUrl();
+  const selected = DATA ? resolveView(selectedRegion, selectedStore) : null;
   DATA ? render(selected,true) : renderEmptyMonth(); window.scrollTo({top:0,behavior:'smooth'});
 }
 function syncPlanScope(view) {
