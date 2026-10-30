@@ -142,7 +142,8 @@ TOP重点房源
  function render(view){
   WBVoice.reset();
   // 共享查看者无需工号即可浏览；仅编辑、核账和管理操作需要登录。
-  if(!C.member&&(currentMode==='admin'||currentMode==='expense'||currentMode==='review')){currentMode='daily';const u=new URL(location.href);u.searchParams.set('tab','daily');history.replaceState(null,'',u);view=syncScope(viewFromUrl());}
+  // 未登录时保留用户选择的管理/核账页面，由对应页面直接展示登录入口。
+  // 不能强制跳回日常推动，否则顶部“数据管理”会被选中但正文仍停留在日常页。
   setCloudRegions();view=syncScope(viewFromUrl());currentView=view;
   document.getElementById('report').hidden=false;document.getElementById('status').hidden=true;document.getElementById('scope-panel').hidden=currentMode==='admin';document.getElementById('toolbar').hidden=false;document.getElementById('word-download').hidden=true;
   document.getElementById('copy-progress-image').hidden=!['daily','review'].includes(currentMode);document.getElementById('copy-progress-image').disabled=false;document.getElementById('copy-report').disabled=!['daily','review'].includes(currentMode);document.getElementById('print-report').disabled=false;
