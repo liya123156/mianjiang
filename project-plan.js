@@ -2,7 +2,7 @@
 
 /* Monthly plans are separate from actual review data. Unconfirmed numbers stay null. */
 const NOVEMBER_PLAN = {
-  "version": "2026-10-30-full-content-sync",
+  "version": "2026-10-30-execution-guide",
   "title": "11月感恩月｜全量顾客连接行动完整方案",
   "theme": "感恩相连，服务有光",
   "status": "目标与职责已共识；执行排期和配套规则形成完整实施稿，供验收使用",
@@ -78,14 +78,6 @@ const NOVEMBER_PLAN = {
       "title": "对平台",
       "text": "让丽兹行的品牌价值在顾客的真实服务体验中被理解、信任和选择，沉淀可持续使用的服务工具、顾客关系和优秀案例，并进一步支撑委托、再次合作、转介绍、开单及成交等业务结果。"
     }
-  ],
-  "principles": [
-    "感恩利他，是珍惜每一次信任，并愿意多向前一步。让感谢有表达，让表达有服务，让服务为顾客创造价值。",
-    "先完成感恩文化与行动共识：通过11月3日全司月会启动视频、项目组统一提供的感恩主题文化研讨方案，以及与销售中心管理者自上而下的层层共识，讲清11月为什么开展感恩月、感恩在丽兹行文化中的意义、向谁表达、如何表达，以及如何进入日常服务。",
-    "明确全量对象与行动深度：按业主、客户及保安物业管家等服务关联群体梳理对象，优先关注在售业主。推动客户与业主有效名单完成100%线上感恩表达；结合服务阶段提供具体价值，并通过在售业主面见、客户需求沟通等场景深化连接。",
-    "提供可直接使用的感理性服务物料包：给销售中心提供线上线下贺卡模板、感恩表达文案框架、礼品库，以及hmall图、市场报告和成交信息表达框架等行动物料。伙伴根据顾客关系与服务阶段选择、定制和取用；完整物料通过独立的“丽兹行·感恩连接行动包”发布。",
-    "把目标落实到单店、组和伙伴：由店总和经理结合历史达成、10月梳理名单及当前可触达资源，制定单店目标与行动安排。项目组汇总并与销售管理者共同校准合理性，明确对象清单、重点场景、责任人、行动节奏和反馈方式；同步提供礼品费用分摊与报销规则，支持持续行动。",
-    "全月持续运营并放大正向行动：按周推进执行过程与进度管理，持续挖掘顾客正反馈、面见正向案例和成交结果反馈。通过内部征集、正向传播、标杆分享和及时激励，让伙伴在创造顾客价值的过程中感受到成就，让好的服务被更多人学习和复制。"
   ],
   "goals": [
     {
@@ -188,110 +180,268 @@ const NOVEMBER_PLAN = {
       "title": "管理者首轮共识与目标口径对齐",
       "role": "项目组",
       "owner": "项目组；协同：大区总、店总",
-      "where": "项目全月实施",
+      "where": "管理者共识沟通／大区及店总群",
       "what": "讲清项目价值、对象分类、量化起点、三类角色承接和费用档位；同步收集单店资源差异与需要支持的问题。",
       "output": "统一口径与各店准备事项；验收：销售管理者清楚如何准备名单、提出目标和组织单店行动。",
-      "status": "实施排期"
+      "status": "实施排期",
+      "steps": [
+        "项目组向大区总、店总说明项目目标、四类顾客对象及在售业主优先级，讲清线上表达与深度服务的关系。",
+        "对齐线上覆盖100%、在售面见率≥20%、TOP面见率≥40%的目标起点；请店总结合历史达成、10月名单与可触达资源提出本店目标。",
+        "说明项目组、销售管理者和伙伴各自承接的动作，以及大区总对每店全月最高500元的分档经费规则，记录需协调的问题。"
+      ],
+      "scripts": [
+        {
+          "label": "项目组发给大区总、店总",
+          "text": "各位大区总、店总，11月我们一起开展感恩顾客连接行动，把感谢表达给每位顾客，并根据他的当前需要把服务做实。启动前想和大家先对齐三件事：\n①按在售业主、全盘非在售业主、已成交客户、未成交客户梳理责任对象，在售业主优先；\n②线上表达覆盖100%，在售面见率≥20%、TOP面见率≥40%作为目标起点，请结合本店历史和可触达资源提出具体目标；\n③明确经理、伙伴的行动安排，以及需要项目组支持的物料、经费或资源问题。大区总给予每店的11月经费支持按送出量分档，单店全月上限500元。项目组会带着方案和大家逐项确认，让店面拿到支持就能开始行动。"
+        }
+      ],
+      "id": "nov-task-01"
     },
     {
       "date": "10月31日前",
       "title": "完成行动包、文化研讨方案与费用规则首版",
       "role": "项目组",
-      "owner": "项目组；协同：Liya维护发布；业务内容来源配合",
-      "where": "项目全月实施",
+      "owner": "项目组；协同：业务管理部门等内容提供方；项目组统一维护发布",
+      "where": "项目组交付协作／行动包资料维护",
       "what": "完成共识文案、贺卡、场景文案、礼品库、专业物料入口和费用说明；完成项目组工作台完整内容。",
       "output": "可用行动包、可发布项目方案、研讨方案、费用规则；验收：内容能直接取用，空缺的真实来源文件清楚显示尚未上传；采购入口与实际到货信息如实呈现。",
-      "status": "确定节点"
+      "status": "确定节点",
+      "steps": [
+        "按共识说明、贺卡、分场景文案、礼品库和专业资料逐项核对，完成首版行动包与统一文化研讨方案。",
+        "向业务内容来源收齐hmall图、市场报告等原始文件，标明日期；尚未收到的文件清楚标注待上传。",
+        "将费用档位、采购与凭证留存要求写入说明，核对礼品采购入口及实际到货提示，统一发布固定链接。"
+      ],
+      "scripts": [
+        {
+          "label": "项目组向内容提供方征集资料",
+          "text": "伙伴们，感恩连接行动包首版需要在10月31日前完成。请各模块承接伙伴把负责内容整理给项目组：贺卡与场景文案、三档礼品推荐及采购入口、文化研讨方案、费用说明；业务资料请提供最新hmall图原文件、已发布的市场报告和可分享的成交信息参考，并注明资料日期。还缺哪些文件、由谁提供，也请同步说明。项目组会统一核对和发布，销售中心通过固定入口即可取用：https://liya123156.github.io/gan-en-yue/。"
+        }
+      ],
+      "id": "nov-task-02"
     },
     {
       "date": "11月1日—2日",
       "title": "单店名单预梳理与资源准备",
       "role": "销售中心管理者",
       "owner": "店总；协同：经理、伙伴；项目组支持",
-      "where": "项目全月实施",
+      "where": "单店部署／经理与伙伴梳理现有名单",
       "what": "在现有名单上梳理各类对象，优先确认在售业主面见机会；形成单店目标初稿与采购准备安排。",
       "output": "单店对象与目标初稿；验收：名单有责任人，能识别首批可开展深度连接的对象。",
-      "status": "实施排期"
+      "status": "实施排期",
+      "steps": [
+        "店总组织经理复用现有房客源名单，按在售业主、全盘非在售业主、已成交客户、未成交客户分类，并落实到具体伙伴。",
+        "经理与伙伴先识别在售及TOP业主的首批面见机会，结合历史、关系基础和可触达情况形成单店目标初稿。",
+        "列出首批联系对象、拟提供的服务与需要准备的资料或心意，明确采购承接人及费用口径，反馈需项目组支持的事项。"
+      ],
+      "scripts": [
+        {
+          "label": "店总布置给经理",
+          "text": "各位经理，请在11月1日—2日带着伙伴把现有顾客名单先梳理一遍。按在售业主、全盘非在售业主、已成交客户、未成交客户分类，确认每位对象由谁负责；优先找出在售及TOP业主中有机会进一步沟通、面见的对象。请各组带回三项内容：有效名单与责任人、首批重点对象及准备提供的服务、本组面见目标建议和所需支持。我们会结合历史达成与资源一起确定合理目标，并把贺卡、专业资料和采购安排提前准备好。"
+        }
+      ],
+      "id": "nov-task-03"
     },
     {
       "date": "11月2日",
       "title": "月会视频、二维码与手机使用联测",
       "role": "项目组",
       "owner": "项目组；协同：月会制作协同",
-      "where": "项目全月实施",
+      "where": "月会现场设备联测／不同手机端试用",
       "what": "检查现场视频播放、二维码识别、手机打开、复制文案、贺卡独立定制、线上图片保存与线下打印文件。",
       "output": "通过核验的发布版本；验收：不同设备操作互不覆盖；固定链接打开内容一致；不出现空白段落和失效入口。",
-      "status": "实施排期"
+      "status": "实施排期",
+      "steps": [
+        "用月会实际播放设备完整播放视频，核对音量、字幕、画面比例及片尾15秒二维码停留。",
+        "安排不同手机同时扫码，分别输入不同称呼、正文和署名，检查贺卡草稿互不影响及图片、打印文件下载。",
+        "逐项试用文案复制、礼品入口和已上传专业文件下载，记录问题并修复后复测。"
+      ],
+      "scripts": [
+        {
+          "label": "项目组邀请伙伴参加联测",
+          "text": "请一起帮忙完成11月2日的发布联测：先用现场设备完整播放视频，再用各自手机扫码打开行动包。大家分别输入不同的称呼、正文和署名，试一次贺卡保存、文案复制、礼品入口和已上传文件下载，看看彼此的内容是否独立。遇到问题请直接发“手机型号＋操作到哪一步＋问题截图”，我们逐项修好后再试，确保11月3日伙伴现场扫码就能用。"
+        }
+      ],
+      "id": "nov-task-04"
     },
     {
       "date": "11月3日",
       "title": "全司月会启动，发布完整行动包",
       "role": "项目组",
       "owner": "项目组；协同：全体销售管理者与伙伴",
-      "where": "项目全月实施",
+      "where": "11月3日全司月会现场",
       "what": "播放感恩月先导视频，片尾展示行动包二维码，让伙伴知道目标、对象、行动和工具入口。",
       "output": "全司启动与行动包发布；验收：伙伴扫码即可进入，能直接制作贺卡、选文案、挑礼品和取专业物料。",
-      "status": "确定节点"
+      "status": "确定节点",
+      "steps": [
+        "按月会安排播放先导视频，围绕感恩文化、顾客信任和基于需求的服务行动形成共识。",
+        "片尾保留完整行动包二维码，邀请伙伴现场扫码，找到贺卡、文案、礼品和专业资料入口。",
+        "同步向销售管理者发送固定链接和单店承接安排，提醒回店后用统一研讨方案明确本店行动。"
+      ],
+      "scripts": [
+        {
+          "label": "月会现场引导扫码",
+          "text": "这个11月，让我们把心里的感谢表达出来，也把顾客此刻需要的服务准备好。现在可以拿出手机扫码，打开丽兹行感恩连接行动包：定制一张贺卡、参考一段表达、准备一份适合的心意，或取用与顾客需要有关的专业资料。回到店里，我们再一起明确本周要联系谁、先了解什么、接下来多做哪一步，让顾客感受到你的认真与在意。"
+        }
+      ],
+      "id": "nov-task-05"
     },
     {
       "date": "11月3日—6日",
       "title": "单店文化研讨与目标责任确认",
       "role": "销售中心管理者",
       "owner": "店总；协同：经理、伙伴；项目组汇总校准",
-      "where": "项目全月实施",
+      "where": "单店文化研讨／组内承接／目标校准",
       "what": "使用统一研讨方案，在真实服务经验中形成共识；确认单店量化目标，完成四项行动产出。",
       "output": "对象清单、重点场景、责任人与节奏、反馈方式；单店确认目标；验收：每位伙伴知道本周联系谁、提供什么服务、重点面见谁。",
-      "status": "实施排期"
+      "status": "实施排期",
+      "steps": [
+        "店总在月会后48小时内组织启动，最迟11月6日完成首轮承接；使用项目组统一提供的感恩主题文化研讨方案。",
+        "围绕真实服务经历讨论感谢什么、顾客当前需要什么、下一步如何提供价值，让伙伴明确自己的第一步。",
+        "确认对象清单、重点场景、责任人与行动节奏、反馈方式四项产出，并把线上覆盖和面见目标落实到组与伙伴。",
+        "店总将目标和依据回传项目组，项目组结合历史与资源共同校准；经理在后续管理中持续跟进。"
+      ],
+      "scripts": [
+        {
+          "label": "店总文化研讨开场",
+          "text": "今天我们一起把感恩月落到本店的真实服务里。先请大家想一段经历：顾客在哪件事上给过你信任？你了解到他现在最关心什么，下一步准备为他做什么？讨论后，我们要明确四件事：联系哪些对象、重点在哪些场景提供服务、由谁在什么节奏推进、沿用什么方式记录和反馈。各组带着实际名单来定目标，在售业主优先，让每位伙伴都知道本周可以从哪里开始。"
+        },
+        {
+          "label": "项目组向店总收集目标与依据",
+          "text": "各位店总，请在11月6日前将本店确认的行动安排回传项目组：\n①四类顾客的有效名单数量与线上覆盖安排；\n②在售及TOP业主的基数、拟面见套数和目标面见率；\n③重点对象、责任人及行动节奏；\n④反馈方式和所需支持。目标请结合历史达成、10月梳理名单和本月可触达资源说明依据，项目组会与大家一起核对合理性，支持门店把目标落实到具体行动。"
+        }
+      ],
+      "id": "nov-task-06"
     },
     {
       "date": "11月3日—30日持续",
       "title": "全量线上表达与重点面见、服务承接",
       "role": "伙伴",
       "owner": "伙伴；协同：经理带教，店总统筹",
-      "where": "项目全月实施",
+      "where": "一对一线上联系／在售业主面见／带看及需求沟通",
       "what": "开展针对性感谢表达，提供与顾客需求有关的专业内容；推进重点面见，并按约定完成后续服务。",
       "output": "覆盖进度、面见与服务事实、顾客回应；验收：表达真实、服务有用、承诺有后续；现有系统记录及时。",
-      "status": "全月持续"
+      "status": "全月持续",
+      "steps": [
+        "伙伴按责任名单一对一表达感谢，写入与顾客有关的真实经历，主动询问当前打算及与上次沟通相比的新变化。",
+        "根据关系和需求选择贺卡、专业资料及得体心意；在售业主重点预约面见，客户结合带看和需求沟通确认下一步服务。",
+        "11月13日前推进首轮覆盖，后续补齐并持续服务；面见后确认约定事项、完成时间和联系节奏，按约定回传进展。",
+        "在现有系统及时录入在售业主面见、是否送礼及具体反馈；经理跟进服务落实，保安物业管家行动单独分类。"
+      ],
+      "scripts": [
+        {
+          "label": "顾问发给在售业主，表达感谢并邀约面见",
+          "text": "【称呼】您好，我是丽兹行【姓名】。感谢您愿意把房产服务交给我，之前您提到的【具体关注点】，我一直记着。最近也想再听听您对这套房子的出售想法和时间安排，看看有没有新的变化。我想约您方便的时间当面聊一聊，把您关心的问题和接下来的服务逐项确认，再准备适合您的方案。您看近期什么时候方便？"
+        },
+        {
+          "label": "顾问发给全盘非在售业主",
+          "text": "【称呼】您好，我是丽兹行【姓名】。感谢您在【真实交流或服务经历】中给予我的信任。最近也想关心一下，您对房产使用、维护或市场信息有没有新的关注？如果有需要了解的内容，您告诉我，我按您关心的方向整理，也和您确认合适的联系节奏。希望今后的服务能持续为您提供帮助。"
+        },
+        {
+          "label": "顾问发给已成交客户",
+          "text": "【称呼】您好，我是丽兹行【姓名】。这个感恩月，想向您表达一份感谢：谢谢您曾经在【真实服务经历】中给予我的信任。也想问问您最近的居住和生活是否顺心，房产使用或维护上有没有需要我协助的地方？您关心的事可以随时告诉我，我会根据您的需要继续做好后续服务。"
+        },
+        {
+          "label": "顾问发给未成交客户",
+          "text": "【称呼】您好，我是丽兹行【姓名】。感谢您愿意和我分享【真实沟通过的置业想法】，也让我有机会为您做准备。想再了解一下，您最近的购房计划、预算或对生活空间的期待有没有变化？如果还在选房，我可以按您现在的需要重新梳理选择；如果暂缓计划，也可以告诉我您希望了解的信息和合适的联系节奏，我按您的安排准备。"
+        },
+        {
+          "label": "顾问在面见后确认后续服务",
+          "text": "【称呼】，谢谢您今天抽时间和我交流。您目前最关心的是【需求或顾虑】，我们确认接下来先做【具体服务事项】。我会在与您约定的【时间】前把进展整理给您，过程中有需要进一步确认的地方也会及时沟通。后续如果您的想法有变化，您随时告诉我，我会相应调整服务。"
+        }
+      ],
+      "id": "nov-task-07"
     },
     {
       "date": "11月6日、13日、20日、27日",
       "title": "每周目标推动与反馈运营",
       "role": "联合推进",
       "owner": "项目组；协同：大区总、店总、经理",
-      "where": "项目全月实施",
+      "where": "每周店级进度汇总／现有管理沟通",
       "what": "查看执行过程、进度、顾客正反馈、面见正向案例和成交结果反馈；明确下一周行动、卡点承接人与支持。",
       "output": "周度进度、支持事项、案例与下一周安排；验收：目标差距对应具体对象与动作，问题有承接，好的做法有传播。",
-      "status": "每周循环"
+      "status": "每周循环",
+      "steps": [
+        "项目组在11月6日、13日、20日、27日复用系统记录和各店已有管理信息，汇总线上覆盖、在售及TOP面见进度。",
+        "店总、经理说明目标差距对应的对象和卡点，核实已发生的服务、顾客反馈、面见正向案例与业务变化。",
+        "共同明确下一周重点对象、具体动作、承接人和时间；项目组协调物料或资源，并在下一轮检查落实。"
+      ],
+      "scripts": [
+        {
+          "label": "项目组发给店总的周反馈提醒",
+          "text": "各位店总，本周感恩行动一起做一次进度对齐。请沿用现有系统记录或管理信息，反馈：\n①截至本次汇总的线上覆盖、在售及TOP面见目标和完成情况；\n②还差哪些具体对象、卡在哪一步；\n③下一周准备怎么推进、由谁承接、需要什么支持；\n④本周真实顾客反馈、面见好做法及已发生的业务变化，有则一并分享。项目组会把需要协调的事项逐项承接，也把值得学习的服务做法及时传递给大家。"
+        }
+      ],
+      "id": "nov-task-08"
     },
     {
       "date": "11月3日起，每周持续",
       "title": "征集、提炼、传播与标杆分享",
-      "role": "项目组 / HRBP",
+      "role": "项目组",
       "owner": "项目组；协同：管理者推荐、伙伴提供事实",
-      "where": "项目全月实施",
+      "where": "内部案例征集／店会或区域分享／即时认可",
       "what": "从已有记录中提炼真实服务，及时认可具体行动；每周发布可学习案例，组织短分享。",
       "output": "正反馈、服务标杆内容及学习要点；验收：讲清顾客需要、伙伴做法和真实变化，让其他伙伴能学会一个动作。",
-      "status": "全月持续"
+      "status": "全月持续",
+      "steps": [
+        "管理者从系统反馈、店会交流和日常服务中推荐真实案例，伙伴提供原始记录或顾客回应。",
+        "项目组核实并提炼顾客需要、伙伴动作、真实变化和可学习做法，传播前处理顾客身份及不宜公开的信息。",
+        "每周通过内部传播和短分享带动学习，管理者及时认可具体服务行动，鼓励伙伴把好做法用到下一次服务。"
+      ],
+      "scripts": [
+        {
+          "label": "项目组向经理、伙伴征集真实服务案例",
+          "text": "这个月，我们想把伙伴为顾客多做的那一步分享出来。欢迎推荐你身边的真实服务：顾客当时需要什么，伙伴具体做了什么，顾客有什么回应，后续服务或业务有哪些实际变化？可以直接提供已有截图、系统反馈或一段文字，并告诉我们最值得其他伙伴学习的一个动作。项目组会和当事伙伴核实、整理，带着具体做法做内部分享，让更多好的服务在团队里发生。"
+        },
+        {
+          "label": "管理者对伙伴的具体认可",
+          "text": "【姓名】，想为你这次【具体服务】点个赞。你先听懂了顾客的【具体需要】，又主动做了【具体动作】，让顾客感受到【真实反馈或帮助】。这份认真很值得大家学习。方便的话，下次店会请你用几分钟讲讲怎么判断、怎么准备、后来怎样跟进，让这份好经验帮助更多伙伴。"
+        }
+      ],
+      "id": "nov-task-09"
     },
     {
       "date": "11月30日",
       "title": "锁定11月结果与费用统计范围",
       "role": "联合推进",
       "owner": "项目组；协同：销售管理者、各店费用核算承接人",
-      "where": "项目全月实施",
+      "where": "11月结果汇总／门店费用与凭证核对",
       "what": "以11月30日为截止日，汇总覆盖、面见、送礼、顾客反馈和业务变化；核对当月实际送出量、费用档位、采购支出与已付款。",
       "output": "11月结果与费用核对稿；验收：统计单位和分母清楚，费用能追溯到记录与凭证，无重复承担。",
-      "status": "实施排期"
+      "status": "实施排期",
+      "steps": [
+        "项目组与店总按11月30日截止口径汇总线上覆盖、业主和客户面见、礼物送出、顾客反馈及业务变化，核对单位、分母与来源。",
+        "各店费用承接人核对11月实际送出的客户和业主礼物份数，库存和保安物业管家礼物单独列示，按最高达成档核定支持且不累加。",
+        "按单店全月最高500元规则核对大区总支持，并核实采购凭证、各层实际支付和应分摊金额，标明待核实差异。"
+      ],
+      "scripts": [
+        {
+          "label": "项目组发给店总和费用核算承接人",
+          "text": "各位店总、费用承接伙伴，11月结果与费用以11月30日为截止日核对。请基于已有记录确认本店线上覆盖、业主及客户面见、顾客反馈和已发生业务变化；礼品请同时核对实际采购、当月实际送出、剩余库存、采购凭证与各层已付款。客户和业主送出量用于经费定档，保安、物业、管家单独列示。大区总支持按达到的最高档确定、档位不累加，每店全月最高500元。存在数量、凭证或支付差异的，请把具体事项和待确认人一起标明，项目组汇总后逐项核对。"
+        }
+      ],
+      "id": "nov-task-10"
     },
     {
       "date": "12月1日",
       "title": "完成项目归档和后续服务交接",
       "role": "项目组",
       "owner": "项目组；协同：店总、经理",
-      "where": "项目全月实施",
+      "where": "项目复盘归档／销售管理者后续服务交接",
       "what": "归档11月执行结果、典型案例与费用记录；将待完成约定服务和业务机会交销售管理者持续承接。",
       "output": "项目复盘、案例归档、后续承接事项；验收：后续事项有销售承接人；重点成果周期仍为11月。",
-      "status": "实施排期"
+      "status": "实施排期",
+      "steps": [
+        "整理11月目标达成、服务反馈、优质案例和费用核对结果，写清有效做法及后续可改进的环节。",
+        "把尚未完成的顾客服务约定和业务机会逐项交给店总、经理，明确具体事项、销售承接人及下一次约定跟进时间。",
+        "完成项目资料归档；后续服务和业务机会由销售管理者持续经营，项目成果汇总重点保留11月实施情况。"
+      ],
+      "scripts": [
+        {
+          "label": "项目组向店总、经理交接后续事项",
+          "text": "各位店总、经理，11月感恩月实施结果进入归档，感谢大家把感谢落到一次次具体服务中。请一起确认本店还有哪些已答应顾客、尚待完成的服务，以及需要继续推进的业务机会。每项请明确“待完成什么、由谁承接、与顾客约定何时跟进”，后续由销售管理者持续推动。项目组会归档11月进度、顾客反馈、好做法与费用记录，把有效经验保留下来，也让顾客后续的需要继续有人认真回应。"
+        }
+      ],
+      "id": "nov-task-11"
     }
   ],
   "materials": [
@@ -448,18 +598,73 @@ const NOVEMBER_PLAN = {
     }
   ],
   "audiences": [
-    ["业主","在售业主","★S级重点","线上表达感谢；结合资产、市场和房源情况准备服务内容；重点推进线下面见与后续服务。","全盘面见率起点≥20%，TOP面见率起点≥40%；单店结合历史和可触达名单确认具体目标。","面见、送礼和反馈录入现有房客源系统。"],
-    ["业主","全盘非在售业主","分层持续连接","线上表达感谢；结合房产维护、市场信息或顾客关心的问题提供服务；有需求与关系基础时选择面见。","有效名单线上表达100%；面见按需要推进。","沿已有房源或关系记录维护服务结果。"],
-    ["客户","已成交客户","分层持续连接","感谢曾经的信任；结合入住、资产维护、生活变化及后续房产需要提供服务。","有效名单线上表达100%；有需要时进一步沟通和面见。","沿现有客户记录更新服务进展。"],
-    ["客户","未成交客户","分层持续连接","感谢给予了解需求和服务的机会；结合带看和需求沟通提供有用判断，继续帮助确认需求、选择合适房产。","有效名单线上表达100%；正在服务中的客户重点做好需求沟通与后续承接。","沿现有客户与带看记录沉淀事实。"],
-    ["服务关联群体","保安、物业、管家","单独分类","感谢日常工作中的协作，结合实际需要选择实用、适宜的表达方式。","纳入行动安排并单独记录；不计入客户、业主连接覆盖率及其经费档位。","单独分类记录。"]
+    [
+      "业主",
+      "在售业主",
+      "★S级重点",
+      "线上表达感谢；结合资产、市场和房源情况准备服务内容；重点推进线下面见与后续服务。",
+      "全盘面见率起点≥20%，TOP面见率起点≥40%；单店结合历史和可触达名单确认具体目标。",
+      "面见、送礼和反馈录入现有房客源系统。"
+    ],
+    [
+      "业主",
+      "全盘非在售业主",
+      "分层持续连接",
+      "线上表达感谢；结合房产维护、市场信息或顾客关心的问题提供服务；有需求与关系基础时选择面见。",
+      "有效名单线上表达100%；面见按需要推进。",
+      "沿已有房源或关系记录维护服务结果。"
+    ],
+    [
+      "客户",
+      "已成交客户",
+      "分层持续连接",
+      "感谢曾经的信任；结合入住、资产维护、生活变化及后续房产需要提供服务。",
+      "有效名单线上表达100%；有需要时进一步沟通和面见。",
+      "沿现有客户记录更新服务进展。"
+    ],
+    [
+      "客户",
+      "未成交客户",
+      "分层持续连接",
+      "感谢给予了解需求和服务的机会；结合带看和需求沟通提供有用判断，继续帮助确认需求、选择合适房产。",
+      "有效名单线上表达100%；正在服务中的客户重点做好需求沟通与后续承接。",
+      "沿现有客户与带看记录沉淀事实。"
+    ],
+    [
+      "服务关联群体",
+      "保安、物业、管家",
+      "单独分类",
+      "感谢日常工作中的协作，结合实际需要选择实用、适宜的表达方式。",
+      "纳入行动安排并单独记录；不计入客户、业主连接覆盖率及其经费档位。",
+      "单独分类记录。"
+    ]
   ],
   "operations": [
-    ["执行过程运营","本周感谢表达、服务准备、邀约、面见和服务落实是否发生。","针对卡住的环节，提供场景参考、专业物料或管理者支持。"],
-    ["进度管理","线上覆盖、在售及TOP面见距单店目标的差距，责任对象是否明确。","店总和经理调整下周重点对象与行动节奏，项目组跟进需要协调的资源。"],
-    ["顾客正反馈","顾客认可、感谢、愿意交流和信任变化的真实信息。","及时反馈给伙伴，提炼顾客感受到的具体服务价值。"],
-    ["面见正向案例","面见前准备、现场交流和后续服务带来的需求或资产服务变化。","讲清可复制的动作，在店会或区域沟通中组织短分享。"],
-    ["业务结果反馈","11月发生的委托、转介绍、开单、成交等结果及前期服务过程。","由销售管理者核实并推动转化，项目组据实呈现，避免简单归因。"]
+    [
+      "执行过程运营",
+      "本周感谢表达、服务准备、邀约、面见和服务落实是否发生。",
+      "针对卡住的环节，提供场景参考、专业物料或管理者支持。"
+    ],
+    [
+      "进度管理",
+      "线上覆盖、在售及TOP面见距单店目标的差距，责任对象是否明确。",
+      "店总和经理调整下周重点对象与行动节奏，项目组跟进需要协调的资源。"
+    ],
+    [
+      "顾客正反馈",
+      "顾客认可、感谢、愿意交流和信任变化的真实信息。",
+      "及时反馈给伙伴，提炼顾客感受到的具体服务价值。"
+    ],
+    [
+      "面见正向案例",
+      "面见前准备、现场交流和后续服务带来的需求或资产服务变化。",
+      "讲清可复制的动作，在店会或区域沟通中组织短分享。"
+    ],
+    [
+      "业务结果反馈",
+      "11月发生的委托、转介绍、开单、成交等结果及前期服务过程。",
+      "由销售管理者核实并推动转化，项目组据实呈现，避免简单归因。"
+    ]
   ],
   "roles": [
     {
@@ -581,6 +786,12 @@ function planRichText(text,terms=[]) {
   }
   return output;
 }
+function renderNovemberTask(task,index) {
+  const steps=task.steps||[];
+  const scripts=task.scripts||[];
+  const scriptBlocks=scripts.map((script,scriptIndex)=>`<article class="plan-task-script"><div class="plan-task-script-head"><h5>${esc(script.label)}</h5><button type="button" class="btn" data-copy-task-script="${index}:${scriptIndex}" aria-label="复制${esc(task.title)}：${esc(script.label)}">复制话术</button></div><pre>${esc(script.text)}</pre></article>`).join('');
+  return `<article class="plan-task" data-owner-role="${esc(task.role)}"><div class="plan-task-date"><span class="plan-task-date-label">什么时间做</span>${esc(task.date)}<span>${esc(task.status)}</span></div><div class="plan-task-main"><h3>${esc(task.title)}</h3><dl class="plan-task-facts"><div><dt>做什么</dt><dd>${esc(task.what)}</dd></div><div><dt>谁来做</dt><dd>${esc(task.owner)}</dd></div><div><dt>如何做</dt><dd><ol class="plan-task-steps">${steps.map(step=>`<li>${esc(step)}</li>`).join('')}</ol></dd></div><div><dt>交付 / 验收</dt><dd>${esc(task.output)}</dd></div></dl>${scripts.length?`<details class="plan-task-script-group" open><summary>可直接使用的话术 · ${scripts.length}条</summary><p class="plan-task-script-hint">补充【】内的真实信息后使用；根据沟通对象调整称呼和语气。</p>${scriptBlocks}</details>`:''}</div><span class="plan-role">${esc(task.role)}</span></article>`;
+}
 function renderNovemberPlan(view) {
   const p=NOVEMBER_PLAN;
   const backgroundTerms=[
@@ -603,17 +814,16 @@ function renderNovemberPlan(view) {
   const problemsFull='<ol class="plan-problem-list">'+p.problems.map(problem=>'<li><h5 class="plan-problem-title">'+esc(problem.title)+'</h5><p class="plan-problem-detail"><span>当前表现</span>'+esc(problem.situation)+'</p><p class="plan-problem-solve"><span>项目要解决</span>'+planRichText(problem.resolve,['知道如何通过服务表达感恩','感性与理性服务工具','形成后续连接','被看见、被学习、被更多伙伴复制'])+'</p></li>').join('')+'</ol>';
   const outcomesFull='<div class="plan-outcomes">'+p.outcomes.map(o=>'<article><span>'+esc(o.title)+'</span><p>'+esc(o.text)+'</p></article>').join('')+'</div>';
   const totalFull='<article class="plan-goal plan-structure-block"><div class="plan-overline">03 · 总目标</div><h3>总目标</h3><p class="plan-main-goal">'+planRichText(p.goal,goalTerms)+'</p><h4 class="plan-subtitle"><span>01</span>通过做什么</h4>'+approachesFull+'<h4 class="plan-subtitle"><span>02</span>进一步解决什么问题</h4>'+problemsFull+'<h4 class="plan-subtitle"><span>03</span>最终形成什么结果</h4>'+outcomesFull+'</article>';
-  const supportGoals = `<div class="plan-goal-grid">${p.goals.map((g,i)=>`<article class="plan-goal-card"><span class="plan-overline">目标支撑 0${i+1}</span><h3>${esc(g.title)}</h3><p class="plan-result">${esc(g.result)}</p><p>${esc(g.why)}</p><details><summary>关键支撑 · 为什么 · 怎么做</summary>${g.supports.map(s=>`<div class="plan-support"><h4>${esc(s.name)}</h4><dl>${[['为什么',s.why],['具体包含',s.what],['如何落地',s.how],['谁来负责',s.owner],['交付标准',s.output]].map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></div>`).join('')}</details></article>`).join('')}</div>`;
-  const goalSectionFull = planSection('plan-goals','01','项目背景、项目定位与总目标','先说明为什么开展感恩月、这是什么项目，再明确通过什么行动、要解决的问题和最终形成的结果。','<div class="plan-structure-stack">'+backgroundFull+positioningFull+totalFull+'</div>');
+  const supportGoals = `<div class="plan-goal-grid">${p.goals.map((g,i)=>`<article class="plan-goal-card"><span class="plan-overline">子目标 0${i+1}</span><h3>${esc(g.title)}</h3><p class="plan-result">${esc(g.result)}</p><details><summary>前三项关键支撑</summary>${g.supports.map((s,j)=>`<div class="plan-support"><h4><span class="plan-support-rank">重点 ${j+1}</span>${esc(s.name)}</h4><dl>${[['为什么',s.why],['做什么',s.what],['谁来做',s.owner],['交付与完成标准',s.output]].map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></div>`).join('')}</details><details class="plan-foundations"><summary>基础配套</summary><ul class="plan-foundation-list">${g.why.split('；').map(t=>t.trim().replace(/^[。；]+|[；]+$/g,'')).filter(Boolean).map(t=>`<li>${esc(t)}</li>`).join('')}</ul></details></article>`).join('')}</div>`;
+  const goalSectionFull = planSection('plan-goals','01','项目背景、定位与目标','从项目背景、定位到总目标，再由三个子目标及关键支撑承接。','<div class="plan-structure-stack">'+backgroundFull+positioningFull+totalFull+'</div><div class="plan-subgoal-section"><h3 class="block-title">三个子目标与关键支撑</h3>'+supportGoals+'</div>');
   const audiences = planTable(['类别','对象','优先级','具体行动','行动深度','记录方式'],p.audiences);
   const metrics = `<div class="cards">${p.metrics.map(m=>`<article class="card"><h3>${esc(m.title)}</h3><div class="card-value">${esc(m.value)}</div><p>${esc(m.text)}</p></article>`).join('')}</div>`;
   const targetSection = planSection('plan-targets','02','对象分层与量化目标','客户和业主有效名单完成100%线上感恩表达；在售业主面见率起点≥20%，门店TOP与户型TOP面见率起点≥40%。',audiences+`<h3 class="block-title">目标与统计口径</h3>`+metrics+`<details class="block details"><summary>目标制定与结果使用原则</summary><p>单店目标由店总结合历史达成、10月名单和当前可触达资源提出，项目组与销售管理者共同校准。面见按房源去重套数统计，重复面见次数另列；礼物送出与真实面见分别记录。关系、委托和成交变化据实呈现，不把全部业务结果简单归因于单一活动。</p></details>`);
-  const taskRoles=['全部','项目组','项目组 / HRBP','销售中心管理者','伙伴','联合推进'];
+  const taskRoles=['全部',...new Set(p.tasks.map(t=>t.role))];
   const taskControls = `<div class="plan-task-controls"><span>按主责查看</span><div class="plan-role-buttons" role="group" aria-label="落地计划主责筛选">${taskRoles.map((r,i)=>`<button class="btn ${i?'':'primary'}" data-task-role="${r}" aria-pressed="${i===0}">${r}</button>`).join('')}</div><span id="task-count" role="status">${p.tasks.length}项安排</span></div>`;
-  const tasks = `<div class="plan-tasks">${p.tasks.map((t,i)=>`<article class="plan-task" data-owner-role="${t.role}"><div class="plan-task-date">${esc(t.date)}<span>${esc(t.status)}</span></div><div class="plan-task-main"><h3>${esc(t.title)}</h3><p>${esc(t.what)}</p><dl><div><dt>主责 / 协同</dt><dd>${esc(t.owner)}</dd></div><div><dt>场景</dt><dd>${esc(t.where)}</dd></div><div><dt>交付 / 验收</dt><dd>${esc(t.output)}</dd></div></dl></div><span class="plan-role">${t.role}</span></article>`).join('')}</div>`;
+  const tasks = `<div class="plan-tasks">${p.tasks.map(renderNovemberTask).join('')}</div>`;
   const roles = planTable(['角色','主要职责','具体交付','责任边界'],p.roles.map(r=>[r.role,r.responsibility,r.outputs,r.boundary]));
-  const executionPrinciples = `<details class="plan-gift-details"><summary>查看项目落地原则</summary><ul>${p.principles.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></details>`;
-  const actions = planSection('plan-actions','03','职责与全月落地计划','项目组与HRBP负责运营支持，销售中心对顾客邀约、服务质量和业务推进负责；月会后单店48小时内启动，最迟11月6日完成承接。',roles+`<div class="plan-note">${esc(scopeFocus(view))}</div><h3 class="block-title">目标落地支撑</h3>`+supportGoals+executionPrinciples+`<h3 class="block-title">全月行动计划</h3>`+taskControls+tasks);
+  const actions = planSection('plan-actions','03','职责与全月落地计划','项目组统一提供运营支持，销售中心负责顾客联系、服务质量和业务推进。按时间安排查看做什么、谁来做、如何做，并直接取用对应话术。',roles+`<div class="plan-note">${esc(scopeFocus(view))}</div><h3 class="block-title">全月行动计划</h3>`+taskControls+tasks);
   const operations = planTable(['运营重点','看什么','推动什么'],p.operations);
   const fee = `<details class="plan-gift-details"><summary>11月礼品经费支持规则</summary><p>按单店11月实际送出的客户、业主礼物份数确定支持档位；大区总给予每家店的全月支持上限为500元，按达到的最高档确定，档位不累加。未送出库存不计，同一对象本项目原则上按1份计入；保安、物业、管家单独分类，不混入客户与业主经费达档份数。</p>${planTable(['单店11月实际送出量','统计口径','大区总支持额度','规则'],p.gifts)}</details>`;
   const splitNote = `<div class="plan-note"><strong>项目方案与销售中心行动包分两条线：</strong>本工作台保留项目目标、职责、全月计划、进度运营、费用规则与验收标准；贺卡、场景话术、礼品库、hmall图和市场报告等可取用物料在独立“丽兹行·感恩连接行动包”中发布和维护。</div>`;
@@ -632,7 +842,7 @@ function renderProject(view) {
   currentView=view; tableModels.clear(); tableSerial=0; syncPlanScope(view);
   const nov=currentMonth==='2026-11';
   document.title=(nov?NOVEMBER_PLAN.title:'10月在售业主面见计划')+'｜'+view.name;
-  const nav=nov?['项目背景、定位与总目标','对象分层与量化目标','职责与全月落地计划','运营规则与交付验收']:['10月目标与口径','10月落地安排','职责与资料说明'];
+  const nav=nov?['背景、定位与目标支撑','对象分层与量化目标','职责与全月落地计划','运营规则与交付验收']:['10月目标与口径','10月落地安排','职责与资料说明'];
   const ids=nov?['plan-goals','plan-targets','plan-actions','plan-delivery']:['plan-goals','plan-actions','plan-decisions'];
   document.getElementById('nav').innerHTML=nav.map((t,i)=>`<a href="#${ids[i]}"><span class="nav-no">0${i+1}</span><span>${t}</span></a>`).join('');
   document.getElementById('report').innerHTML=`<header class="hero plan-hero"><div class="eyebrow">LANDZ · NOVEMBER 2026</div><div class="plan-title-line"><h1>${nov?NOVEMBER_PLAN.title:'10月在售业主面见计划'}</h1><span class="plan-badge">${nov?NOVEMBER_PLAN.status:'按已有资料归档'}</span></div><p class="plan-theme">${nov?NOVEMBER_PLAN.theme:'让每一次面见，成为持续服务的开始'}</p><div class="meta-row"><span>${esc(view.name)} · ${esc(view.role)}</span><span>${nov?NOVEMBER_PLAN.period:'数据截至2026/10/25 · 行动10/27—10/31'}</span></div></header>${nov?renderNovemberPlan(view):renderOctoberPlan(view)}<footer class="footer"><span>上海丽兹行 · ${nov?'感恩月全量顾客连接行动':'在售业主面见项目'}</span><span>完整实施稿 · 2026/10/30更新</span></footer>`;
@@ -665,11 +875,11 @@ function exportProjectText() {
   if(currentMonth==='2026-10') return exportText({...currentView,sections:currentView.sections.filter(s=>['goals','week'].includes(s.id))});
   const p=NOVEMBER_PLAN;
   const parts=[p.title,p.theme,p.status,p.period,'查看范围：'+currentView.name,'','项目背景',...p.background,'','项目定位',...p.positioning,'','总目标',p.goal,'','通过做什么',...p.approach.flatMap((a,i)=>[(i+1)+'. '+a.title,a.text]),'','进一步解决什么问题',...p.problems.flatMap((problem,i)=>[(i+1)+'. '+problem.title,'当前表现：'+problem.situation,'项目要解决：'+problem.resolve]),'','最终形成什么结果',...p.outcomes.map(o=>o.title+'｜'+o.text)];
+  p.goals.forEach((g,i)=>{parts.push('',`子目标${i+1}：${g.title}`,g.result,'前三项关键支撑');g.supports.forEach((s,j)=>parts.push(`重点${j+1}：${s.name}`,'为什么：'+s.why,'做什么：'+s.what,'谁来做：'+s.owner,'交付与完成标准：'+s.output));parts.push('基础配套',...g.why.split('；').map(t=>t.trim()).filter(Boolean));});
   parts.push('','对象分层与行动深度',...p.audiences.map(r=>r.join('｜')),'','量化目标与统计口径',...p.metrics.flatMap(m=>[m.title+'：'+m.value,m.text]));
   parts.push('','职责与边界',...p.roles.flatMap(r=>[r.role,'主要职责：'+r.responsibility,'具体交付：'+r.outputs,'责任边界：'+r.boundary]));
-  parts.push('','当前范围落实重点',scopeFocus(currentView),'','目标落地原则',...p.principles);
-  p.goals.forEach((g,i)=>{parts.push('',`目标支撑${i+1}：${g.title}`,g.result,g.why);g.supports.forEach(s=>parts.push(s.name,'为什么：'+s.why,'具体包含：'+s.what,'如何落地：'+s.how,'负责人：'+s.owner,'交付标准：'+s.output));});
-  parts.push('','全月落地计划');p.tasks.forEach(t=>parts.push(`${t.date}｜${t.title}｜${t.status}`,'负责人：'+t.owner,'场景：'+t.where,'行动：'+t.what,'交付：'+t.output));
+  parts.push('','当前范围落实重点',scopeFocus(currentView));
+  parts.push('','全月落地计划');p.tasks.forEach(t=>{parts.push('',t.title,'什么时间做：'+t.date,'做什么：'+t.what,'谁来做：'+t.owner,'如何做：',...(t.steps||[]).map((step,i)=>`${i+1}. ${step}`),'交付 / 验收：'+t.output);(t.scripts||[]).forEach(s=>parts.push('可直接使用的话术｜'+s.label,s.text));});
   parts.push('','每周全过程运营',...p.operations.map(r=>r.join('｜')),'','11月礼品经费支持',...p.gifts.map(r=>r.join('｜')),'','交付验收标准',...p.decisions.map(r=>r.join('｜')),'','项目方案与销售中心行动包分两条线：本工作台专注目标、职责、计划、运营、费用与验收；贺卡、场景话术、礼品库、hmall图和市场报告在独立行动包发布。');
   return parts.join('\n');
 }
@@ -679,6 +889,13 @@ function attachProjectEvents() {
   });
   document.getElementById('report').addEventListener('click',e=>{
     const mode=e.target.closest('[data-plan-mode]'); if(mode) setViewMode(mode.dataset.planMode);
+    const taskCopy=e.target.closest('[data-copy-task-script]');
+    if(taskCopy){
+      const [taskIndex,scriptIndex]=taskCopy.dataset.copyTaskScript.split(':').map(Number);
+      const script=Number.isInteger(taskIndex)&&Number.isInteger(scriptIndex)?NOVEMBER_PLAN.tasks[taskIndex]?.scripts?.[scriptIndex]:null;
+      if(script)copyText(script.text,'话术已复制，补充真实信息后即可使用');
+      return;
+    }
     const copy=e.target.closest('[data-copy-material]');
     if(copy){ const m=NOVEMBER_PLAN.materials.find(m=>m.id===copy.dataset.copyMaterial); if(m)copyText(m.text,'模板已复制，请补入真实信息后使用'); }
     const role=e.target.closest('[data-task-role]');
@@ -689,4 +906,5 @@ function attachProjectEvents() {
     }
   });
 }
+
 
