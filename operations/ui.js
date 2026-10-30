@@ -156,7 +156,10 @@ TOP重点房源
   document.getElementById('report').innerHTML=connection()+(currentMode==='daily'?daily(view):currentMode==='expense'?finance(view):currentMode==='review'?review(view):admin(view));
   if(C.configured&&!data()&&!state.loading&&!state.error)refresh();
  }
- async function refresh(){if(!C.configured)return;const month=currentMonth,memberAtStart=C.member,viewAtStart=currentView;state.loading=true;state.error='';try{const loaded=await C.load(month);if(C.member!==memberAtStart)return;state.cache[month]=loaded;await publishQuality(loaded,month);}catch(e){state.error=e.message;}finally{state.loading=false;if(currentMonth===month&&isMode(currentMode))render(viewAtStart||currentView||viewFromUrl());}}
+ async function refresh(){if(!C.configured)return;const month=currentMonth,memberAtStart=C.member,viewAtStart=currentView;state.loading=true;state.error='';try{const loaded=await C.load(month);if(C.member!==memberAtStart)return;state.cache[month]=loaded;await publishQuality(loaded,month);}catch(e){state.error=e.message;}finally{state.loading=false;
+  // A refresh can finish after the visitor has changed the filters. Always use
+  // the newest in-page selection; viewAtStart is only a fallback.
+  if(currentMonth===month&&isMode(currentMode))render(currentView||viewAtStart||viewFromUrl());}}
  async function save(kind,id,body,store){const s=scope(),selectedStore=kind==='goals'?null:store||s.store;if(!selectedStore&&!['goals','rules'].includes(kind))throw Error('请先筛选单店');const region=DATA.regions.find(r=>r.stores.includes(selectedStore))?.name||(kind==='goals'?null:s.region)||null,existing=item(kind,id,selectedStore);await C.saveItem(currentMonth,kind,id,region,selectedStore||null,body,existing?.updated_at);await refresh();}
  function dialog(content){let el=document.getElementById('ops-dialog');if(!el){el=document.createElement('dialog');el.id='ops-dialog';el.className='ops-dialog';document.body.append(el);}el.innerHTML=`<button class="btn ops-dialog-close" data-ops="close-dialog">关闭</button>${content}`;if(!el.open)el.showModal();return el;}
  function formData(form){return Object.fromEntries(new FormData(form));}
