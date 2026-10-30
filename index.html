@@ -297,7 +297,12 @@ function selectMonth(month) {
 function resolveView(region, store) {
   const byStore = store && DATA.views['store:' + store];
   if (byStore && (!region || byStore.region === region)) return byStore;
-  return DATA.views['region:' + region] || DATA.views.company;
+  // Plan-only months may reuse the organization directory without having a
+  // prebuilt view object for every region/store. Build a lightweight view so
+  // filtering still works consistently across every module.
+  const regionRecord = region && DATA.regions?.find(r => r.name === region);
+  if (store && regionRecord?.stores?.includes(store)) return {scope:'store',role:'店总',name:store,region,store,sections:[],kpis:[],title:store};
+  return DATA.views['region:' + region] || (regionRecord ? {scope:'region',role:'大区总',name:region,region,store:null,sections:[],kpis:[],title:region} : DATA.views.company);
 }
 function viewKey(view) { return view.scope === 'company' ? 'company' : view.scope + ':' + view.name; }
 function viewFromUrl() {
