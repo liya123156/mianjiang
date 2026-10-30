@@ -2,36 +2,83 @@
 
 /* Monthly plans are separate from actual review data. Unconfirmed numbers stay null. */
 const NOVEMBER_PLAN = {
-  "version": "2026-10-30-structure-sync",
+  "version": "2026-10-30-full-content-sync",
   "title": "11月感恩月｜全量顾客连接行动完整方案",
   "theme": "感恩相连，服务有光",
   "status": "目标与职责已共识；执行排期和配套规则形成完整实施稿，供验收使用",
   "period": "2026年11月1日—11月30日",
-  "background": "11月是丽兹行的感恩月，也是把全年持续坚持的“感恩利他、顾客至上”集中看见、表达并落到行动的文化契机。感恩月不仅是一次节日活动，更重要的是让伙伴从文化理解走向顾客服务：主动感谢每一份信任，在真实关系与服务场景中多向前一步。国王与天使、爱心义卖等共同构成感恩文化氛围；本项目聚焦面向全量顾客的连接与服务行动，重点推动在售业主的持续维护。",
-  "positioning": "以11月感恩月为文化与组织动员契机，由项目组为销售中心提供文化共识、连接工具、目标进度管理、费用规则和全过程运营支持，推动店总、经理和伙伴面向全量顾客开展主动、持续、有温度的感恩连接行动。项目不是一次节日送礼，也不是单纯提升面见数量，而是通过真实服务深化顾客关系，服务于责任盘长期经营和11月业务结果。",
-  "goal": "面向全量顾客开展有效的感恩连接行动。通过主动表达感谢、提供与顾客有关的专业服务、推动重点对象深度面见并持续履行服务约定，进而深化连接、建立信任、形成可学习的优质服务行动，最终支撑顾客对伙伴与丽兹行的认可、选择及11月业务结果。",
+  "background": [
+    "11月的感恩月，不是照搬一个节日，也不是因为只有11月才需要感恩。它是丽兹行以“感恩利他”为文化基础，每年在11月集中回看我们从顾客、伙伴和社会中获得的支持，集中表达感谢，并将感谢转化为实际行动的文化行动月。",
+    "感恩不是简单地说一句“谢谢”，也不只是一张贺卡或一份礼物，而是看见他人的价值、记得彼此的关系，并愿意用实际行动回应每一份信任。",
+    "在丽兹行，感恩月有不同的行动承载：对内，通过“国王与天使”表达伙伴之间的感恩与关怀；对社会，通过爱心义卖等行动表达对社会和祖国的感恩与回馈；对顾客，今年进一步增加“顾客感恩连接”这条行动主线，让感恩真正进入顾客服务。",
+    "我们感谢业主给予我们资产服务与房产维护的机会，感谢客户让我们参与其置业与资产决策，感谢成交顾客持续给予信任，也感谢保安、物业、管家等服务协作伙伴提供的支持。因此，今年感恩月希望把感谢落实到一次主动联系、一份有用的信息、一场认真准备的面见和一件真正完成的服务中。",
+    "感恩要表达，表达要进入服务，服务要让顾客真正感受到。"
+  ],
+  "positioning": [
+    "这是一个以感恩为主题的“全量顾客连接行动”。",
+    "项目组将销售中心的店总、经理和伙伴视为内部顾客，通过提供感恩文化共识、顾客对象梳理、连接工具、行动物料、目标进度管理、费用规则和全月运营支持，帮助销售中心更好地开展顾客服务。",
+    "销售中心面向全量外部顾客，根据不同关系和服务阶段开展分层连接：在售业主是本次行动的★S级重点；同时覆盖非在售业主、已成交客户和未成交客户；保安、物业、管家等服务协作群体纳入感谢行动，并单独分类记录。",
+    "这个项目不只是“在售业主面见计划”，不只是一次节日送礼活动，也不是单纯为了增加面见数量。它要推动伙伴把“感恩利他、顾客至上”从文化认知转化为主动、持续、有温度的顾客服务，在服务中深化关系、建立信任，进而支撑顾客长期经营和11月业务结果。"
+  ],
+  "goal": "以11月感恩月为契机，推动全体伙伴将“感恩利他、顾客至上”从文化理解转化为面向全量顾客的主动服务行动。通过感恩表达、分层连接、专业服务和持续跟进，让顾客在不同服务阶段都能够感受到丽兹行伙伴的主动、专业与温度；进而深化顾客关系、建立信任，形成可学习、可传播、可复制的优质服务行动；最终支撑顾客对伙伴与丽兹行的认可、信任和选择，以及11月业务结果。",
+  "approach": [
+    {
+      "title": "形成感恩文化与行动共识",
+      "text": "通过全司启动视频、单店文化研讨和管理者层层共识，让伙伴理解为什么开展感恩月、为什么要感恩顾客、要向谁表达，以及如何把感恩落实到具体服务中。"
+    },
+    {
+      "title": "明确全量顾客对象、行动优先级和连接深度",
+      "text": "按照在售业主、非在售业主、已成交客户、未成交客户，以及保安、物业、管家等服务协作群体分类，明确不同对象的行动方式；其中在售业主为★S级重点，重点推动深度服务与线下面见。"
+    },
+    {
+      "title": "提供伙伴可以直接使用的感性与理性服务工具",
+      "text": "为伙伴提供贺卡、分场景表达话术、礼品选择，以及hmall图、市场报告、成交信息等专业服务工具，帮助伙伴减少准备成本，把更多时间用于理解顾客和提供服务。"
+    },
+    {
+      "title": "把行动落实到单店、组和伙伴",
+      "text": "由店总和经理结合本店顾客名单、历史达成和当前资源，明确重点对象、服务场景、责任人、行动节奏及量化目标，确保全司行动能够被每家门店真正承接。"
+    },
+    {
+      "title": "开展全月运营并持续放大正向行动",
+      "text": "持续记录伙伴行动、顾客反馈、关系变化和业务变化，通过内部征集、正向传播、即时激励和标杆分享，让好的服务被看见、被学习、被复制。"
+    }
+  ],
   "problems": [
-    "感恩认知还没有充分转化为具体服务行动。",
-    "伙伴有服务意愿，但缺少直接可用的工具和支持。",
-    "顾客往往只在产生业务需求时才被联系，缺少持续连接。",
-    "优质服务仍停留在个体行为，没有形成组织层面的挖掘、传播、激励和学习复制。"
+    {
+      "title": "感恩文化认知还没有充分转化为具体服务行动",
+      "situation": "伙伴知道“感恩利他、顾客至上”是丽兹行的重要文化，但还需要进一步理解：为什么要感恩顾客、应该向哪些顾客表达、感谢什么，以及如何结合真实关系和服务场景采取行动。当前的感恩表达容易停留在一句“谢谢”、一张贺卡或一次节日问候上，还没有完全进入主动联系、专业服务、认真准备的面见和持续履行服务约定。",
+      "resolve": "让伙伴从“知道感恩”走向“知道如何通过服务表达感恩”。"
+    },
+    {
+      "title": "伙伴有服务意愿，但缺少直接可用的工具和行动支持",
+      "situation": "很多伙伴愿意主动服务顾客，但在实际行动中仍然需要自己准备：面对不同顾客应该表达什么，使用什么贺卡、话术和专业物料，如何选择合适的心意与礼物，如何发起邀约并准备面见，以及面见后应该如何持续服务。这会导致伙伴准备成本较高、门店行动差异较大，也容易出现“有礼物但缺少服务内容”“有表达但没有后续行动”的情况。",
+      "resolve": "提供可直接使用、又能结合顾客关系进行个性化调整的感性与理性服务工具，以及清晰的费用和使用规则，让伙伴把更多精力用于理解顾客和创造服务价值。"
+    },
+    {
+      "title": "顾客连接仍然较多围绕业务需求发生，缺少主动、持续的服务",
+      "situation": "过去我们与顾客的联系，较多发生在顾客产生买房、卖房、带看、委托或成交需求时。当顾客暂时没有明确业务需求，主动联系和持续服务就容易减少。但不动产服务贯穿需求了解、房源选择、资产维护、委托、成交及成交后的长期服务，顾客关系不能只在产生业务机会时才重新启动。",
+      "resolve": "借助感恩月增加主动联系和有价值的服务连接，让顾客持续感受到自己被记得、需求被理解、托付被认真对待；让一次感恩表达能够进入真实服务，并形成后续连接。"
+    },
+    {
+      "title": "优质服务仍较多停留在个体行为，没有形成组织层面的学习与复制",
+      "situation": "目前很多伙伴已经在顾客服务中做出了有价值的行动，也获得了顾客认可，但这些服务往往分散在个人记录、系统反馈或门店沟通中。组织层面还缺少对优质服务的持续挖掘、事实核实、正向传播、及时激励和学习复制。顾客感受、关系变化、服务价值及业务变化，也没有被完整连接起来。",
+      "resolve": "通过全月持续运营，挖掘真实顾客反馈和服务案例，讲清楚伙伴做了什么、顾客感受到了什么、关系与业务发生了什么变化，并通过标杆分享和及时激励，让好的服务被看见、被学习、被更多伙伴复制。"
+    }
   ],
   "outcomes": [
     {
       "title": "对顾客",
-      "text": "感受到丽兹行伙伴的专业、主动和温度，在持续获得有价值的服务中逐步建立信任。"
+      "text": "让顾客在不同服务阶段感受到丽兹行伙伴的专业、主动和温度，更了解伙伴与丽兹行，并在持续获得有价值的服务中逐步建立信任和长期连接。"
     },
     {
       "title": "对伙伴",
-      "text": "在创造顾客价值的过程中获得价值感、成就感和持续行动的动力。"
+      "text": "让伙伴真正理解感恩如何进入顾客服务，借助工具开展主动行动，并在创造顾客价值、获得顾客认可和优秀做法被学习的过程中，获得价值感、成就感和持续行动的动力。"
     },
     {
       "title": "对平台",
-      "text": "让丽兹行的品牌价值被顾客理解、信任和选择，并进一步支撑委托、合作、转介绍、开单及成交等业务结果。"
+      "text": "让丽兹行的品牌价值在顾客的真实服务体验中被理解、信任和选择，沉淀可持续使用的服务工具、顾客关系和优秀案例，并进一步支撑委托、再次合作、转介绍、开单及成交等业务结果。"
     }
   ],
-  "value": "顾客｜被理解、被认真服务，更清楚地认识伙伴与丽兹行：顾客在不同服务阶段获得与自己有关的感谢表达和专业支持，感受到服务伙伴的主动、专业与温度，更了解其判断与做事方式。在一次次有价值的服务中建立看得见的信任，愿意继续交流需求、交付委托或作出选择。\n伙伴｜因创造顾客价值而获得价值感、成就感与行动动力：伙伴能够借助统一工具开展个性化服务，在顾客的认可、需求得到解决、服务约定得到完成，以及优质做法被同伴学习的过程中，感受到自己的工作有价值、努力有回应，形成持续行动与成长的动力。\n平台｜让顾客理解、信任并选择丽兹行，支撑11月业务转化：通过全量而有温度的顾客连接，以及有专业内容的持续服务，让品牌价值在顾客的真实体验中被感知，支持委托、再次合作、转介绍、开单和成交等11月业务结果。同时沉淀可以持续使用的共识、工具和服务案例。",
-  "problem": "感恩认知需要进一步转化为具体服务行动：伙伴知道“感恩利他”是丽兹行的文化价值观，还需要进一步理解为什么要感谢顾客、向哪些对象表达，以及如何结合真实关系与服务场景行动，让文化认同成为日常服务中的具体选择。\n伙伴有服务意愿，还需要顺手可用的工具与支持：在表达什么、使用什么物料、选择什么心意、如何邀约以及面见后怎样持续服务等环节，伙伴仍需自行准备。项目统一提供可定制的工具和清晰的费用规则，帮助伙伴把时间更多用于理解顾客与提供服务。\n持续服务中的主动连接需要进一步做实：不动产服务贯穿需求了解、房源选择、资产维护、委托、成交及后续服务。通过在日常业务推进之外增加主动感谢和有价值的服务连接，让顾客持续感受到自己被记得、需求被理解、托付被认真对待，并逐步建立稳定的信任。\n让个体的优质服务成为组织共同学习的行动：针对优质服务作为个体行为，尚需进一步挖掘、传播、激励和学习复制的情况，持续呈现顾客感受、服务价值变化与业务推进结果，让好行动带动更多伙伴行动，形成全月的正向氛围。",
   "principles": [
     "感恩利他，是珍惜每一次信任，并愿意多向前一步。让感谢有表达，让表达有服务，让服务为顾客创造价值。",
     "先完成感恩文化与行动共识：通过11月3日全司月会启动视频、项目组统一提供的感恩主题文化研讨方案，以及与销售中心管理者自上而下的层层共识，讲清11月为什么开展感恩月、感恩在丽兹行文化中的意义、向谁表达、如何表达，以及如何进入日常服务。",
@@ -517,15 +564,47 @@ function scopeFocus(view) {
   if (view.scope==='region') return `${view.name}：大区BP汇总各店目标与变化，和区域管理者共同确认重点支持门店；具体邀约与面见质量由销售中心负责。`;
   return `${view.name}：店总确认本店目标与节奏，经理落实到组和顾问；BP做好启动、礼物、周度反馈和真实案例支持。本店11月目标套数待与店总共识。`;
 }
+function planRichText(text,terms=[]) {
+  const keys=[...new Set(terms.filter(Boolean))].sort((a,b)=>b.length-a.length);
+  const value=String(text??'');
+  if(!keys.length) return esc(value);
+  let cursor=0,output='';
+  while(cursor<value.length){
+    let found=-1,key='';
+    keys.forEach(candidate=>{
+      const index=value.indexOf(candidate,cursor);
+      if(index!==-1&&(found===-1||index<found||(index===found&&candidate.length>key.length))){found=index;key=candidate;}
+    });
+    if(found===-1){output+=esc(value.slice(cursor));break;}
+    output+=esc(value.slice(cursor,found))+'<strong class="plan-key">'+esc(key)+'</strong>';
+    cursor=found+key.length;
+  }
+  return output;
+}
 function renderNovemberPlan(view) {
   const p=NOVEMBER_PLAN;
-  const background = `<article class="plan-goal plan-structure-block"><div class="plan-overline">01 · 项目背景</div><h3>为什么11月要做这件事</h3><p>${esc(p.background)}</p></article>`;
-  const positioning = `<article class="plan-goal plan-structure-block"><div class="plan-overline">02 · 项目定位</div><h3>这是一个什么项目</h3><p>${esc(p.positioning)}</p></article>`;
-  const problems = `<ol class="plan-problem-list">${p.problems.map(t=>`<li>${esc(t)}</li>`).join('')}</ol>`;
-  const outcomes = `<div class="plan-outcomes">${p.outcomes.map(o=>`<article><span>${esc(o.title)}</span><p>${esc(o.text)}</p></article>`).join('')}</div>`;
-  const total = `<article class="plan-goal plan-structure-block"><div class="plan-overline">03 · 总目标</div><h3>核心行动｜做什么</h3><p class="plan-main-goal">${esc(p.goal)}</p><h4 class="plan-subtitle">要解决的四个问题</h4>${problems}<h4 class="plan-subtitle">最终效果</h4>${outcomes}</article>`;
+  const backgroundTerms=[
+    ['11月的感恩月','感恩利他','集中表达感谢','实际行动'],
+    ['感恩不是简单地说一句“谢谢”','实际行动回应每一份信任'],
+    ['国王与天使','爱心义卖','顾客感恩连接','让感恩真正进入顾客服务'],
+    ['主动联系','有用的信息','认真准备的面见','真正完成的服务'],
+    ['感恩要表达','表达要进入服务','服务要让顾客真正感受到']
+  ];
+  const positioningTerms=[
+    ['全量顾客连接行动'],
+    ['内部顾客','全月运营支持'],
+    ['全量外部顾客','在售业主','★S级重点','单独分类记录'],
+    ['不只是“在售业主面见计划”','不只是一次节日送礼活动','主动、持续、有温度的顾客服务','11月业务结果']
+  ];
+  const goalTerms=['感恩利他、顾客至上','全量顾客','主动服务行动','主动、专业与温度','深化顾客关系、建立信任','可学习、可传播、可复制','11月业务结果'];
+  const backgroundFull='<article class="plan-goal plan-structure-block"><div class="plan-overline">01 · 项目背景</div><h3>为什么11月要做这件事</h3><div class="plan-prose">'+p.background.map((t,i)=>'<p class="'+(i===p.background.length-1?'plan-thesis':'')+'">'+planRichText(t,backgroundTerms[i])+'</p>').join('')+'</div></article>';
+  const positioningFull='<article class="plan-goal plan-structure-block"><div class="plan-overline">02 · 项目定位</div><h3>这是一个什么项目</h3><div class="plan-prose">'+p.positioning.map((t,i)=>'<p>'+planRichText(t,positioningTerms[i])+'</p>').join('')+'</div></article>';
+  const approachesFull='<div class="plan-approach-list">'+p.approach.map((a,i)=>'<article class="plan-approach"><span>'+String(i+1).padStart(2,'0')+'</span><div><h5>'+esc(a.title)+'</h5><p>'+planRichText(a.text,['全司启动视频','全量顾客','★S级重点','感性与理性服务工具','单店、组和伙伴','全月运营','被看见、被学习、被复制'])+'</p></div></article>').join('')+'</div>';
+  const problemsFull='<ol class="plan-problem-list">'+p.problems.map(problem=>'<li><h5 class="plan-problem-title">'+esc(problem.title)+'</h5><p class="plan-problem-detail"><span>当前表现</span>'+esc(problem.situation)+'</p><p class="plan-problem-solve"><span>项目要解决</span>'+planRichText(problem.resolve,['知道如何通过服务表达感恩','感性与理性服务工具','形成后续连接','被看见、被学习、被更多伙伴复制'])+'</p></li>').join('')+'</ol>';
+  const outcomesFull='<div class="plan-outcomes">'+p.outcomes.map(o=>'<article><span>'+esc(o.title)+'</span><p>'+esc(o.text)+'</p></article>').join('')+'</div>';
+  const totalFull='<article class="plan-goal plan-structure-block"><div class="plan-overline">03 · 总目标</div><h3>总目标</h3><p class="plan-main-goal">'+planRichText(p.goal,goalTerms)+'</p><h4 class="plan-subtitle"><span>01</span>通过做什么</h4>'+approachesFull+'<h4 class="plan-subtitle"><span>02</span>进一步解决什么问题</h4>'+problemsFull+'<h4 class="plan-subtitle"><span>03</span>最终形成什么结果</h4>'+outcomesFull+'</article>';
   const supportGoals = `<div class="plan-goal-grid">${p.goals.map((g,i)=>`<article class="plan-goal-card"><span class="plan-overline">目标支撑 0${i+1}</span><h3>${esc(g.title)}</h3><p class="plan-result">${esc(g.result)}</p><p>${esc(g.why)}</p><details><summary>关键支撑 · 为什么 · 怎么做</summary>${g.supports.map(s=>`<div class="plan-support"><h4>${esc(s.name)}</h4><dl>${[['为什么',s.why],['具体包含',s.what],['如何落地',s.how],['谁来负责',s.owner],['交付标准',s.output]].map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></div>`).join('')}</details></article>`).join('')}</div>`;
-  const goalSection = planSection('plan-goals','01','项目背景、项目定位与总目标','先说明为什么开展感恩月、这是什么项目，再明确核心行动、要解决的问题和最终效果。',`<div class="plan-structure-stack">${background}${positioning}${total}</div>`);
+  const goalSectionFull = planSection('plan-goals','01','项目背景、项目定位与总目标','先说明为什么开展感恩月、这是什么项目，再明确通过什么行动、要解决的问题和最终形成的结果。','<div class="plan-structure-stack">'+backgroundFull+positioningFull+totalFull+'</div>');
   const audiences = planTable(['类别','对象','优先级','具体行动','行动深度','记录方式'],p.audiences);
   const metrics = `<div class="cards">${p.metrics.map(m=>`<article class="card"><h3>${esc(m.title)}</h3><div class="card-value">${esc(m.value)}</div><p>${esc(m.text)}</p></article>`).join('')}</div>`;
   const targetSection = planSection('plan-targets','02','对象分层与量化目标','客户和业主有效名单完成100%线上感恩表达；在售业主面见率起点≥20%，门店TOP与户型TOP面见率起点≥40%。',audiences+`<h3 class="block-title">目标与统计口径</h3>`+metrics+`<details class="block details"><summary>目标制定与结果使用原则</summary><p>单店目标由店总结合历史达成、10月名单和当前可触达资源提出，项目组与销售管理者共同校准。面见按房源去重套数统计，重复面见次数另列；礼物送出与真实面见分别记录。关系、委托和成交变化据实呈现，不把全部业务结果简单归因于单一活动。</p></details>`);
@@ -539,7 +618,7 @@ function renderNovemberPlan(view) {
   const fee = `<details class="plan-gift-details"><summary>11月礼品经费支持规则</summary><p>按单店11月实际送出的客户、业主礼物份数确定支持档位；大区总给予每家店的全月支持上限为500元，按达到的最高档确定，档位不累加。未送出库存不计，同一对象本项目原则上按1份计入；保安、物业、管家单独分类，不混入客户与业主经费达档份数。</p>${planTable(['单店11月实际送出量','统计口径','大区总支持额度','规则'],p.gifts)}</details>`;
   const splitNote = `<div class="plan-note"><strong>项目方案与销售中心行动包分两条线：</strong>本工作台保留项目目标、职责、全月计划、进度运营、费用规则与验收标准；贺卡、场景话术、礼品库、hmall图和市场报告等可取用物料在独立“丽兹行·感恩连接行动包”中发布和维护。</div>`;
   const delivery = planSection('plan-delivery','04','全月运营、费用规则与交付验收','每周复用已有系统和管理沟通，以店级汇总和真实事实推进；无案例不编造，不要求伙伴重复填报整套明细。',operations+`<div class="plan-note">周度最小反馈：范围与截止时间；线上覆盖、在售及TOP面见进度；需承接的问题与下一步；一项顾客反馈或服务事实（有则提供）；已发生的业务变化（有则提供）。</div>`+fee+splitNote+`<h3 class="block-title">交付验收标准</h3>`+planTable(['验收项','完成标准','责任角色','周期','状态'],p.decisions));
-  return [goalSection,targetSection,actions,delivery].join('');
+  return [goalSectionFull,targetSection,actions,delivery].join('');
 }
 function renderOctoberPlan(view) {
   const goals = arr(view.sections).find(s=>s.id==='goals');
@@ -585,7 +664,7 @@ function render(view,syncUrl=false) {
 function exportProjectText() {
   if(currentMonth==='2026-10') return exportText({...currentView,sections:currentView.sections.filter(s=>['goals','week'].includes(s.id))});
   const p=NOVEMBER_PLAN;
-  const parts=[p.title,p.theme,p.status,p.period,'查看范围：'+currentView.name,'','项目背景',p.background,'','项目定位',p.positioning,'','总目标','核心行动｜做什么',p.goal,'','要解决的四个问题',...p.problems,'','最终效果',...p.outcomes.map(o=>`${o.title}｜${o.text}`)];
+  const parts=[p.title,p.theme,p.status,p.period,'查看范围：'+currentView.name,'','项目背景',...p.background,'','项目定位',...p.positioning,'','总目标',p.goal,'','通过做什么',...p.approach.flatMap((a,i)=>[(i+1)+'. '+a.title,a.text]),'','进一步解决什么问题',...p.problems.flatMap((problem,i)=>[(i+1)+'. '+problem.title,'当前表现：'+problem.situation,'项目要解决：'+problem.resolve]),'','最终形成什么结果',...p.outcomes.map(o=>o.title+'｜'+o.text)];
   parts.push('','对象分层与行动深度',...p.audiences.map(r=>r.join('｜')),'','量化目标与统计口径',...p.metrics.flatMap(m=>[m.title+'：'+m.value,m.text]));
   parts.push('','职责与边界',...p.roles.flatMap(r=>[r.role,'主要职责：'+r.responsibility,'具体交付：'+r.outputs,'责任边界：'+r.boundary]));
   parts.push('','当前范围落实重点',scopeFocus(currentView),'','目标落地原则',...p.principles);
