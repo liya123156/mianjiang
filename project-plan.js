@@ -447,7 +447,10 @@ function setViewMode(mode) {
   currentMode = mode;
   DATA = ARCHIVE.months[currentMonth] || (typeof WBOperations!=='undefined' && WBOperations.isMode(mode) ? WBOperations.emptyData(currentMonth) : undefined);
   const url = new URL(location.href); url.search = ''; url.hash = ''; history.replaceState(null,'',url);
-  DATA ? render(viewFromUrl(),true) : renderEmptyMonth(); window.scrollTo({top:0,behavior:'smooth'});
+  // Preserve the currently selected organization when switching modules. The
+  // canonical URL stays clean; scope lives in the current page session.
+  const selected = currentView && DATA?.views?.[viewKey(currentView)] ? DATA.views[viewKey(currentView)] : viewFromUrl();
+  DATA ? render(selected,true) : renderEmptyMonth(); window.scrollTo({top:0,behavior:'smooth'});
 }
 function syncPlanScope(view) {
   document.getElementById('region-filter').innerHTML = '<option value="">全司 · 全部大区</option>'+DATA.regions.map(r=>`<option value="${esc(r.name)}">${esc(r.name)}</option>`).join('');
