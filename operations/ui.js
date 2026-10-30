@@ -144,7 +144,10 @@ TOP重点房源
   // 共享查看者无需工号即可浏览；仅编辑、核账和管理操作需要登录。
   // 未登录时保留用户选择的管理/核账页面，由对应页面直接展示登录入口。
   // 不能强制跳回日常推动，否则顶部“数据管理”会被选中但正文仍停留在日常页。
-  setCloudRegions();view=syncScope(viewFromUrl());currentView=view;
+  // Keep the view explicitly selected by the user. The main URL is intentionally
+  // kept clean, so rebuilding the scope from the URL here would always reset a
+  // region/store selection back to the company view after every async refresh.
+  setCloudRegions();view=syncScope(view||currentView||viewFromUrl());currentView=view;
   document.getElementById('report').hidden=false;document.getElementById('status').hidden=true;document.getElementById('scope-panel').hidden=currentMode==='admin';document.getElementById('toolbar').hidden=false;document.getElementById('word-download').hidden=true;
   document.getElementById('copy-progress-image').hidden=!['daily','review'].includes(currentMode);document.getElementById('copy-progress-image').disabled=false;document.getElementById('copy-report').disabled=!['daily','review'].includes(currentMode);document.getElementById('print-report').disabled=false;
   const nav=currentMode==='daily'?[['daily-progress','面见及礼物进展'],['daily-quality','面见质量'],['daily-message','今日重点与话术'],['daily-actions','动作追踪与结果']]:currentMode==='review'?[['review-progress','目标与达成'],['daily-quality','面见质量'],['review-actions','动作执行与结果'],['review-scenes','现场复盘']]:currentMode==='expense'?[['expense-todo','BP核账待办'],['expense-head','账本与当月规则'],['expense-records','送礼明细与凭证'],['expense-settlement','分摊与收付款'],['expense-cash','实际收付款登记']]:[['admin-import','导入基础数据'],['admin-goals','本月门店目标'],['admin-history','更新与备份']];
@@ -153,7 +156,7 @@ TOP重点房源
   document.getElementById('report').innerHTML=connection()+(currentMode==='daily'?daily(view):currentMode==='expense'?finance(view):currentMode==='review'?review(view):admin(view));
   if(C.configured&&!data()&&!state.loading&&!state.error)refresh();
  }
- async function refresh(){if(!C.configured)return;const month=currentMonth,memberAtStart=C.member;state.loading=true;state.error='';try{const loaded=await C.load(month);if(C.member!==memberAtStart)return;state.cache[month]=loaded;await publishQuality(loaded,month);}catch(e){state.error=e.message;}finally{state.loading=false;if(currentMonth===month&&isMode(currentMode))render(viewFromUrl());}}
+ async function refresh(){if(!C.configured)return;const month=currentMonth,memberAtStart=C.member,viewAtStart=currentView;state.loading=true;state.error='';try{const loaded=await C.load(month);if(C.member!==memberAtStart)return;state.cache[month]=loaded;await publishQuality(loaded,month);}catch(e){state.error=e.message;}finally{state.loading=false;if(currentMonth===month&&isMode(currentMode))render(viewAtStart||currentView||viewFromUrl());}}
  async function save(kind,id,body,store){const s=scope(),selectedStore=kind==='goals'?null:store||s.store;if(!selectedStore&&!['goals','rules'].includes(kind))throw Error('请先筛选单店');const region=DATA.regions.find(r=>r.stores.includes(selectedStore))?.name||(kind==='goals'?null:s.region)||null,existing=item(kind,id,selectedStore);await C.saveItem(currentMonth,kind,id,region,selectedStore||null,body,existing?.updated_at);await refresh();}
  function dialog(content){let el=document.getElementById('ops-dialog');if(!el){el=document.createElement('dialog');el.id='ops-dialog';el.className='ops-dialog';document.body.append(el);}el.innerHTML=`<button class="btn ops-dialog-close" data-ops="close-dialog">关闭</button>${content}`;if(!el.open)el.showModal();return el;}
  function formData(form){return Object.fromEntries(new FormData(form));}
