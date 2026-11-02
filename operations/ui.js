@@ -77,11 +77,16 @@
     ['徐汇大区','嘉御庭公馆店',1,5,4,5,'成交倒推'],['徐汇大区','尚海湾店',2,10,13,13,'9月峰值'],['徐汇大区','徐汇滨江店',1,5,19,19,'9月峰值']
    ],
    actions:[
-    ['11月1—6日','目标与名单到店','确认单店目标、对象清单、责任人、物料和推进节奏，并落实到组和伙伴。'],
-    ['11月13日前','完成首轮全量表达','对有效客户和业主完成首轮线上感恩表达；在售及TOP业主同步推动线下面见。'],
-    ['11月6／13／20／27日','周度逐套复盘','同时打开组织进度与逐套房源；未完成事项明确具体对象、动作、承接人和完成时间。'],
-    ['全月持续','正反馈与标杆沉淀','从系统反馈、店会和伙伴推荐中发现真实服务案例，讲清顾客需要、伙伴动作、真实变化及可复制做法。'],
-    ['11月30日','结果与费用收口','分别汇总线上覆盖、面见、礼物、反馈及业务变化，并完成礼物费用与凭证核对。']
+    ['10月30日—11月2日','销售中心共识与行动准备','项目组先与大区总、店总共识感恩月主题、顾客价值、行动对象、角色分工、线上表达与线下面见口径；同步准备启动内容、行动工具和费用规则。'],
+    ['11月3日','全司月会正式启动','通过感恩月主题视频、项目发布和面见精英激励，讲清为什么做、做什么、如何做，以及销售中心可获得的支持。'],
+    ['11月3—6日','单店文化研讨启动','由店总带领伙伴围绕真实服务经历，共识感恩文化如何进入顾客服务，明确单店行动承诺并在48小时内启动。'],
+    ['11月6日前','确认单店目标','结合11月市占目标、9月已验证水平、在售及双TOP基数，确认各店线上感恩表达、全盘与双TOP面见目标。'],
+    ['11月6日前','目标分解到组和伙伴','把对象清单、面见套数、责任人、首批重点房源、推进节奏和反馈方式落实到店组与伙伴。'],
+    ['11月1—6日','单店礼物与物料准备','各店结合顾客关系和服务场景选购小而美的礼物，确认数量、预算、采购或领取人、到店时间并留存凭证；同步备齐感谢信、电子贺卡、邀约话术和专业服务物料。'],
+    ['11月13日前','完成首轮全量表达与重点面见','对有效客户和业主完成首轮线上感恩表达；在售及TOP业主同步推进线下面见，面见后兑现约定服务并记录真实反馈。'],
+    ['11月6／13／20／27日','按周推动与逐套复盘','周初确定重点、周中带教补资源、周末复盘；同步查看线上覆盖、全盘及双TOP进度，把差距打开到具体房源和顾客，明确卡点、动作、承接人与完成时间。'],
+    ['全月持续','正反馈运营与标杆放大','持续从系统反馈、店会和伙伴推荐中沉淀真实服务案例，讲清顾客需要、伙伴动作、真实变化及可复制做法，及时认可并传播。'],
+    ['11月30日','结果、承诺与费用收口','汇总线上覆盖、面见、礼物、反馈及业务变化，梳理未完成承诺和12月持续维护名单，并完成礼物费用与凭证核对。']
    ]
   }
  }};
@@ -144,8 +149,9 @@
   const opportunity=reviewOpportunityScope(ctx)?.summary;
   const opportunityText=opportunity?`${opportunity.unmet}套跨月未持续面见房源，其中${opportunity.anyTop}套为TOP房源`:'当前范围跨月未持续经营机会池';
   return html
+   .replace('目标到店、逐套推动、按周复盘','先共识、再启动、目标到人、按周推动')
    .replace('278套为基础套数目标',`${scoped.summary.target}套为当前范围基础套数目标`)
-   .replace(/延续10月组织进度管理，同时每周打开[^<]*，把差距落实到具体对象、动作、承接人和时间。/,`延续10月组织进度管理，同时每周打开${E(opportunityText)}，把差距落实到具体对象、动作、承接人和时间。`);
+   .replace(/延续10月组织进度管理，同时每周打开[^<]*，把差距落实到具体对象、动作、承接人和时间。/,`以感恩月为主题，先完成销售中心共识、全司月会与单店文化研讨启动，再把目标、名单、礼物和服务物料落实到店、组与伙伴；全月按周打开${E(opportunityText)}，把差距落实到具体对象、动作、承接人和时间。`);
  };
  function reviewRankText(ctx,row,tone){const facts=ctx.facts,reason=tone==='benchmark'?(facts?.benchmarkReasons?.[row.store]||reviewRankReason(row,'benchmark')):tone==='reminder'?(facts?.reminderReasons?.[row.store]||reviewRankReason(row,'reminder')):reviewRankReason(row,'neutral');return `${row.store}\n${reviewMetricSentence('全盘',row.met,row.stock,row.met_rate)}\n${reviewMetricSentence('门店TOP',row.store_top_met,row.store_top_stock,row.store_top_rate)}\n${reviewMetricSentence('户型TOP',row.unit_top_met,row.unit_top_stock,row.unit_top_rate)}\n分析：${reason}\n店组下钻：${reviewStoreInsight(ctx,row,tone)}`;}
  function reviewText(view=currentView){const ctx=reviewContext(view);if(!ctx){const old=ARCHIVE.months[currentMonth]?.views[viewKey(view)];return old?exportText(old):'本月日常记录待导入';}const r=ctx.root,q=ctx.quality?.summary||Q.summary([]),topics=Object.entries(F.labels).map(([key,label])=>({key,label,count:Number(q.topics?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count),sets=reviewRankSets(ctx),opp=reviewOpportunityScope(ctx),singleTone=sets.single?(ctx.facts?.benchmark||[]).includes(sets.single.store)?'benchmark':(ctx.facts?.reminders||[]).includes(sets.single.store)?'reminder':'neutral':'neutral',bench=sets.single?reviewRankText(ctx,sets.single,singleTone):sets.bench.map(x=>reviewRankText(ctx,x,'benchmark')).join('\n\n')||'当前范围暂无可识别的标杆门店',remind=sets.single?'':sets.remind.map(x=>reviewRankText(ctx,x,'reminder')).join('\n\n')||'当前范围暂无可识别的重点提醒门店';
