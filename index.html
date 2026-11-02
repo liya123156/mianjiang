@@ -286,7 +286,7 @@ function renderMonthControls() {
   const year = currentMonth.slice(0,4);
   document.getElementById('year-filter').innerHTML = ARCHIVE.years.map(y => `<option value="${y}">${y}年</option>`).join('');
   document.getElementById('year-filter').value = year;
-  document.getElementById('month-filter').innerHTML = MONTH_CATALOG.filter(([month]) => month.startsWith(year+'-')).map(([month,status]) => `<option value="${month}">${Number(month.slice(5))}月（${status}）</option>`).join('');
+  document.getElementById('month-filter').innerHTML = MONTH_CATALOG.filter(([month]) => month.startsWith(year+'-')).map(([month,status]) => `<option value="${month}">${Number(month.slice(5))}月${status === '历史复盘' ? '' : `（${status}）`}</option>`).join('');
   document.getElementById('month-filter').value = currentMonth;
   document.getElementById('archive-note').textContent = isHistoryArchiveMonth(currentMonth) ? '历史月份按原复盘文件留存' : '按月留存目标、计划与结果';
   document.getElementById('sidebar-period').textContent = monthLabel(currentMonth) + ' · ' + (isHistoryArchiveMonth(currentMonth) ? '历史复盘归档' : DATA ? '计划与复盘' : '资料待补充');
