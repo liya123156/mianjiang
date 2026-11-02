@@ -160,7 +160,7 @@
 <script src="operations/quality-feed.js?v=20261027-11"></script>
 <script src="operations/quality.js?v=20261027-11"></script>
 <script src="operations/workflow.js?v=20261027-11"></script>
-<script src="operations/ui.js?v=20261102-11"></script>
+<script src="operations/ui.js?v=20261102-12"></script>
 <script>
 'use strict';
 let progressImageUrl = '';
@@ -607,7 +607,12 @@ function attachEvents() {
   document.getElementById('copy-link').addEventListener('click',() => { const url = new URL(location.origin + location.pathname); url.searchParams.set('month',currentMonth); url.searchParams.set('tab',currentMode); if(currentView?.region)url.searchParams.set('region',currentView.region); if(currentView?.scope==='store')url.searchParams.set('store',currentView.store||currentView.name); copyText(url.href,'当前月份与查看范围的链接已复制，可直接转发'); });
   document.getElementById('copy-progress-image').addEventListener('click',copyProgressImage);
   document.getElementById('close-image-dialog').addEventListener('click',()=>document.getElementById('image-dialog').close());
-  document.getElementById('copy-report').addEventListener('click',() => copyText(currentMode === 'plan' ? exportProjectText() : currentMode === 'daily' ? document.getElementById('ops-message')?.value || '' : currentMode === 'review' && typeof WBOperations!=='undefined' && WBOperations.isMode(currentMode) ? WBOperations.reviewText() : exportText(currentView),currentMode === 'plan' ? '当前计划已复制' : currentMode === 'daily' ? '推动话术已复制' : '当前复盘已复制'));
+  document.getElementById('copy-report').addEventListener('click',() => {
+    const reviewText = currentMode === 'review' && typeof WBOperations !== 'undefined' && typeof WBOperations.reviewText === 'function' ? WBOperations.reviewText() : '';
+    const text = currentMode === 'plan' ? exportProjectText() : currentMode === 'daily' ? document.getElementById('ops-message')?.value || '' : currentMode === 'review' ? reviewText : exportText(currentView);
+    if (!text) { notify('复盘数据尚未加载，请点击“刷新进展”后重试'); return; }
+    copyText(text,currentMode === 'plan' ? '当前计划已复制' : currentMode === 'daily' ? '推动话术已复制' : '当前复盘已复制');
+  });
   document.getElementById('print-report').addEventListener('click',() => window.print());
   document.getElementById('report').addEventListener('click',e => {
     const candidateLink = e.target.closest('[data-candidate-link]');
