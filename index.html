@@ -102,7 +102,7 @@
 
 </style>
 <link rel="stylesheet" href="project-plan.css?v=20261030-execution-01">
-<link rel="stylesheet" href="operations/styles.css?v=20261102-06">
+<link rel="stylesheet" href="operations/styles.css?v=20261102-archive-01">
 </head>
 <body>
 <a class="skip" href="#content">跳到复盘正文</a>
@@ -153,14 +153,14 @@
 <script src="operations/cloud-config.js?v=20261027-11"></script>
 <script src="operations/core.js?v=20261027-11"></script>
 <script src="operations/xlsx-reader.js?v=20261027-11"></script>
-<script src="operations/cloud.js?v=20261027-11"></script>
+<script src="operations/cloud.js?v=20261102-archive-01"></script>
 <script src="operations/proof-paste.js?v=20261027-11"></script>
 <script src="operations/voice.js?v=20261027-11"></script>
 <script src="operations/scene.js?v=20261027-11"></script>
 <script src="operations/quality-feed.js?v=20261027-11"></script>
 <script src="operations/quality.js?v=20261027-11"></script>
 <script src="operations/workflow.js?v=20261027-11"></script>
-<script src="operations/ui.js?v=20261102-13"></script>
+<script src="operations/ui.js?v=20261102-archive-01"></script>
 <script>
 'use strict';
 let progressImageUrl = '';
@@ -261,15 +261,21 @@ async function copyProgressImage() {
 const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const arr = value => Array.isArray(value) ? value : [];
 const tone = value => ['warning','green','purple'].includes(value) ? value : '';
+const MONTH_CATALOG = [
+  ['2026-03','历史复盘'],['2026-04','历史复盘'],['2026-05','历史复盘'],['2026-06','历史复盘'],['2026-07','历史复盘'],['2026-08','历史复盘'],['2026-09','历史复盘'],
+  ['2026-10','已发布'],['2026-11','计划已入库'],['2026-12','待补充']
+];
+const HISTORY_ARCHIVE_MONTHS = new Set(MONTH_CATALOG.filter(([,status]) => status === '历史复盘').map(([month]) => month));
+function isHistoryArchiveMonth(month) { return HISTORY_ARCHIVE_MONTHS.has(month); }
 const ARCHIVE = applyProjectPlans(JSON.parse(document.getElementById('embedded-review').textContent));
 let currentMonth = monthFromUrl(), DATA = ARCHIVE.months[currentMonth];
 let currentView, tableSerial = 0, toastTimer, candidateReturnScroll = null;
-let currentMode = modeFromUrl();
+let currentMode = isHistoryArchiveMonth(currentMonth) ? 'review' : modeFromUrl();
 if (!DATA && typeof WBOperations!=='undefined' && WBOperations.isMode(currentMode)) DATA = WBOperations.emptyData(currentMonth);
 const tableModels = new Map();
 
 function validMonth(month) {
-  return /^\d{4}-(0[1-9]|1[0-2])$/.test(month || '') && ARCHIVE.years.includes(Number(month.slice(0,4)));
+  return MONTH_CATALOG.some(([value]) => value === month);
 }
 function monthFromUrl() {
   const month = new URLSearchParams(location.search).get('month');
@@ -280,15 +286,15 @@ function renderMonthControls() {
   const year = currentMonth.slice(0,4);
   document.getElementById('year-filter').innerHTML = ARCHIVE.years.map(y => `<option value="${y}">${y}年</option>`).join('');
   document.getElementById('year-filter').value = year;
-  document.getElementById('month-filter').innerHTML = Array.from({length:12},(_,i) => { const m = year + '-' + String(i+1).padStart(2,'0'); return `<option value="${m}">${i+1}月${ARCHIVE.months[m]?.planOnly ? '（计划已入库）' : ARCHIVE.months[m] ? '（已发布）' : '（待补充）'}</option>`; }).join('');
+  document.getElementById('month-filter').innerHTML = MONTH_CATALOG.filter(([month]) => month.startsWith(year+'-')).map(([month,status]) => `<option value="${month}">${Number(month.slice(5))}月（${status}）</option>`).join('');
   document.getElementById('month-filter').value = currentMonth;
-  document.getElementById('archive-note').textContent = '按月留存目标、计划与结果';
-  document.getElementById('sidebar-period').textContent = monthLabel(currentMonth) + ' · ' + (DATA ? '计划与复盘' : '资料待补充');
+  document.getElementById('archive-note').textContent = isHistoryArchiveMonth(currentMonth) ? '历史月份按原复盘文件留存' : '按月留存目标、计划与结果';
+  document.getElementById('sidebar-period').textContent = monthLabel(currentMonth) + ' · ' + (isHistoryArchiveMonth(currentMonth) ? '历史复盘归档' : DATA ? '计划与复盘' : '资料待补充');
 }
 function selectMonth(month) {
   if (!validMonth(month)) return;
   const keepMode = typeof WBOperations!=='undefined' && WBOperations.isMode(currentMode);
-  currentMonth = month; DATA = ARCHIVE.months[month]; currentMode = keepMode ? currentMode : DATA?.planOnly ? 'plan' : 'review';
+  currentMonth = month; DATA = ARCHIVE.months[month]; currentMode = isHistoryArchiveMonth(month) ? 'review' : keepMode ? currentMode : DATA?.planOnly ? 'plan' : 'review';
   if (!DATA && keepMode) DATA = WBOperations.emptyData(month);
   const url = new URL(location.href); url.search = ''; url.hash = ''; history.replaceState(null,'',url);
   renderMonthControls(); DATA ? render(viewFromUrl()) : renderEmptyMonth();
@@ -598,7 +604,7 @@ function attachEvents() {
     history.pushState(null,'',url); candidateReturnScroll = null; render(currentView);
     requestAnimationFrame(() => document.getElementById(link.hash.slice(1))?.scrollIntoView());
   });
-  document.getElementById('year-filter').addEventListener('change',e => selectMonth(e.target.value + '-' + currentMonth.slice(5)));
+  document.getElementById('year-filter').addEventListener('change',e => { const months=MONTH_CATALOG.map(([month])=>month).filter(month=>month.startsWith(e.target.value+'-')),preferred=e.target.value+'-'+currentMonth.slice(5);selectMonth(months.includes(preferred)?preferred:months[0]); });
   document.getElementById('month-filter').addEventListener('change',e => selectMonth(e.target.value));
   document.getElementById('region-filter').innerHTML = '<option value="">全司 · 全部大区</option>' + ARCHIVE.months[ARCHIVE.defaultMonth].regions.map(r => `<option value="${esc(r.name)}">${esc(r.name)}</option>`).join('');
   document.getElementById('region-filter').addEventListener('change',e => render(resolveView(e.target.value,''),true));
