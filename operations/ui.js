@@ -66,18 +66,18 @@
    regions:[['陆家嘴大区',70,22,6,16],['徐汇大区',27,14,6,8],['黄浦大区',23,10,2,8],['花木大区',14,8,5,3],['滨江古北大区',8,3,1,2]],
    stores:[['星河湾店',21,6,0,6],['陆家嘴旗舰店',18,5,0,5],['徐汇滨江店',14,7,3,4],['陆家嘴金融中心店',14,3,1,2],['尚海湾店',10,4,2,2],['顶级豪宅部',9,3,1,2],['黄浦滨江店',9,1,0,1],['陆家嘴滨江店',8,5,4,1],['复兴香园店',8,5,2,3],['融创滨江壹号院店',7,2,0,2],['御翠园店',4,4,3,1],['浦东别墅旗舰店',4,1,0,1],['碧云店',4,2,1,1],['嘉御庭公馆店',3,3,1,2],['新天地一店',3,2,0,2],['新天地二店',3,2,0,2],['仁恒河滨城店',2,1,1,0],['长宁古北店',1,1,1,0]]},
   november:{
-	   company:{sales:26,support:130,september:269,target:300},
+	   company:{marketBaseline:15,storeStretch:26,september:269,target:300},
 	   qualitative:{
 	    goal:'以11月感恩月为契机，把“感恩利他、顾客至上”从文化认知转化为面向全量顾客的主动服务行动；通过多层共识、分层连接、线上感恩表达、在售业主线下面见、伴手礼与专业服务、持续跟进和正向故事运营，让顾客在不同服务阶段感受到丽兹行伙伴的主动、专业与温度，进而深化关系与信任、沉淀可复制的优质服务方式，最终支撑顾客认可、委托、转介绍、市占与成交结果。',
 	    online:'全量线上感恩表达100%',whole:'在售业主全盘面见率不低于20%',top:'门店TOP与户型TOP面见率均不低于40%',value:'让顾客持续感受到被记得、被理解和被认真服务'
 	   },
-	   regions:[['花木大区',4,20,41,52],['黄浦大区',9,45,48,63],['陆家嘴大区',7,35,126,126],['滨江古北大区',2,10,18,21],['徐汇大区',4,20,36,38]],
+	   regions:[['花木大区',4,41,52],['黄浦大区',9,48,63],['陆家嘴大区',7,126,126],['滨江古北大区',2,18,21],['徐汇大区',4,36,38]],
    stores:[
-	    ['花木大区','碧云店',1,5,7,8,'区域20%校准'],['花木大区','浦东别墅旗舰店',1,5,15,17,'区域20%校准'],['花木大区','仁恒河滨城店',1,5,8,11,'区域20%校准'],['花木大区','御翠园店',1,5,11,16,'20%校准＋强执行'],
-	    ['黄浦大区','复兴香园店',3,15,19,23,'20%校准＋强执行'],['黄浦大区','黄浦滨江店',2,10,15,17,'区域20%校准'],['黄浦大区','新天地二店',2,10,8,11,'区域20%校准'],['黄浦大区','新天地一店',2,10,6,12,'区域20%校准'],
-	    ['陆家嘴大区','陆家嘴滨江店',2,10,21,21,'9月峰值'],['陆家嘴大区','陆家嘴金融中心店',1,5,23,23,'9月峰值'],['陆家嘴大区','陆家嘴旗舰店',1,5,24,24,'9月峰值'],['陆家嘴大区','顶级豪宅部',1,5,22,22,'9月峰值'],['陆家嘴大区','星河湾店',2,10,36,36,'9月峰值'],
-	    ['滨江古北大区','长宁古北店',1,5,3,5,'成交倒推'],['滨江古北大区','融创滨江壹号院店',1,5,15,16,'强执行承接'],
-	    ['徐汇大区','嘉御庭公馆店',1,5,4,5,'成交倒推'],['徐汇大区','尚海湾店',2,10,13,14,'区域20%校准'],['徐汇大区','徐汇滨江店',1,5,19,19,'9月峰值']
+	    ['花木大区','碧云店',1,7,8,'全盘20%／双TOP40%校准'],['花木大区','浦东别墅旗舰店',1,15,17,'全盘20%／双TOP40%校准'],['花木大区','仁恒河滨城店',1,8,11,'全盘20%／双TOP40%校准'],['花木大区','御翠园店',1,11,16,'覆盖线校准＋承接能力'],
+	    ['黄浦大区','复兴香园店',3,19,23,'覆盖线校准＋承接能力'],['黄浦大区','黄浦滨江店',2,15,17,'全盘20%／双TOP40%校准'],['黄浦大区','新天地二店',2,8,11,'全盘20%／双TOP40%校准'],['黄浦大区','新天地一店',2,6,12,'全盘20%／双TOP40%校准'],
+	    ['陆家嘴大区','陆家嘴滨江店',2,21,21,'9月峰值＋双TOP40%校准'],['陆家嘴大区','陆家嘴金融中心店',1,23,23,'9月峰值＋双TOP40%校准'],['陆家嘴大区','陆家嘴旗舰店',1,24,24,'9月峰值＋双TOP40%校准'],['陆家嘴大区','顶级豪宅部',1,22,22,'9月峰值＋双TOP40%校准'],['陆家嘴大区','星河湾店',2,36,36,'9月峰值＋双TOP40%校准'],
+	    ['滨江古北大区','长宁古北店',1,3,5,'全盘20%／双TOP40%校准'],['滨江古北大区','融创滨江壹号院店',1,15,16,'双TOP40%校准＋承接能力'],
+	    ['徐汇大区','嘉御庭公馆店',1,4,5,'全盘20%／双TOP40%校准'],['徐汇大区','尚海湾店',2,13,14,'全盘20%／双TOP40%校准'],['徐汇大区','徐汇滨江店',1,19,19,'9月峰值＋双TOP40%校准']
    ],
 	   strategyActions:[
 	    ['目标共识与分层启动',['11月3日全司月会播放感恩月视频，讲清项目价值、行动对象与工具入口。','在店总会、经理会中对齐目标口径、角色责任和支持资源。','单店开展文化研讨，结合真实服务经历形成店面行动共识。','将300套、全盘面见率≥20%、门店TOP与户型TOP面见率≥40%的目标拆到大区、门店、店组、伙伴及具体房源。']],
@@ -134,11 +134,10 @@
  }
  function reviewContext(view){const d=data();if(!d?.housing.length)return null;const s={region:view.region||'',store:view.scope==='store'?(view.store||view.name):''},progress=M.table(d.housing,s,goals(),currentMonth,d.meetings||[]);const ctx={view,d,s,progress,root:reviewRoot(progress,view),quality:qualityData(view),facts:REVIEW_FACTS[currentMonth]||null};return ctx;}
  function reviewActionsHtml(ctx){const month=Number(currentMonth.slice(5));return `<div class="review-report"><div class="review-action-grid"><article><span>动作01</span><h3>每周与BP复盘</h3><p>按照各店当周进展、目标差距和TOP房进展，持续复盘组织表现。</p></article><article><span>动作02</span><h3>按门店进展制定动作</h3><p>领先门店总结可复制做法；中段门店聚焦剩余差距；进展较慢门店由BP联动店总、经理下钻到组。</p></article><article><span>动作03</span><h3>全盘与TOP双线推进</h3><p>既看全盘面见量，也持续关注门店TOP与户型TOP的经营覆盖。</p></article><article><span>动作04</span><h3>伴手礼与反馈同步沉淀</h3><p>让面见不仅产生数量，也留下真实反馈、关系进展和后续服务线索。</p></article></div><div class="review-callout critical"><strong>${month}月未完全达成目标的真实原因</strong><p>管理跟进主要停留在全司、大区、门店等组织维度，能够判断哪家店进展较慢，但没有持续打开到一套套房源，因此未能充分识别每套房源的真实场景卡点、责任人，以及销售中心需要提供的具体支持。</p></div></div>`;}
- function reviewNovemberScope(ctx){const plan=ctx.facts?.november;if(!plan)return null;if(ctx.view.scope==='company')return {plan,summary:plan.company,regions:plan.regions,stores:plan.stores};if(ctx.view.scope==='region'){const region=plan.regions.find(row=>row[0]===ctx.view.region),summary=region?{sales:region[1],support:region[2],september:region[3],target:region[4]}:{sales:0,support:0,september:0,target:0};return {plan,summary,regions:region?[region]:[],stores:plan.stores.filter(row=>row[0]===ctx.view.region)};}const store=plan.stores.find(row=>row[1]===(ctx.view.store||ctx.view.name)),summary=store?{sales:store[2],support:store[3],september:store[4],target:store[5]}:{sales:0,support:0,september:0,target:0};return {plan,summary,regions:[],stores:store?[store]:[]};}
+ function reviewNovemberScope(ctx){const plan=ctx.facts?.november;if(!plan)return null;if(ctx.view.scope==='company')return {plan,summary:plan.company,regions:plan.regions,stores:plan.stores};if(ctx.view.scope==='region'){const region=plan.regions.find(row=>row[0]===ctx.view.region),summary=region?{marketBaseline:plan.company.marketBaseline,storeStretch:region[1],september:region[2],target:region[3]}:{marketBaseline:plan.company.marketBaseline,storeStretch:0,september:0,target:0};return {plan,summary,regions:region?[region]:[],stores:plan.stores.filter(row=>row[0]===ctx.view.region)};}const store=plan.stores.find(row=>row[1]===(ctx.view.store||ctx.view.name)),summary=store?{marketBaseline:plan.company.marketBaseline,storeStretch:store[2],september:store[3],target:store[4]}:{marketBaseline:plan.company.marketBaseline,storeStretch:0,september:0,target:0};return {plan,summary,regions:[],stores:store?[store]:[]};}
  function reviewNovemberTable(title,headers,rows){if(!rows.length)return '';return `<div class="review-table-card"><h3>${E(title)}</h3><div class="review-table-scroll"><table class="review-tier-table"><thead><tr>${headers.map(x=>`<th>${E(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((value,i)=>`<td class="${i<2?'review-org-name':''}">${E(value)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;}
- function reviewNovemberActionTable(rows){return `<div class="review-strategy-table"><h3>11月策略与动作</h3><table aria-label="11月策略与动作"><thead><tr><th>策略</th><th>动作</th></tr></thead><tbody>${(rows||[]).map(row=>`<tr><td>${E(row[0])}</td><td>${E(row[1])}</td></tr>`).join('')}</tbody></table></div>`;}
- function reviewNovemberPlanText(ctx){const scoped=reviewNovemberScope(ctx);if(!scoped)return '11月承接目标待确认';const {plan,summary,regions,stores}=scoped,delta=summary.target-summary.september,regionText=regions.map(row=>`${row[0]}：市占目标${row[1]}套｜成交支撑底线${row[2]}套｜9月面见${row[3]}套｜11月目标${row[4]}套`).join('\n'),storeText=stores.map(row=>`${row[1]}：市占目标${row[2]}套｜成交支撑底线${row[3]}套｜9月面见${row[4]}套｜11月目标${row[5]}套（${row[6]}）`).join('\n'),strategyText=(plan.strategyActions||[]).map(row=>`${row[0]}：${row[1]}`).join('\n');return `11月市占目标：${summary.sales}套\n成交支撑底线：${summary.support}套\n9月关键节点面见达成：${summary.september}套\n11月基础面见目标：${summary.target}套${delta?`（较9月${delta>0?'增加':'减少'}${Math.abs(delta)}套）`:''}\n\n目标算法：每计划成交1套，至少以5套业主面见支撑房源加工与机会识别；同时不低于9月关键节日节点已经验证的单店面见水平。逐店取两项较高值，再汇总到大区和全司。\n\n定性目标：以感恩连接打开业主沟通，通过逐套面见识别真实出售意愿、价格机会、看房条件和决策信息，进而加工出可旋转、价格有竞争力的成交房源，支撑11月市占目标；同时让顾客持续感受到被记得、被理解和被认真服务。\n${plan.qualitative.online}\n${plan.qualitative.whole}\n${plan.qualitative.top}\n\n${regionText?`大区目标：\n${regionText}\n\n`:''}${storeText?`门店目标：\n${storeText}\n\n`:''}11月策略与动作：\n${strategyText}`;}
- function reviewNextHtml(ctx){const scoped=reviewNovemberScope(ctx);if(!scoped)return '<div class="review-report"><p class="ops-muted">11月承接目标待确认。</p></div>';const {plan,summary,regions,stores}=scoped,delta=summary.target-summary.september,deltaRate=summary.september?M.pct(Math.abs(delta),summary.september):'—',regionRows=regions.map(row=>[row[0],row[1]+'套',row[2]+'套',row[3]+'套',row[4]+'套']),storeRows=stores.map(row=>[row[0],row[1],row[2]+'套',row[3]+'套',row[4]+'套',row[5]+'套',row[6]]),companyNote=ctx.view.scope==='company'?'<p class="review-footnote">目标校准采用9月在售业主面见进展表的全月达成269套。徐汇一店当前不在现有面见工作台18店及9月面见基线中，本次不纳入278套汇总；组织启用并形成在售底表后再补定目标。</p>':'';return `<div class="review-report"><div class="review-subhead"><span>11月目标承接</span><h3>从10月复盘进入感恩月关键战役</h3><p>用成交目标倒推房源加工量，同时不低于门店在9月关键节日节点已经验证的执行水平。</p></div><div class="review-summary-grid compact">${[['11月市占目标',summary.sales+'套'],['成交支撑底线',summary.support+'套'],['9月面见达成',summary.september+'套'],['11月面见目标',summary.target+'套'],['较9月变化',delta?`${delta>0?'+':'-'}${Math.abs(delta)}套 · ${deltaRate}`:'持平']].map(([label,value])=>`<article class="review-summary-card"><span>${E(label)}</span><strong class="${String(value).includes('%')?'review-percent':''}">${E(value)}</strong></article>`).join('')}</div><div class="review-callout warm"><strong>定量目标如何得出</strong><p>每计划成交1套，至少以5套业主面见作为房源加工与机会识别池，通过逐套面见识别真实出售意愿和价格机会，支撑房源旋转与成交。11月是感恩月关键战役，单店目标同时不低于9月已验证的面见水平。因此逐店取“市占目标×5”与“9月面见达成”的较高值，再汇总到大区和全司。${summary.target}套为当前范围基础套数目标；全盘面见率20%和双TOP面见率40%为动态检核线，实时盘量测算结果更高时按较高值执行。</p></div><div class="review-callout"><strong>11月定性目标</strong><p>以感恩连接打开业主沟通，通过逐套面见识别真实出售意愿、价格机会、看房条件和决策信息，进而加工出可旋转、价格有竞争力的成交房源，支撑11月市占目标；同时让顾客持续感受到被记得、被理解和被认真服务。</p></div><div class="review-summary-grid compact">${[['线上感恩表达','100%'],['全盘面见率','≥20%'],['门店TOP面见率','≥40%'],['户型TOP面见率','≥40%']].map(([label,value])=>`<article class="review-summary-card"><span>${E(label)}</span><strong class="review-percent">${E(value)}</strong></article>`).join('')}</div>${reviewNovemberTable('11月大区目标汇总',['大区','市占目标','成交支撑底线','9月面见达成','11月面见目标'],regionRows)}${reviewNovemberTable(ctx.view.scope==='company'?'11月18家门店目标明细':ctx.view.scope==='region'?'区域内门店目标明细':'本店目标依据',['大区','门店','市占目标','成交支撑底线','9月面见达成','11月面见目标','取值依据'],storeRows)}${companyNote}${reviewNovemberActionTable(plan.strategyActions)}<div class="review-callout"><strong>11月检核方式</strong><p>同时检核线上覆盖、全盘与双TOP面见、逐套反馈和业务变化。未完成事项必须明确具体对象、责任人和完成时间，并在下一次周度复盘中继续跟进；月末单独完成礼物费用与凭证收口。</p></div></div>`;}
+ function reviewNovemberMetricRow(ctx,level,name){if(level==='company')return ctx.root;return ctx.progress.rows.find(row=>row._level===level&&(level==='region'?row.region===name:row.store===name));}
+ function reviewNovemberCoverage(row){if(!row)return {whole:'—',storeTop:'—',unitTop:'—'};return {whole:Math.ceil(Number(row.stock||0)*.2),storeTop:Math.ceil(Number(row.store_top_stock||0)*.4),unitTop:Math.ceil(Number(row.unit_top_stock||0)*.4)};}
  function reviewRankText(ctx,row,tone){const facts=ctx.facts,reason=tone==='benchmark'?(facts?.benchmarkReasons?.[row.store]||reviewRankReason(row,'benchmark')):tone==='reminder'?(facts?.reminderReasons?.[row.store]||reviewRankReason(row,'reminder')):reviewRankReason(row,'neutral');return `${row.store}\n${reviewMetricSentence('全盘',row.met,row.stock,row.met_rate)}\n${reviewMetricSentence('门店TOP',row.store_top_met,row.store_top_stock,row.store_top_rate)}\n${reviewMetricSentence('户型TOP',row.unit_top_met,row.unit_top_stock,row.unit_top_rate)}\n分析：${reason}\n店组下钻：${reviewStoreInsight(ctx,row,tone)}`;}
  function reviewText(view=currentView){const ctx=reviewContext(view);if(!ctx){const old=ARCHIVE.months[currentMonth]?.views[viewKey(view)];return old?exportText(old):'本月日常记录待导入';}const r=ctx.root,q=ctx.quality?.summary||Q.summary([]),topics=Object.entries(F.labels).map(([key,label])=>({key,label,count:Number(q.topics?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count),sets=reviewRankSets(ctx),opp=reviewOpportunityScope(ctx),singleTone=sets.single?(ctx.facts?.benchmark||[]).includes(sets.single.store)?'benchmark':(ctx.facts?.reminders||[]).includes(sets.single.store)?'reminder':'neutral':'neutral',bench=sets.single?reviewRankText(ctx,sets.single,singleTone):sets.bench.map(x=>reviewRankText(ctx,x,'benchmark')).join('\n\n')||'当前范围暂无可识别的标杆门店',remind=sets.single?'':sets.remind.map(x=>reviewRankText(ctx,x,'reminder')).join('\n\n')||'当前范围暂无可识别的重点提醒门店';
   const oppText=!opp?.summary?'当前月份暂无锁定的跨月机会数据':ctx.view.scope==='company'?`9月面见${ctx.facts.opportunity.septemberMet}套，10月末仍在售${ctx.facts.opportunity.stillListed}套；10月继续面见${ctx.facts.opportunity.continued}套（${ctx.facts.opportunity.continuedRate}），跨月未持续面见${ctx.facts.opportunity.unmet}套（${ctx.facts.opportunity.unmetRate}），其中任一TOP ${ctx.facts.opportunity.anyTop}套（${ctx.facts.opportunity.topRate}）。`:`当前范围跨月未持续面见${opp.summary.unmet}套，其中任一TOP ${opp.summary.anyTop}套，门店TOP ${opp.summary.storeTop}套，户型TOP ${opp.summary.unitTop}套。`;
@@ -150,8 +149,11 @@
   const scoped=reviewNovemberScope(ctx);
   if(!scoped)return '11月承接目标待确认';
   const {plan,summary,regions,stores}=scoped,delta=summary.target-summary.september,numbers=['①','②','③','④','⑤'];
-  const regionText=regions.map(row=>`${row[0]}：市占目标${row[1]}套｜成交支撑底线${row[2]}套｜9月面见${row[3]}套｜11月目标${row[4]}套`).join('\n');
-  const storeText=stores.map(row=>`${row[1]}：市占目标${row[2]}套｜成交支撑底线${row[3]}套｜9月面见${row[4]}套｜11月目标${row[5]}套（${row[6]}）`).join('\n');
+  const scopeName=ctx.view.scope==='region'?ctx.view.region:ctx.view.scope==='store'?(ctx.view.store||ctx.view.name):'全司';
+  const coverage=reviewNovemberCoverage(reviewNovemberMetricRow(ctx,ctx.view.scope,scopeName));
+  const marketText=ctx.view.scope==='company'?`全司市占底线：${plan.company.marketBaseline}套\n单店市占分解合计：${plan.company.storeStretch}套（以更高的组织分解目标支撑全司底线）`:ctx.view.scope==='region'?`全司市占底线：${plan.company.marketBaseline}套\n当前大区单店市占分解合计：${summary.storeStretch}套`:`全司市占底线：${plan.company.marketBaseline}套\n本店市占分解目标：${summary.storeStretch}套`;
+  const regionText=regions.map(row=>{const c=reviewNovemberCoverage(reviewNovemberMetricRow(ctx,'region',row[0]));return `${row[0]}：单店市占分解合计${row[1]}套｜全盘20%测算${c.whole}套｜门店TOP40%测算${c.storeTop}套｜户型TOP40%测算${c.unitTop}套｜9月面见${row[2]}套｜11月目标${row[3]}套`;}).join('\n');
+  const storeText=stores.map(row=>{const c=reviewNovemberCoverage(reviewNovemberMetricRow(ctx,'store',row[1]));return `${row[1]}：市占分解${row[2]}套｜全盘20%测算${c.whole}套｜门店TOP40%测算${c.storeTop}套｜户型TOP40%测算${c.unitTop}套｜9月面见${row[3]}套｜11月目标${row[4]}套（${row[5]}）`;}).join('\n');
   const strategyText=(plan.strategyActions||[]).map(row=>{const actions=Array.isArray(row[1])?row[1]:[row[1]];return `${row[0]}：\n${actions.map((item,i)=>`${numbers[i]||((i+1)+'.')} ${item}`).join('\n')}`;}).join('\n\n');
   return `11月定量目标
 在售业主面见量：${summary.target}套${delta?`（较9月${delta>0?'增加':'减少'}${Math.abs(delta)}套）`:''}
@@ -161,11 +163,13 @@
 户型TOP面见率：≥40%
 
 目标测算依据
-11月市占目标：${summary.sales}套
-成交支撑底线：${summary.support}套
+全盘20%测算：${coverage.whole}套
+门店TOP40%测算：${coverage.storeTop}套
+户型TOP40%测算：${coverage.unitTop}套
 9月关键节点面见达成：${summary.september}套
+${marketText}
 
-目标制定逻辑：全司先以“市占目标×5”和9月峰值形成278套基础盘，再结合10月末在售盘量，将花木、黄浦、徐汇补至区域全盘覆盖20%以上；剩余增量由10月全盘或TOP表现已验证的门店承接，形成300套目标。
+目标制定逻辑：11月面见总目标为300套。以全盘面见率≥20%、门店TOP面见率≥40%、户型TOP面见率≥40%为目标线，结合9月已验证的单店峰值、各组织承接能力和11月感恩月战役强度，逐店校准后汇总形成。全司市占底线15套、单店分解合计26套仅作业务结果参考，不参与面见目标测算。
 
 11月定性目标
 ${plan.qualitative.goal}
@@ -183,19 +187,23 @@ ${strategyText}`;
   const scoped=reviewNovemberScope(ctx);
   if(!scoped)return '<div class="review-report"><p class="ops-muted">11月承接目标待确认。</p></div>';
   const {plan,summary,regions,stores}=scoped,delta=summary.target-summary.september,deltaRate=summary.september?M.pct(Math.abs(delta),summary.september):'—';
-  const regionRows=regions.map(row=>[row[0],row[1]+'套',row[2]+'套',row[3]+'套',row[4]+'套']);
-  const storeRows=stores.map(row=>[row[0],row[1],row[2]+'套',row[3]+'套',row[4]+'套',row[5]+'套',row[6]]);
+  const scopeName=ctx.view.scope==='region'?ctx.view.region:ctx.view.scope==='store'?(ctx.view.store||ctx.view.name):'全司';
+  const coverage=reviewNovemberCoverage(reviewNovemberMetricRow(ctx,ctx.view.scope,scopeName));
+  const regionRows=regions.map(row=>{const c=reviewNovemberCoverage(reviewNovemberMetricRow(ctx,'region',row[0]));return [row[0],row[1]+'套',c.whole+'套',c.storeTop+'套',c.unitTop+'套',row[2]+'套',row[3]+'套'];});
+  const storeRows=stores.map(row=>{const c=reviewNovemberCoverage(reviewNovemberMetricRow(ctx,'store',row[1]));return [row[0],row[1],row[2]+'套',c.whole+'套',c.storeTop+'套',c.unitTop+'套',row[3]+'套',row[4]+'套',row[5]];});
   const cardGrid=rows=>`<div class="review-summary-grid compact">${rows.map(([label,value])=>`<article class="review-summary-card"><span>${E(label)}</span><strong class="${String(value).includes('%')?'review-percent':''}">${E(value)}</strong></article>`).join('')}</div>`;
   const quantitative=[['在售业主面见量',summary.target+'套'],['线上感恩表达','100%'],['全盘面见率','≥20%'],['门店TOP面见率','≥40%'],['户型TOP面见率','≥40%']];
-  const evidence=[['11月市占目标',summary.sales+'套'],['成交支撑底线',summary.support+'套'],['9月面见达成',summary.september+'套'],['较9月变化',delta?`${delta>0?'+':'-'}${Math.abs(delta)}套 · ${deltaRate}`:'持平']];
+  const stretchLabel=ctx.view.scope==='company'?'单店目标合计':ctx.view.scope==='region'?'区域单店目标合计':'本店市占分解';
+  const evidence=[['全司市占底线',plan.company.marketBaseline+'套'],[stretchLabel,summary.storeStretch+'套'],['全盘20%测算',coverage.whole+'套'],['门店TOP40%测算',coverage.storeTop+'套'],['户型TOP40%测算',coverage.unitTop+'套'],['9月面见达成',summary.september+'套'],['较9月变化',delta?`${delta>0?'+':'-'}${Math.abs(delta)}套 · ${deltaRate}`:'持平']];
   return `<div class="review-report">
    <div class="review-subhead"><span>11月目标承接</span><h3>从10月复盘进入感恩月关键战役</h3><p>以300套面见量、全盘覆盖和双TOP覆盖共同牵引顾客连接与重点房源经营。</p></div>
    <section class="review-goal-section"><h3 class="review-goal-title">11月定量目标</h3>${cardGrid(quantitative)}</section>
    <section class="review-goal-section"><h3 class="review-goal-title">目标测算依据</h3>${cardGrid(evidence)}</section>
-   <div class="review-callout warm"><strong>300套目标如何拆解</strong><p>全司先以“市占目标×5”和9月峰值形成278套基础盘，再结合10月末在售盘量，将花木、黄浦、徐汇补至区域全盘覆盖20%以上；剩余增量由10月全盘或TOP表现已验证的门店承接，形成300套目标。当前筛选范围目标为${summary.target}套，面见量、全盘面见率≥20%和双TOP面见率≥40%同时检核。</p></div>
+   <div class="review-callout warm"><strong>300套目标如何形成</strong><p>以全盘面见率≥20%、门店TOP面见率≥40%、户型TOP面见率≥40%为目标线，结合9月已验证的单店峰值、各组织承接能力和11月感恩月战役强度，逐店校准后汇总形成300套。三项覆盖目标基于同一批房源，不做简单相加；当前筛选范围面见目标为${summary.target}套。</p></div>
+   <div class="review-callout"><strong>市占目标口径</strong><p>全司11月市占底线为${plan.company.marketBaseline}套；拆解到单店的目标合计为${plan.company.storeStretch}套，以更高的组织目标提高达成全司底线的概率。市占只作业务结果参考，不参与面见目标测算。</p></div>
    <div class="review-callout"><strong>11月定性目标</strong><p>${E(plan.qualitative.goal)}</p></div>
-   ${reviewNovemberTable('11月大区目标汇总',['大区','市占目标','成交支撑底线','9月面见达成','11月面见目标'],regionRows)}
-   ${reviewNovemberTable(ctx.view.scope==='company'?'11月18家门店目标明细':ctx.view.scope==='region'?'区域内门店目标明细':'本店目标依据',['大区','门店','市占目标','成交支撑底线','9月面见达成','11月面见目标','取值依据'],storeRows)}
+   ${reviewNovemberTable('11月大区目标汇总',['大区','单店市占分解合计','全盘20%测算','门店TOP40%测算','户型TOP40%测算','9月面见达成','11月面见目标'],regionRows)}
+   ${reviewNovemberTable(ctx.view.scope==='company'?'11月18家门店目标明细':ctx.view.scope==='region'?'区域内门店目标明细':'本店目标依据',['大区','门店','市占分解目标','全盘20%测算','门店TOP40%测算','户型TOP40%测算','9月面见达成','11月面见目标','校准依据'],storeRows)}
    ${reviewNovemberActionTableV2(plan.strategyActions)}
    <div class="review-callout"><strong>11月检核方式</strong><p>同时检核线上覆盖、全盘与双TOP面见、逐套反馈和业务变化。未完成事项必须明确具体对象、责任人和完成时间，并在下一次周度复盘中继续跟进；月末单独完成礼物费用与凭证收口。</p></div>
   </div>`;
