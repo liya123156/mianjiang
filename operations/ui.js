@@ -193,14 +193,14 @@ ${strategyText}`;
   const storeRows=stores.map(row=>{const c=reviewNovemberCoverage(reviewNovemberMetricRow(ctx,'store',row[1]));return [row[0],row[1],row[2]+'套',c.whole+'套',c.storeTop+'套',c.unitTop+'套',row[3]+'套',row[4]+'套',row[5]];});
   const cardGrid=rows=>`<div class="review-summary-grid compact">${rows.map(([label,value])=>`<article class="review-summary-card"><span>${E(label)}</span><strong class="${String(value).includes('%')?'review-percent':''}">${E(value)}</strong></article>`).join('')}</div>`;
   const quantitative=[['在售业主面见量',summary.target+'套'],['线上感恩表达','100%'],['全盘面见率','≥20%'],['门店TOP面见率','≥40%'],['户型TOP面见率','≥40%']];
-  const stretchLabel=ctx.view.scope==='company'?'单店目标合计':ctx.view.scope==='region'?'区域单店目标合计':'本店市占分解';
+  const stretchLabel=ctx.view.scope==='company'?'单店市占分解合计':ctx.view.scope==='region'?'大区市占分解合计':'本店市占分解';
   const evidence=[['全司市占底线',plan.company.marketBaseline+'套'],[stretchLabel,summary.storeStretch+'套'],['全盘20%测算',coverage.whole+'套'],['门店TOP40%测算',coverage.storeTop+'套'],['户型TOP40%测算',coverage.unitTop+'套'],['9月面见达成',summary.september+'套'],['较9月变化',delta?`${delta>0?'+':'-'}${Math.abs(delta)}套 · ${deltaRate}`:'持平']];
   return `<div class="review-report">
    <div class="review-subhead"><span>11月目标承接</span><h3>从10月复盘进入感恩月关键战役</h3><p>以300套面见量、全盘覆盖和双TOP覆盖共同牵引顾客连接与重点房源经营。</p></div>
    <section class="review-goal-section"><h3 class="review-goal-title">11月定量目标</h3>${cardGrid(quantitative)}</section>
    <section class="review-goal-section"><h3 class="review-goal-title">目标测算依据</h3>${cardGrid(evidence)}</section>
    <div class="review-callout warm"><strong>300套目标如何形成</strong><p>以全盘面见率≥20%、门店TOP面见率≥40%、户型TOP面见率≥40%为目标线，结合9月已验证的单店峰值、各组织承接能力和11月感恩月战役强度，逐店校准后汇总形成300套。三项覆盖目标基于同一批房源，不做简单相加；当前筛选范围面见目标为${summary.target}套。</p></div>
-   <div class="review-callout"><strong>市占目标口径</strong><p>全司11月市占底线为${plan.company.marketBaseline}套；拆解到单店的目标合计为${plan.company.storeStretch}套，以更高的组织目标提高达成全司底线的概率。市占只作业务结果参考，不参与面见目标测算。</p></div>
+   <div class="review-callout"><strong>市占参考口径</strong><p>全司11月市占底线为${plan.company.marketBaseline}套；拆解到单店的目标合计为${plan.company.storeStretch}套，以更高的组织目标提高达成全司底线的概率。市占只作业务结果参考，不参与面见目标测算。</p></div>
    <div class="review-callout"><strong>11月定性目标</strong><p>${E(plan.qualitative.goal)}</p></div>
    ${reviewNovemberTable('11月大区目标汇总',['大区','单店市占分解合计','全盘20%测算','门店TOP40%测算','户型TOP40%测算','9月面见达成','11月面见目标'],regionRows)}
    ${reviewNovemberTable(ctx.view.scope==='company'?'11月18家门店目标明细':ctx.view.scope==='region'?'区域内门店目标明细':'本店目标依据',['大区','门店','市占分解目标','全盘20%测算','门店TOP40%测算','户型TOP40%测算','9月面见达成','11月面见目标','校准依据'],storeRows)}
