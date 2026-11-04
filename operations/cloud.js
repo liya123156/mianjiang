@@ -26,6 +26,10 @@
   return {...data,archives,directory:(directory?.items||[]).filter(x=>x.kind==='review'&&x.payload.recordType==='leadership'),loadedAt:new Date().toISOString()};
  }
  const rpc=(name,body)=>api(name,body);
+ async function plan(action,args={}){
+  if(!['public'].includes(action)&&!session?.token)throw Error('请先进入BP／管理入口');
+  return request('wb_plan_api',{p_token:session?.token||null,p_action:action,p_args:args});
+ }
  const saveItem=(month,kind,id,region,store,payload,expected)=>rpc('wb_save_item',{p_month:month,p_kind:kind,p_id:id,p_region:region,p_store:store,p_payload:payload,p_expected_updated_at:expected||null});
  async function uploadProof(file,month,region,store){
   if(!['image/png','image/jpeg','image/webp','application/pdf'].includes(file.type)||file.size>2*1024*1024)throw Error('凭证支持PNG、JPG、WEBP或PDF，每份不超过2MB');
@@ -43,6 +47,6 @@
   if(!response.ok||result.error)throw Error(result.error||result.message||'文件上传失败：'+response.status);
   return {...result.asset,url:archiveUrl(result.asset.object_path),downloadUrl:archiveUrl(result.asset.object_path,result.asset.original_name)};
  }
- root.WBCloud={configured,validateCode,login,membership,logout,load,rpc,saveItem,uploadProof,proofUrl,uploadArchive,archiveUrl,get member(){return member;},get hasSession(){return !!session;},get project(){return member?.role==='project';}};
+ root.WBCloud={configured,validateCode,login,membership,logout,load,rpc,plan,saveItem,uploadProof,proofUrl,uploadArchive,archiveUrl,get member(){return member;},get hasSession(){return !!session;},get project(){return member?.role==='project';}};
 })(window);
 

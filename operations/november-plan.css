@@ -1,0 +1,101 @@
+/* Scoped styles for the November planning view. */
+.november-plan{--np-ink:#3d3453;--np-muted:#756b88;--np-purple:#8658e8;--np-line:#e8defa;--np-tint:#f8f4ff;color:var(--np-ink)}
+.november-plan p{overflow-wrap:anywhere}
+.november-plan .np-hero-note{font-size:13px;line-height:1.9;color:#9985ad;margin:17px 0 0}
+.november-plan .np-section{scroll-margin-top:24px}
+.november-plan .np-total-goal{border:1px solid #d9c9fa;background:linear-gradient(125deg,#f6efff,#fff 84%);border-radius:20px;padding:28px 30px;margin:20px 0 18px;box-shadow:0 10px 30px #794fc409}
+.november-plan .np-overline{font-size:12px;font-weight:800;letter-spacing:.08em;color:#8254cc}
+.november-plan .np-total-goal h3{font-size:25px;line-height:1.45;margin:9px 0 20px;color:#50377b}
+.november-plan .np-goal-flow{display:grid;gap:13px}
+.november-plan .np-goal-flow p{font-size:16px;line-height:1.95;margin:0;display:grid;grid-template-columns:77px minmax(0,1fr);gap:12px}
+.november-plan .np-goal-flow strong{color:#7c50c6;white-space:nowrap;font-size:14px;padding-top:2px}
+.november-plan .np-goal-support{font-size:14px;line-height:1.9;margin:22px 0 0;padding:16px 0 0;border-top:1px solid #e3d7f6;color:#6e6081}
+.november-plan .np-subgoals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0}
+.november-plan .np-subgoals article{border:1px solid var(--np-line);border-radius:15px;padding:21px;background:#fff}
+.november-plan .np-subgoals h3{font-size:18px;margin:9px 0 10px;color:#503c74}
+.november-plan .np-subgoals p{font-size:14px;line-height:1.8;margin:0}
+.november-plan .np-subgoals .np-evidence{margin-top:16px;padding-top:13px;border-top:1px solid #eee7f7;color:var(--np-muted);font-size:13px}
+.november-plan .np-evidence strong{display:block;font-size:12px;color:#8763b9;margin-bottom:5px}
+.november-plan .np-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:20px 0 12px}
+.november-plan .np-metrics article{border-radius:14px;background:#f8f4ff;border:1px solid #ebe2fb;padding:17px 15px}
+.november-plan .np-metrics span{font-size:12px;font-weight:700;color:#7b6c93}
+.november-plan .np-metrics strong{display:block;color:#8956de;font-size:28px;line-height:1.4;margin:8px 0}
+.november-plan .np-metrics p{font-size:12px;line-height:1.75;margin:0;color:#786b8c}
+.november-plan .np-note{padding:13px 16px;border-radius:11px;background:#fbf9ff;border-left:3px solid #b38aee;font-size:13px;line-height:1.8;color:#756585;margin:15px 0 20px}
+.november-plan .np-support{border:1px solid var(--np-line);border-radius:13px;background:white;margin:18px 0}
+.november-plan .np-support>summary{cursor:pointer;padding:17px 20px;font-size:14px;font-weight:750;color:#755397}
+.november-plan .np-support[open]>summary{border-bottom:1px solid var(--np-line)}
+.november-plan .np-support-body{padding:6px 23px 20px}
+.november-plan .np-support-body h3{font-size:16px;margin:20px 0 8px;color:#5f457e}
+.november-plan .np-support-body p,.november-plan .np-support-body li{font-size:14px;line-height:1.9}
+.november-plan .np-support-body ul{padding-left:20px;margin:8px 0}
+.november-plan .np-support-body li+li{margin-top:7px}
+.november-plan .np-strategy-map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}
+.november-plan .np-strategy-map a{border:1px solid #dfd1f9;border-radius:14px;text-decoration:none;background:linear-gradient(145deg,#fff,#f8f3ff);padding:18px;display:grid;gap:8px;color:inherit;transition:background .15s,box-shadow .15s}
+.november-plan .np-strategy-map a:hover{background:#f4edff;box-shadow:0 5px 16px #9676c91a}
+.november-plan .np-strategy-map a:focus-visible,.november-plan summary:focus-visible{outline:3px solid #aa84ed;outline-offset:4px}
+.november-plan .np-strategy-map span{font-size:11px;letter-spacing:.05em;color:#9772c4;font-weight:800}
+.november-plan .np-strategy-map strong{font-size:16px;color:#68448f;line-height:1.5}
+.november-plan .np-strategy-map small{font-size:12px;color:#83738f;line-height:1.65}
+.november-plan .np-strategy{border:1px solid #dfd3f3;border-radius:17px;margin:14px 0;background:#fff;overflow:hidden;scroll-margin-top:24px}
+.november-plan .np-strategy>summary{display:flex;align-items:center;gap:16px;cursor:pointer;padding:22px 24px;list-style:none;background:linear-gradient(110deg,#f5efff,#fff);min-height:91px}
+.november-plan .np-strategy>summary::-webkit-details-marker{display:none}
+.november-plan .np-strategy-number{display:grid;place-items:center;flex:0 0 44px;height:44px;border-radius:13px;background:#9163e7;color:white;font-size:20px;font-weight:800}
+.november-plan .np-strategy-heading{display:grid;gap:6px;flex:1;min-width:0}
+.november-plan .np-strategy-heading strong{font-size:20px;color:#5b3e84;line-height:1.4}
+.november-plan .np-strategy-heading>span{font-size:13px;color:#877496}
+.november-plan .np-count{font-size:12px;color:#9573ba;padding:6px 10px;border:1px solid #e3d5f5;border-radius:20px;white-space:nowrap}
+.november-plan .np-expand{font-size:24px;color:#a17dc9;font-weight:400}
+.november-plan .np-strategy[open] .np-expand{transform:rotate(45deg)}
+.november-plan .np-strategy-content{padding:0 24px 22px}
+.november-plan .np-strategy-why{background:#f8f4ff;padding:19px 21px;border:1px solid #e9dff8;border-radius:12px;margin:4px 0 14px}
+.november-plan .np-strategy-why>span{font-size:12px;font-weight:800;color:#966bc4}
+.november-plan .np-strategy-why p{font-size:15px;line-height:1.9;margin:8px 0 0}
+.november-plan .np-strategy-context{margin:15px 0 20px;padding:0 3px}
+.november-plan .np-strategy-context p{font-size:13px;line-height:1.8;color:#746580;margin:8px 0}
+.november-plan .np-strategy-context strong{display:block;color:#654879;font-size:12px;margin-bottom:3px}
+.november-plan .np-action-list{display:grid;gap:13px}
+.november-plan .np-action{border:1px solid #e9e0f5;border-radius:12px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);overflow:hidden;scroll-margin-top:20px}
+.november-plan .np-action-main{padding:21px 21px 18px}
+.november-plan .np-action-id{display:inline-block;color:#9366be;font-weight:800;font-size:11px;letter-spacing:.04em;margin:0 0 8px}
+.november-plan .np-action h4{font-size:16px;line-height:1.55;margin:0 0 10px;color:#544066}
+.november-plan .np-action p{font-size:13px;line-height:1.85;margin:0}
+.november-plan .np-action .np-business{margin-top:15px;color:#887097;font-size:12px;padding-top:12px;border-top:1px solid #efe7f7}
+.november-plan .np-business strong,.november-plan .np-fact strong,.november-plan .np-trigger strong{display:block;font-size:11px;margin-bottom:3px}
+.november-plan .np-action .np-fact{font-size:12px;margin-top:13px;color:#5d8072;background:#f1f8f4;border-radius:8px;padding:10px 12px}
+.november-plan .np-action .np-trigger{font-size:12px;margin-top:13px;color:#8d7852;background:#fdf8ed;border-radius:8px;padding:10px 12px}
+.november-plan .np-action-meta{margin:0;background:#fcfaff;border-left:1px solid #ebe2f5;padding:18px 21px;display:grid;gap:14px;align-content:start}
+.november-plan .np-action-meta>div+div{padding-top:12px;border-top:1px solid #eee6f7}
+.november-plan .np-action-meta dt{font-size:11px;font-weight:800;color:#9368b7;margin-bottom:5px}
+.november-plan .np-action-meta dd{font-size:13px;line-height:1.8;margin:0;color:#63536e}
+.november-plan .np-action-meta dd>span{display:block;color:#87768e;font-size:12px;margin-top:4px}
+.november-plan .np-action-meta small{display:block;color:#a18aaf;font-size:11px;line-height:1.7;margin-top:5px}
+.november-plan .np-cadence{border:1px solid var(--np-line);border-radius:15px;background:#fff;overflow:hidden;margin:20px 0}
+.november-plan .np-cadence article{display:grid;grid-template-columns:185px minmax(0,1fr);gap:24px;padding:21px 24px}
+.november-plan .np-cadence article+article{border-top:1px solid #eee6f6}
+.november-plan .np-cadence article>div:first-child{display:grid;gap:9px;align-content:start}
+.november-plan .np-cadence strong{font-size:14px;line-height:1.7;color:#7d53ab}
+.november-plan .np-cadence span{font-size:11px;color:#9a81b3;line-height:1.4}
+.november-plan .np-cadence h3{font-size:15px;margin:0 0 7px;color:#5a456e}
+.november-plan .np-cadence p{font-size:13px;line-height:1.9;margin:0;color:#7a6a88}
+.november-plan .np-role-list{padding:4px 23px 13px}
+.november-plan .np-role-list article{display:grid;grid-template-columns:100px minmax(0,1fr) minmax(0,.85fr);gap:20px;padding:17px 0}
+.november-plan .np-role-list article+article{border-top:1px solid #eee7f8}
+.november-plan .np-role-list h3{font-size:14px;margin:0;color:#775499;line-height:1.9}
+.november-plan .np-role-list p{font-size:13px;line-height:1.9;margin:0;color:#796985}
+.november-plan .np-role-list strong{display:block;font-size:11px;color:#9a7db4;margin-bottom:3px}
+.november-plan .np-handoff{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:20px 0}
+.november-plan .np-handoff article{background:#fff;border:1px solid var(--np-line);border-radius:13px;padding:20px}
+.november-plan .np-handoff article>span{font-size:24px;color:#b497df;font-weight:800}
+.november-plan .np-handoff h3{font-size:16px;color:#72508f;margin:10px 0}
+.november-plan .np-handoff p{font-size:13px;line-height:1.9;color:#82718f;margin:0}
+.november-plan .np-bottom-note{display:flex;align-items:center;gap:25px;background:#f7f1ff;border-radius:13px;padding:20px 23px;margin:18px 0}
+.november-plan .np-bottom-note>div:first-child{flex:1}
+.november-plan .np-bottom-note strong{font-size:13px;color:#8660ab}
+.november-plan .np-bottom-note p{font-size:13px;line-height:1.9;color:#88729b;margin:6px 0 0}
+.november-plan .np-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.november-plan .np-buttons button{white-space:nowrap}
+@media(max-width:1100px){.november-plan .np-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.november-plan .np-strategy-map{grid-template-columns:repeat(2,minmax(0,1fr))}.november-plan .np-handoff{grid-template-columns:repeat(2,minmax(0,1fr))}.november-plan .np-bottom-note{align-items:flex-start;flex-direction:column}}
+@media(max-width:760px){.november-plan .np-total-goal{padding:22px 20px}.november-plan .np-total-goal h3{font-size:21px}.november-plan .np-goal-flow p{font-size:14px;grid-template-columns:65px minmax(0,1fr);gap:9px}.november-plan .np-goal-flow strong{font-size:12px}.november-plan .np-subgoals{grid-template-columns:1fr}.november-plan .np-subgoals article{padding:18px}.november-plan .np-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.november-plan .np-action{grid-template-columns:1fr}.november-plan .np-action-meta{border-left:0;border-top:1px solid #ebe2f5}.november-plan .np-strategy-content{padding:0 14px 15px}.november-plan .np-strategy>summary{padding:17px 16px;gap:11px;min-height:80px}.november-plan .np-strategy-number{flex-basis:36px;height:36px;font-size:17px;border-radius:10px}.november-plan .np-strategy-heading strong{font-size:17px}.november-plan .np-count{font-size:10px;padding:5px 7px}.november-plan .np-expand{font-size:20px}.november-plan .np-cadence article{grid-template-columns:1fr;gap:10px;padding:18px}.november-plan .np-cadence article>div:first-child{display:flex;align-items:center;gap:12px}.november-plan .np-role-list article{grid-template-columns:1fr;gap:7px}.november-plan .np-role-list article>p:last-child{padding-left:12px;border-left:2px solid #e6d7f7}.november-plan .np-strategy-why{padding:16px}.november-plan .np-strategy-why p{font-size:14px}}
+@media(max-width:420px){.november-plan .np-strategy-map{gap:8px}.november-plan .np-strategy-map a{padding:14px}.november-plan .np-strategy-map strong{font-size:14px}.november-plan .np-strategy-heading strong{font-size:16px}.november-plan .np-strategy-heading>span{font-size:11px}.november-plan .np-count{display:none}.november-plan .np-handoff{grid-template-columns:1fr}.november-plan .np-total-goal{padding:20px 17px}.november-plan .np-goal-flow p{display:block}.november-plan .np-goal-flow strong{display:block;margin-bottom:2px}.november-plan .np-metrics strong{font-size:25px}}
+@media print{.november-plan details>*{display:block!important}.november-plan .np-strategy>summary{display:flex!important}.november-plan .np-strategy{overflow:visible;break-inside:auto}.november-plan .np-action{break-inside:avoid}.november-plan .np-buttons,.november-plan .np-expand{display:none!important}.november-plan .np-strategy-map a{color:#563d75}.november-plan .np-total-goal{box-shadow:none}.november-plan .np-section{break-inside:auto}}

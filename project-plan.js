@@ -712,6 +712,16 @@ function applyProjectPlans(archive) {
       regions:JSON.parse(JSON.stringify(base.regions)),views,planOnly:true
     };
   }
+  // The shared organization directory includes these three additional stores.
+  // Keep October's historical reporting scope unchanged.
+  const november=archive.months['2026-11'];
+  if(november){
+    for(const [region,store] of [['徐汇大区','徐汇二店'],['滨江古北大区','Hmall中心店'],['滨江古北大区','Hmall旗舰店']]){
+      const group=november.regions.find(r=>r.name===region);
+      if(group&&!group.stores.includes(store))group.stores.push(store);
+      november.views['store:'+store]||={scope:'store',role:'店总',name:store,region,store,sections:[],kpis:[],title:store};
+    }
+  }
   return archive;
 }
 function planAvailable() { return ['2026-10','2026-11'].includes(currentMonth); }
@@ -728,7 +738,7 @@ function renderModeControls() {
   });
   document.getElementById('copy-report').textContent = currentMode === 'plan' ? '复制当前计划' : currentMode === 'daily' ? '复制推动话术' : '复制当前复盘';
   document.getElementById('copy-progress-image').hidden = !['daily','review'].includes(currentMode) || (!!DATA?.planOnly && currentMode==='review');
-  document.querySelector('.nav-label').textContent = 'CONTENTS / '+({plan:'项目计划',review:'结果复盘',daily:'日常推动',expense:'费用核账',admin:'数据管理'}[currentMode]||'项目工作台');
+  document.querySelector('.nav-label').textContent = 'CONTENTS / '+({plan:'项目规划',review:'结果复盘',daily:'日常推动',expense:'费用核销',admin:'数据管理'}[currentMode]||'项目工作台');
 }
 function setViewMode(mode) {
   // Capture the scope before replacing DATA. Operational views add live
@@ -841,6 +851,17 @@ function renderOctoberPlan(view) {
 function renderProject(view) {
   currentView=view; tableModels.clear(); tableSerial=0; syncPlanScope(view);
   const nov=currentMonth==='2026-11';
+  if(nov&&window.WBNovemberPlan){
+    document.title='11月感恩月 · 项目规划｜'+view.name;
+    const sections=window.WBNovemberPlan.navigation||[['plan-goals','完整目标'],['plan-strategies','四项核心策略'],['plan-delivery','进程与验收']];
+    document.getElementById('nav').innerHTML=sections.map(([id,title],i)=>`<a href="#${id}"><span class="nav-no">0${i+1}</span><span>${esc(title)}</span></a>`).join('');
+    document.getElementById('report').innerHTML=window.WBNovemberPlan.render(view);
+    ['toolbar','scope-panel','report'].forEach(id=>document.getElementById(id).hidden=false);
+    document.getElementById('status').hidden=true;document.getElementById('word-download').hidden=true;
+    document.getElementById('copy-report').disabled=false;document.getElementById('print-report').disabled=false;
+    document.querySelector('.scope-note').textContent='总目标与四项策略全司共用；在日常推动中按大区、门店查看任务、更新实际结果并完成验收。';
+    highlight();return;
+  }
   document.title=(nov?NOVEMBER_PLAN.title:'10月在售业主面见计划')+'｜'+view.name;
   const nav=nov?['背景、定位与目标支撑','对象分层与量化目标','职责与全月落地计划','运营规则与交付验收']:['10月目标与口径','10月落地安排','职责与资料说明'];
   const ids=nov?['plan-goals','plan-targets','plan-actions','plan-delivery']:['plan-goals','plan-actions','plan-decisions'];
@@ -872,6 +893,7 @@ function render(view,syncUrl=false) {
   renderModeControls();
 }
 function exportProjectText() {
+  if(currentMonth==='2026-11'&&window.WBNovemberPlan?.text)return window.WBNovemberPlan.text(currentView);
   if(currentMonth==='2026-10') return exportText({...currentView,sections:currentView.sections.filter(s=>['goals','week'].includes(s.id))});
   const p=NOVEMBER_PLAN;
   const parts=[p.title,p.theme,p.status,p.period,'查看范围：'+currentView.name,'','项目背景',...p.background,'','项目定位',...p.positioning,'','总目标',p.goal,'','通过做什么',...p.approach.flatMap((a,i)=>[(i+1)+'. '+a.title,a.text]),'','进一步解决什么问题',...p.problems.flatMap((problem,i)=>[(i+1)+'. '+problem.title,'当前表现：'+problem.situation,'项目要解决：'+problem.resolve]),'','最终形成什么结果',...p.outcomes.map(o=>o.title+'｜'+o.text)];
