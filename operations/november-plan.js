@@ -802,12 +802,162 @@
     {id:3,title:'目标过程管理',tagline:'把差距落实为下一步',why:actions.find(a=>a.strategy===3).why,businessLink:'销售中心承担邀约、面见质量和业务推进；项目组与BP看清到店到组的进度、行为变化和所需支持。',roles:'项目负责人逐店共识并推动卡点解决；店总向下承接；大区BP汇总协调；店面BP跟进事实、反馈和复查。'},
     {id:4,title:'正反馈激励与标杆运营',tagline:'主动发现，及时认可',why:actions.find(a=>a.strategy===4).why,businessLink:'从真实行动和顾客反馈提炼可学的一步，经店总、经理带动其他伙伴尝试，回看是否出现行为和结果变化。',roles:'店面BP主动发现、追问核实、及时分享；大区BP汇聚；项目组每日运营；店总、经理认可并带动学习。'}
   ];
-  const goal = '以11月感恩月为契机，推动全体伙伴将“感恩利他、顾客至上”从文化理解转化为面向全量顾客的主动服务行动。通过感恩表达、分层连接、专业服务和持续跟进，让顾客在不同服务阶段都能够感受到丽兹行伙伴的主动、专业与温度；进而深化顾客关系、建立信任，形成可学习、可传播、可复制的优质服务行动；最终支撑顾客对伙伴与丽兹行的认可、信任和选择，以及11月业务结果。';
+  const goalNarrative = {
+  "flow": [
+    {
+      "label": "总目标",
+      "text": "以11月感恩月为契机，推动全体伙伴将“感恩利他、顾客至上”从文化理解转化为面向全量顾客的主动服务行动。围绕在售业主、非在售业主、已成交客户和未成交客户的不同关系与服务阶段开展分层连接，以在售业主为★S级重点，同时向保安、物业、管家等服务协作伙伴表达感谢，让感恩进入真实服务。"
+    },
+    {
+      "label": "通过",
+      "text": "项目组面向21家店，以目标共识、物料与资源支持、目标过程管理、正反馈激励与标杆运营四项策略提供支持：通过全司、大区和单店多场景共识，将目标、责任与行动逐层落实到店、组和伙伴；通过贺卡、礼品、hmall图、线上及纸质报告等感性与理性工具，降低准备成本，让物料到店可取、使用场景清楚；通过面见数据看板、日晒话术和目标进度图支持每日推动，结合关键动作进展与卡点及时协调帮助；通过BP主动发现、核实和传播真实进步，带动学习与行动。销售中心据此开展感恩表达、顾客沟通、邀约、面见、专业服务与服务约定的持续履行。"
+    },
+    {
+      "label": "进而",
+      "text": "让管理者和伙伴从理解价值走向明确目标、主动行动与认真服务，让各店的安排和行为真实发生变化；让BP清楚每天推动什么、怎么做、可使用哪些工具、遇到问题找谁支持；让顾客在不同服务阶段感到自己被记得、需求被理解、托付被认真对待，在持续获得有价值的服务中深化关系、建立信任；让个人的优质实践转化为组织可学习、可传播、可复制的服务方法，形成持续行动的正向循环。"
+    },
+    {
+      "label": "最终效果",
+      "text": "对顾客，形成专业、主动、有温度的服务体验与长期连接；对伙伴，在创造顾客价值、获得顾客认可和优秀做法被学习的过程中，获得价值感、成就感和持续行动的动力；对平台，让丽兹行的品牌价值在真实服务中被理解、信任和选择，沉淀可持续使用的服务工具、顾客关系与优秀案例，进一步支撑委托、再次合作、转介绍、开单、成交及11月业务目标；对项目协作，形成从规划承接、日常推动、问题支持到周月复盘的完整闭环。"
+    }
+  ],
+  "boundary": "项目组和BP服务销售中心的店总、经理与伙伴，负责共识、资源、工具、过程支持与正反馈运营；店总负责单店组织和结果，经理与伙伴负责具体顾客服务和业务推进。以下说明目标的实现逻辑，具体做法、负责人、时间和验收标准在Part 2的四项策略、35项动作中逐项展开。",
+  "customerScope": {
+    "title": "明确全量顾客对象、行动优先级和连接深度",
+    "text": "按照在售业主、非在售业主、已成交客户、未成交客户，以及保安、物业、管家等服务协作群体分类，明确不同对象的行动方式；其中在售业主为★S级重点，重点推动深度服务与线下面见。",
+    "more": "店总与经理结合有效顾客名单、真实关系和当前需求，明确线上感恩表达、带看、面见等不同服务场景及连接深度。在售业主关注全盘、门店TOP与户型TOP；礼品和物料配合专业服务使用。保安、物业、管家等协作群体单独记录，顾客沟通和后续服务由销售中心承接。"
+  },
+  "pathways": [
+    {
+      "title": "策略一｜目标共识：从理解价值到真实行动",
+      "paragraphs": [
+        "通过全司启动视频、单店文化研讨和管理者层层共识，让伙伴理解为什么开展感恩月、为什么要感恩顾客、要向谁表达，以及如何把感恩落实到具体服务中。",
+        "项目负责人负责全司月会、全司店总会共识与文化研讨方案输出，并将目标共识到单店店总；店总主持单店启动大会、文化研讨和日常早会；大区BP承接每周大区店总会及每日晒数据时的目标共识；店面BP协助落地并确认实际效果。",
+        "共识的结果要体现为管理者和伙伴能讲清目的、对象、目标、责任与下一步，并已有具体安排和行为变化。启动和行动包发布、研讨方案输出后，继续确认接收、理解、承接与执行；行为没有变化时查明原因，再共识或补充支持。"
+      ]
+    },
+    {
+      "title": "策略二｜物料与资源支持：让伙伴拿得到、用得上",
+      "paragraphs": [
+        "为伙伴提供贺卡、分场景表达话术、礼品选择，以及hmall图、市场报告、成交信息等专业服务工具，帮助伙伴减少准备成本，把更多时间用于理解顾客和提供服务。",
+        "项目负责人统筹资源信息、文件版本和交付节点，并检核各店准备情况；店面BP协助礼品选购落地、贺卡及hmall图印刷。贺卡由BP与店总结合目标量，确定伙伴线上定制、批量印刷空白贺卡手写或组合使用；礼品持续确认哪些店、哪些组已选购、受阻在哪里、需要什么帮助。",
+        "hmall图先确认现有印刷数量、版本和可用情况，按需求补齐；建议单店准备约20份A3卡纸或A3塑封版本供本月使用。到店后明确公用存放位置、领取归还方式，以及带看、面见客户等使用场景，方便伙伴随取随用并由BP统一保管。",
+        "《韧性向前》上海城市报告按本周确认供应商、定稿并发送线上版本，下周推进纸质印刷、预计11月15日前分发的计划执行；逐店确认接收、数量与取用方式。物料支持与现有费用规则相衔接，采购、分摊和报销核对进入费用核销模块。"
+      ]
+    },
+    {
+      "title": "策略三｜目标过程管理：让目标进展与行动承接都看得清",
+      "paragraphs": [
+        "由店总和经理结合本店顾客名单、历史达成和当前资源，明确重点对象、服务场景、责任人、行动节奏及量化目标，确保全司行动能够被每家门店真正承接。",
+        "日目标管理聚焦面见：复用统一导入的业务数据，形成全司、大区、单店数据看板，提供对应范围的日晒话术与目标进度图，支持BP结合全盘、门店TOP和户型TOP的目标、进展、差距，推动店总和经理明确下一步。数值以导入数据及明确的统计截止时间为准，BP补充现场判断、卡点与下一步。",
+        "项目负责人从全司视角查看21家店关键动作的实际结果，必要时追踪到组；区分尚未更新、经核实未行动、正在推进、等待支持和已完成。共识、物料准备等节点动作保留已有结果，发生变化时更新；日常推动记录当天的进展和问题，完成后按标准验收，每周回看支持是否有效。",
+        "提醒同时给出下一步做法、可用物料和协助入口。BP提出的问题需要明确承接人、下一步、反馈时间及复查结果；项目负责人和大区BP根据原因协调资源、再次共识或介入推动，让过程管理帮助门店解决问题、推进目标。"
+      ]
+    },
+    {
+      "title": "策略四｜正反馈激励与标杆运营：让真实进步持续被看见",
+      "paragraphs": [
+        "持续记录伙伴行动、顾客反馈、关系变化和业务变化，通过内部征集、正向传播、即时激励和标杆分享，让好的服务被看见、被学习、被复制。",
+        "店面BP每日结合所负责门店的数据变化和行为变化，主动留意哪些店、组、伙伴开始行动，哪些服务方式得到顾客认可，哪些小进步值得分享；从系统记录、店会、现场观察和伙伴交流中发现线索，补全真实场景、具体动作、顾客回应及可学习的一步。",
+        "有核实的正反馈及时分享，由店总、经理给予即时认可，大区BP汇聚，项目负责人组织全司每日正反馈运营和周度学习。以每天都有真实内容可传播为运营方向，大小进步都可以；当天暂无素材如实记录并继续寻找，不给每店设置每日硬性案例配额。",
+        "持续回看分享后哪些伙伴尝试了做法、发生了什么变化；未行动或长期无进展的门店，BP将具体原因和所需帮助反馈项目负责人，再次共识、协调并跟进结果。"
+      ]
+    }
+  ],
+  "problems": [
+    {
+      "title": "感恩文化认知还没有充分转化为具体服务行动",
+      "situation": "伙伴知道“感恩利他、顾客至上”是丽兹行的重要文化，但还需要进一步理解：为什么要感恩顾客、应该向哪些顾客表达、感谢什么，以及如何结合真实关系和服务场景采取行动。当前的感恩表达容易停留在一句“谢谢”、一张贺卡或一次节日问候上，还没有完全进入主动联系、专业服务、认真准备的面见和持续履行服务约定。",
+      "resolve": "让伙伴从“知道感恩”走向“知道如何通过服务表达感恩”。"
+    },
+    {
+      "title": "伙伴有服务意愿，但缺少直接可用的工具和行动支持",
+      "situation": "很多伙伴愿意主动服务顾客，但在实际行动中仍然需要自己准备：面对不同顾客应该表达什么，使用什么贺卡、话术和专业物料，如何选择合适的心意与礼物，如何发起邀约并准备面见，以及面见后应该如何持续服务。这会导致伙伴准备成本较高、门店行动差异较大，也容易出现“有礼物但缺少服务内容”“有表达但没有后续行动”的情况。",
+      "resolve": "提供可直接使用、又能结合顾客关系进行个性化调整的感性与理性服务工具，以及清晰的费用和使用规则，让伙伴把更多精力用于理解顾客和创造服务价值。"
+    },
+    {
+      "title": "顾客连接仍然较多围绕业务需求发生，缺少主动、持续的服务",
+      "situation": "过去我们与顾客的联系，较多发生在顾客产生买房、卖房、带看、委托或成交需求时。当顾客暂时没有明确业务需求，主动联系和持续服务就容易减少。但不动产服务贯穿需求了解、房源选择、资产维护、委托、成交及成交后的长期服务，顾客关系不能只在产生业务机会时才重新启动。",
+      "resolve": "借助感恩月增加主动联系和有价值的服务连接，让顾客持续感受到自己被记得、需求被理解、托付被认真对待；让一次感恩表达能够进入真实服务，并形成后续连接。"
+    },
+    {
+      "title": "优质服务仍较多停留在个体行为，没有形成组织层面的学习与复制",
+      "situation": "目前很多伙伴已经在顾客服务中做出了有价值的行动，也获得了顾客认可，但这些服务往往分散在个人记录、系统反馈或门店沟通中。组织层面还缺少对优质服务的持续挖掘、事实核实、正向传播、及时激励和学习复制。顾客感受、关系变化、服务价值及业务变化，也没有被完整连接起来。",
+      "resolve": "通过全月持续运营，挖掘真实顾客反馈和服务案例，讲清楚伙伴做了什么、顾客感受到了什么、关系与业务发生了什么变化，并通过标杆分享和及时激励，让好的服务被看见、被学习、被更多伙伴复制。"
+    },
+    {
+      "title": "方案已发布，但接收、理解和落地效果还需要逐店确认",
+      "situation": "11月3日启动及行动包发布已完成，文化研讨方案已输出；这些已知交付还不能说明21家店都已接收、理解并开始执行。礼品选购、物料印刷、研讨安排和目标拆解需要逐店、必要时逐组核实，明确卡在哪里。",
+      "resolve": "把“安排了什么、谁来承接、何时完成、实际结果如何、未完成需要什么支持”连接起来。以理解、安排和行为变化确认共识效果，未解决事项持续跟进到有实际结论。"
+    },
+    {
+      "title": "过程记录还需要转化为BP推动门店的实际帮助",
+      "situation": "BP每天既要推动面见目标，也要协助共识、物料准备和标杆发现。如果提醒只要求更新状态，缺少具体做法、现成工具与资源回应，就会增加记录负担；项目负责人也难以判断门店缺少的是认知、方法、资源还是推进。",
+      "resolve": "复用业务数据，提供分层看板、可复制话术和进度图；关键动作配套方法、物料及参考做法，BP只补充实际进展、卡点和需要的支持。求助明确承接人和反馈时间，完成后复查，让BP的反馈带来帮助、让项目负责人看见支持效果。"
+    }
+  ],
+  "outcomes": [
+    {
+      "title": "对顾客",
+      "text": "让顾客在不同服务阶段感受到丽兹行伙伴的专业、主动和温度，更了解伙伴与丽兹行，并在持续获得有价值的服务中逐步建立信任和长期连接。",
+      "evidence": "关注顾客的真实回应、需求理解、价格与心态信息、关系变化及服务约定的履行情况；面见数量与顾客获得的服务价值共同呈现。"
+    },
+    {
+      "title": "对伙伴",
+      "text": "让伙伴真正理解感恩如何进入顾客服务，借助工具开展主动行动，并在创造顾客价值、获得顾客认可和优秀做法被学习的过程中，获得价值感、成就感和持续行动的动力。",
+      "evidence": "关注伙伴是否理解服务价值、能使用工具主动行动，好的做法是否得到及时认可、是否被其他伙伴学习和尝试。"
+    },
+    {
+      "title": "对平台",
+      "text": "让丽兹行的品牌价值在顾客的真实服务体验中被理解、信任和选择，沉淀可持续使用的服务工具、顾客关系和优秀案例，并进一步支撑委托、再次合作、转介绍、开单及成交等业务结果。",
+      "evidence": "由销售管理者核实委托、再次合作、转介绍、开单和成交等真实进展，说明与服务行动的关联及其他影响因素；业务变化按事实记录，作为项目贡献和持续经营的依据。"
+    },
+    {
+      "title": "对BP与项目协作",
+      "text": "让BP能够看清所负责门店的目标差距和当日重点，直接取用方法、物料与传播工具，主动发现进步，并在遇到卡点时获得及时支持。让项目负责人看清21家店关键动作、所需资源和实际结果，形成规划、日推动、每日验收、周月复盘相衔接的工作方式。",
+      "evidence": "关注问题是否有人承接、资源是否按节点补齐、解决后行动是否继续推进，以及周复盘是否形成明确的下周目标、动作、责任人与复查时间。"
+    }
+  ],
+  "background": [
+    "11月的感恩月，不是照搬一个节日，也不是因为只有11月才需要感恩。它是丽兹行以“感恩利他”为文化基础，每年在11月集中回看我们从顾客、伙伴和社会中获得的支持，集中表达感谢，并将感谢转化为实际行动的文化行动月。",
+    "感恩不是简单地说一句“谢谢”，也不只是一张贺卡或一份礼物，而是看见他人的价值、记得彼此的关系，并愿意用实际行动回应每一份信任。",
+    "在丽兹行，感恩月有不同的行动承载：对内，通过“国王与天使”表达伙伴之间的感恩与关怀；对社会，通过爱心义卖等行动表达对社会和祖国的感恩与回馈；对顾客，今年进一步增加“顾客感恩连接”这条行动主线，让感恩真正进入顾客服务。",
+    "我们感谢业主给予我们资产服务与房产维护的机会，感谢客户让我们参与其置业与资产决策，感谢成交顾客持续给予信任，也感谢保安、物业、管家等服务协作伙伴提供的支持。因此，今年感恩月希望把感谢落实到一次主动联系、一份有用的信息、一场认真准备的面见和一件真正完成的服务中。",
+    "感恩要表达，表达要进入服务，服务要让顾客真正感受到。"
+  ],
+  "positioning": [
+    "这是一个以感恩为主题的“全量顾客连接行动”。",
+    "项目组将销售中心的店总、经理和伙伴视为内部顾客，通过提供感恩文化共识、顾客对象梳理、连接工具、行动物料、目标进度管理、费用规则和全月运营支持，帮助销售中心更好地开展顾客服务。",
+    "销售中心面向全量外部顾客，根据不同关系和服务阶段开展分层连接：在售业主是本次行动的★S级重点；同时覆盖非在售业主、已成交客户和未成交客户；保安、物业、管家等服务协作群体纳入感谢行动，并单独分类记录。",
+    "这个项目不只是“在售业主面见计划”，不只是一次节日送礼活动，也不是单纯为了增加面见数量。它要推动伙伴把“感恩利他、顾客至上”从文化认知转化为主动、持续、有温度的顾客服务，在服务中深化关系、建立信任，进而支撑顾客长期经营和11月业务结果。"
+  ],
+  "measurement": [
+    "同时看认知是否清楚、行为是否变化、目标是否推进、顾客是否有真实反馈。会议举办、方案发送、物料印刷和案例发布分别记录对应交付，还要继续看理解、取用、行动及学习效果。",
+    "业务结果和关键动作分别呈现，再结合分析。面见数据复用系统导入，统一组织范围、分母和截止时间；面见套数按房源去重，面见次数合计不去重，礼品送出单独记录。单店目标分解和执行结果以逐店确认及实际数据为准。",
+    "周月复盘连接“目标—进展—差距—原因—下一步支持”，以事实说明项目贡献和业务变化。顾客认可、关系变化与优质服务本身也是价值；业务结果由销售中心核实和持续经营。"
+  ]
+};
+  const goal = goalNarrative.flow.map(part=>part.label+'：'+part.text).join("\n");
   const goals = [
-    {id:'understanding',title:'对内认知',what:'管理者和伙伴理解为什么做、向谁表达、怎样把感恩落到服务中。',evidence:'能讲清目的和服务价值，知道本店目标、行动包入口及自己的第一步。'},
-    {id:'action',title:'内部践行',what:'21家店承接目标，管理者组织行动，BP提供共识、物料、过程和正反馈支持。',evidence:'查看实际安排和行为变化：哪些店组已行动、哪些待核实、哪些需要支持；不能以已发消息代替落地。'},
-    {id:'customer',title:'顾客感受与业务价值',what:'完成全量感恩表达，重点深化在售业主面见，让顾客感受到主动、专业与温度。',evidence:'同时看覆盖与面见进度、真实顾客反馈、关系变化和业务进展；委托、转介绍、成交等由销售管理者核实。'}
-  ];
+  {
+    "id": "understanding",
+    "title": "对内认知",
+    "what": "让管理者和伙伴共同理解感恩月的文化意义、顾客服务价值、全量对象与重点，以及本店的目标、责任和行动方式，能够把“感恩利他、顾客至上”讲成具体的服务行动。",
+    "evidence": "能讲清为什么做、向谁表达、怎么服务；知道行动包入口和自己的第一步。共识后有对象、重点场景、责任人、时间及实际行为变化，需要时再次共识。"
+  },
+  {
+    "id": "action",
+    "title": "内部践行",
+    "what": "让21家店真正承接规划。店总带动经理和伙伴，BP提供共识、物料、目标推动和正反馈支持，帮助伙伴做好准备、主动服务，并将遇到的问题推进到有结论。",
+    "evidence": "查看店、组的真实安排和进展，物料是否到店可取用，目标是否落实，卡点是否得到回应，标杆是否被分享和采用；按实际结果记录、验收和复盘。"
+  },
+  {
+    "id": "customer",
+    "title": "顾客感受与业务价值",
+    "what": "完成全量感恩表达，重点深化在售业主面见与专业服务，让顾客感到被记得、需求被理解、托付被认真对待，在关系与信任持续积累中支撑长期经营和11月业务目标。",
+    "evidence": "同时看覆盖与面见进度、真实顾客反馈、服务及关系变化、伙伴成长和业务进展；委托、再次合作、转介绍、开单与成交由销售管理者核实。"
+  }
+];
   const metrics = [
     {value:'21家',label:'项目覆盖门店',note:'按现有组织名册承接，任务按授权BP负责范围分派。'},
     {value:'100%',label:'线上感恩表达',note:'以有效客户和业主名单为分母；服务协作群体单列。'},
@@ -861,11 +1011,16 @@
   function strategyCard(s){const group=actions.filter(a=>a.strategy===s.id);return `<details class="np-strategy" id="nov-strategy-${s.id}"><summary><span class="np-strategy-number">0${s.id}</span><span class="np-strategy-heading"><strong>${E(s.title)}</strong><span>${E(s.tagline)}</span></span><span class="np-count">${group.length}项动作</span><span class="np-expand" aria-hidden="true">＋</span></summary><div class="np-strategy-content"><div class="np-strategy-why"><span>为什么这样做 · Why</span><p>${E(s.why)}</p></div><div class="np-strategy-context"><p><strong>销售中心的业务承接</strong>${E(s.businessLink)}</p><p><strong>角色分工</strong>${E(s.roles)}</p></div><div class="np-action-list">${group.map(actionRow).join('')}</div></div></details>`;}
   function render(view={}){
     const scopeName=view.scope==='store'?view.store||view.name:view.scope==='region'?view.region||view.name:'全司';
-    const total=`<article class="np-total-goal"><div class="np-overline">总目标 · 完整呈现</div><h3>让感恩进入服务，让行动支撑目标</h3><div class="np-goal-flow"><p><strong>总目标</strong>以11月感恩月为契机，推动全体伙伴将“感恩利他、顾客至上”从文化理解转化为面向全量顾客的主动服务行动。</p><p><strong>通过</strong>感恩表达、分层连接、专业服务和持续跟进，让顾客在不同服务阶段都能够感受到丽兹行伙伴的主动、专业与温度。</p><p><strong>进而</strong>深化顾客关系、建立信任，形成可学习、可传播、可复制的优质服务行动。</p><p><strong>最终效果</strong>支撑顾客对伙伴与丽兹行的认可、信任和选择，以及11月业务结果。</p></div><p class="np-goal-support">项目组以目标共识、物料资源、目标过程管理、正反馈与标杆运营四项策略支持21家店；销售中心将支持落实为顾客沟通、邀约、面见和专业服务。</p></article>`;
+    const paragraphs=items=>items.map(text=>'<p>'+E(text)+'</p>').join('');
+    const detail=(id,title,html)=>'<details class="np-support np-goal-detail" id="'+id+'"><summary>'+E(title)+'</summary><div class="np-support-body">'+html+'</div></details>';
+    const total=`<article class="np-total-goal"><div class="np-overline">总目标 · 完整呈现</div><h3>让感恩进入服务，让行动支撑目标</h3><div class="np-goal-flow">${goalNarrative.flow.map(part=>'<p><strong>'+E(part.label)+'</strong><span>'+E(part.text)+'</span></p>').join('')}</div><p class="np-goal-support">${E(goalNarrative.boundary)}</p></article>`;
+    const paths=detail('nov-goal-paths','通过什么｜顾客分层与四项支持路径',`<article class="np-goal-explanation"><h3>${E(goalNarrative.customerScope.title)}</h3>${paragraphs([goalNarrative.customerScope.text,goalNarrative.customerScope.more])}</article>${goalNarrative.pathways.map(path=>'<article class="np-goal-explanation"><h3>'+E(path.title)+'</h3>'+paragraphs(path.paragraphs)+'</article>').join('')}`);
+    const changes=detail('nov-goal-changes','进而改变什么｜六类问题与预期变化',goalNarrative.problems.map((problem,i)=>`<article class="np-goal-explanation"><h3>${i+1}. ${E(problem.title)}</h3><p>${E(problem.situation)}</p><p class="np-goal-result"><strong>希望带来的变化</strong>${E(problem.resolve)}</p></article>`).join(''));
+    const effects=detail('nov-goal-effects','最终实现什么｜顾客、伙伴、平台与协作效果',goalNarrative.outcomes.map(outcome=>`<article class="np-goal-explanation"><h3>${E(outcome.title)}</h3><p>${E(outcome.text)}</p><p class="np-goal-result"><strong>观察与复盘依据</strong>${E(outcome.evidence)}</p></article>`).join(''));
     const goalCards=`<div class="np-subgoals">${goals.map((g,i)=>`<article><span class="np-overline">子目标 0${i+1}</span><h3>${E(g.title)}</h3><p>${E(g.what)}</p><p class="np-evidence"><strong>看什么结果</strong>${E(g.evidence)}</p></article>`).join('')}</div>`;
     const targetCards=`<div class="np-metrics">${metrics.map(m=>`<article><span>${E(m.label)}</span><strong>${E(m.value)}</strong><p>${E(m.note)}</p></article>`).join('')}</div><p class="np-note">量化目标沿用工作台现有11月口径，单店目标分解、分母和责任需逐店确认。数字是计划目标，实际达成以导入业务数据为准；礼品送出与面见分别记录。</p>`;
-    const background=`<details class="np-support"><summary>展开项目背景、顾客对象与衡量原则</summary><div class="np-support-body"><h3>为什么开展感恩月</h3><p>感恩月以“感恩利他”为文化基础，集中回看顾客、伙伴和社会给予的支持，并将感谢转化为实际行动。感恩是看见他人的价值、回应信任，让顾客在真实服务中感受到主动、专业与温度。</p><p>对内的国王与天使、对社会的爱心义卖沿既有安排开展。本项目重点承接顾客感恩连接；项目组把店总、经理和伙伴作为内部服务对象，提供可执行的支持。</p><h3>向谁表达，重点放在哪里</h3><ul><li><strong>在售业主：</strong>本月重点对象，结合礼品、贺卡、hmall图与专业报告深化面见。</li><li><strong>非在售业主、已成交客户、未成交客户：</strong>按真实关系和需求开展感恩表达与有价值的服务。</li><li><strong>保安、物业、管家等服务协作群体：</strong>纳入感谢行动，单独分类记录。</li></ul><h3>怎样衡量项目价值</h3><p>同时看认知是否清楚、行为是否变化、目标是否推进、顾客是否有真实反馈。结果统计保持同一分母和截止时间；委托、转介绍、成交等变化由销售管理者核实，呈现项目贡献和其他业务因素。</p></div></details>`;
-    const planGoals=section('plan-goals','01','Part 1｜项目目标','总目标始终展开；详细背景按需查看。先对齐想拿到的结果，再查看支撑它的策略。',total+goalCards+targetCards+background);
+    const background=detail('nov-goal-background','背景与定位｜感恩月的完整说明与衡量原则',`<article class="np-goal-explanation"><h3>为什么开展感恩月</h3>${paragraphs(goalNarrative.background)}</article><article class="np-goal-explanation"><h3>项目定位与服务对象</h3>${paragraphs(goalNarrative.positioning)}</article><article class="np-goal-explanation"><h3>怎样衡量项目价值</h3>${paragraphs(goalNarrative.measurement)}</article>`);
+    const planGoals=section('plan-goals','01','Part 1｜项目目标','总目标完整展开；实现路径、预期变化、各方效果与背景说明可展开阅读。复制方案时保留全部内容。',total+paths+changes+effects+goalCards+targetCards+background);
     const strategyOverview=`<div class="np-strategy-map">${strategies.map(s=>`<a href="#nov-strategy-${s.id}" data-np-open="${s.id}"><span>策略 ${s.id}</span><strong>${E(s.title)}</strong><small>${E(s.tagline)}</small></a>`).join('')}</div><p class="np-note"><strong>从策略到动作：</strong>展开下方任一策略，查看具体做法、负责人、时间与验收标准。35项动作保留完整明细，日常检核按角色和日期承接。</p>`;
     const planActions=section('plan-actions','02','Part 2｜核心策略与落地动作','四项策略共同支持销售中心目标。每项策略说明为什么做，并落实到谁在什么时间做什么。',strategyOverview+strategies.map(strategyCard).join(''));
     const schedule=`<div class="np-cadence">${cadence.map(c=>`<article><div><strong>${E(c.date)}</strong><span>${E(c.kind)}</span></div><div><h3>${E(c.title)}</h3><p>${E(c.text)}</p></div></article>`).join('')}</div>`;
@@ -875,7 +1030,17 @@
     const hero=`<header class="hero plan-hero np-hero"><div class="eyebrow">LANDZ · NOVEMBER 2026</div><div class="plan-title-line"><h1>11月感恩月｜项目规划与执行</h1><span class="plan-badge">11月4日共创更新</span></div><p class="plan-theme">感恩相连，服务有光</p><div class="meta-row"><span>${E(scopeName||'全司')} · 共享规划</span><span>2026年11月1日—11月30日</span><span>21家店 · 四项策略 · 35项行动</span></div><p class="np-hero-note">规划明确目标和动作，实际推进与验收结果在日常推动中持续更新。</p></header>`;
     return `<div class="november-plan">${hero}${planGoals}${planActions}${planTargets}${section('plan-delivery','04','从规划承接到日检核与周复盘','规划、执行与复盘使用对应的行动编号，保留推进和验收结果。',daily)}<footer class="footer"><span>上海丽兹行 · 11月感恩月项目</span><span>2026/11/04 共创更新</span></footer></div>`;
   }
-  function exportText(){return ['11月感恩月｜项目规划','2026年11月4日共创更新','总目标',goal,'',...goals.flatMap(g=>[g.title,g.what,'看什么结果：'+g.evidence]),'',...metrics.map(m=>m.label+'：'+m.value+'；'+m.note),'','四项核心策略',...strategies.flatMap(s=>['','策略'+s.id+'｜'+s.title,'Why：'+s.why,'与业务的关联：'+s.businessLink,...actions.filter(a=>a.strategy===s.id).flatMap(a=>['',a.id+' '+a.title,'How：'+a.how,'Who：'+a.owner+'；'+a.collaborators,'When：'+a.when,'验收：'+a.acceptance,'业务关联：'+a.businessLink,a.knownFact?'已知事实：'+a.knownFact:''])])].filter(x=>x!==undefined).join('\n');}
+  function exportText(){return [
+    '11月感恩月｜项目规划','2026年11月4日共创更新','',goal,'',goalNarrative.boundary,
+    '','通过什么｜顾客分层与四项支持路径',goalNarrative.customerScope.title,goalNarrative.customerScope.text,goalNarrative.customerScope.more,
+    ...goalNarrative.pathways.flatMap(path=>['',path.title,...path.paragraphs]),
+    '','进而改变什么｜六类问题与预期变化',...goalNarrative.problems.flatMap((p,i)=>['',(i+1)+'. '+p.title,p.situation,'希望带来的变化：'+p.resolve]),
+    '','最终实现什么｜顾客、伙伴、平台与协作效果',...goalNarrative.outcomes.flatMap(o=>['',o.title,o.text,'观察与复盘依据：'+o.evidence]),
+    '','三个子目标',...goals.flatMap(g=>[g.title,g.what,'看什么结果：'+g.evidence]),
+    '','量化目标',...metrics.map(m=>m.label+'：'+m.value+'；'+m.note),
+    '','项目背景',...goalNarrative.background,'','项目定位与服务对象',...goalNarrative.positioning,'','衡量原则',...goalNarrative.measurement,
+    '','四项核心策略',...strategies.flatMap(s=>['','策略'+s.id+'｜'+s.title,'Why：'+s.why,'与业务的关联：'+s.businessLink,...actions.filter(a=>a.strategy===s.id).flatMap(a=>['',a.id+' '+a.title,'How：'+a.how,'Who：'+a.owner+'；'+a.collaborators,'When：'+a.when,'验收：'+a.acceptance,'业务关联：'+a.businessLink,a.knownFact?'已知事实：'+a.knownFact:''])])
+  ].filter(x=>x!==undefined).join('\n');}
   if(typeof document!=='undefined')document.addEventListener('click',e=>{const link=e.target.closest('[data-np-open]');if(link){const target=document.getElementById('nov-strategy-'+link.dataset.npOpen);if(target)target.open=true;}});
-  root.WBNovemberPlan={version,title:'11月感恩月｜项目规划与执行',status:'11月4日共创更新 · 按实际结果逐项检核',theme:'感恩相连，服务有光',period:'2026年11月1日—11月30日',goal,goals,metrics,strategies,actions,executionActions,render,exportText,text:exportText,navigation:[['plan-goals','Part 1 · 项目目标'],['plan-actions','Part 2 · 核心策略与动作'],['plan-targets','执行节奏与角色承接'],['plan-delivery','日检核与周复盘承接']],nav:[{id:'plan-goals',title:'Part 1 · 项目目标'},{id:'plan-actions',title:'Part 2 · 核心策略与动作'},{id:'plan-targets',title:'执行节奏与角色承接'},{id:'plan-delivery',title:'日检核与周复盘承接'}]};
+  root.WBNovemberPlan={version,title:'11月感恩月｜项目规划与执行',status:'11月4日共创更新 · 按实际结果逐项检核',theme:'感恩相连，服务有光',period:'2026年11月1日—11月30日',goalNarrative,goal,goals,metrics,strategies,actions,executionActions,render,exportText,text:exportText,navigation:[['plan-goals','Part 1 · 项目目标'],['plan-actions','Part 2 · 核心策略与动作'],['plan-targets','执行节奏与角色承接'],['plan-delivery','日检核与周复盘承接']],nav:[{id:'plan-goals',title:'Part 1 · 项目目标'},{id:'plan-actions',title:'Part 2 · 核心策略与动作'},{id:'plan-targets',title:'执行节奏与角色承接'},{id:'plan-delivery',title:'日检核与周复盘承接'}]};
 })(window);

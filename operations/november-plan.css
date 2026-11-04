@@ -30,6 +30,14 @@
 .november-plan .np-support-body p,.november-plan .np-support-body li{font-size:14px;line-height:1.9}
 .november-plan .np-support-body ul{padding-left:20px;margin:8px 0}
 .november-plan .np-support-body li+li{margin-top:7px}
+.november-plan .np-goal-detail{margin:12px 0}
+.november-plan .np-goal-detail>summary{line-height:1.7}
+.november-plan .np-goal-explanation{padding:0 0 15px}
+.november-plan .np-goal-explanation+.np-goal-explanation{border-top:1px solid var(--np-line)}
+.november-plan .np-goal-explanation:last-child{padding-bottom:0}
+.november-plan .np-goal-explanation p{margin:10px 0}
+.november-plan .np-goal-explanation .np-goal-result{background:var(--np-tint);border-radius:10px;padding:13px 16px;color:#65517e}
+.november-plan .np-goal-result strong{display:block;font-size:12px;color:#8254cc;margin-bottom:4px}
 .november-plan .np-strategy-map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}
 .november-plan .np-strategy-map a{border:1px solid #dfd1f9;border-radius:14px;text-decoration:none;background:linear-gradient(145deg,#fff,#f8f3ff);padding:18px;display:grid;gap:8px;color:inherit;transition:background .15s,box-shadow .15s}
 .november-plan .np-strategy-map a:hover{background:#f4edff;box-shadow:0 5px 16px #9676c91a}
