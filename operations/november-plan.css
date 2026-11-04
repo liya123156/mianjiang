@@ -38,6 +38,24 @@
 .november-plan .np-goal-explanation p{margin:10px 0}
 .november-plan .np-goal-explanation .np-goal-result{background:var(--np-tint);border-radius:10px;padding:13px 16px;color:#65517e}
 .november-plan .np-goal-result strong{display:block;font-size:12px;color:#8254cc;margin-bottom:4px}
+.november-plan .np-target-summary strong{color:var(--np-purple)}
+.november-plan .np-target-regions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:18px 0}
+.november-plan .np-target-region{min-width:0;border:1px solid var(--np-line);border-radius:13px;background:#fff;padding:17px}
+.november-plan .np-target-region header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.november-plan .np-target-region h3{margin:0;font-size:16px}
+.november-plan .np-target-region header>strong{font-size:25px;color:var(--np-purple);white-space:nowrap}
+.november-plan .np-target-region header small{font-size:12px;margin-left:4px}
+.november-plan .np-target-table{width:100%;min-width:0;border-collapse:collapse;font-size:13px;table-layout:fixed}
+.november-plan .np-target-table caption{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.november-plan .np-target-table th,.november-plan .np-target-table td{padding:10px 0;border-bottom:1px solid #eee7f7;line-height:1.6;text-align:left;overflow-wrap:anywhere;background:transparent}
+.november-plan .np-target-table th:first-child{width:72%}
+.november-plan .np-target-table th:last-child,.november-plan .np-target-table td{text-align:right}
+.november-plan .np-target-table thead th{color:var(--np-muted);font-size:12px;font-weight:600}
+.november-plan .np-target-table tbody th{font-weight:400}
+.november-plan .np-target-table td{font-weight:700;color:#72529d}
+.november-plan .np-target-table tbody tr:last-child>*{border-bottom:0}
+@media(max-width:1100px){.november-plan .np-target-regions{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.november-plan .np-target-regions{grid-template-columns:1fr}.november-plan .np-target-breakdown .np-support-body{padding:6px 15px 16px}}
 .november-plan .np-strategy-map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}
 .november-plan .np-strategy-map a{border:1px solid #dfd1f9;border-radius:14px;text-decoration:none;background:linear-gradient(145deg,#fff,#f8f3ff);padding:18px;display:grid;gap:8px;color:inherit;transition:background .15s,box-shadow .15s}
 .november-plan .np-strategy-map a:hover{background:#f4edff;box-shadow:0 5px 16px #9676c91a}

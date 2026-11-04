@@ -810,7 +810,7 @@
     },
     {
       "label": "通过",
-      "text": "项目组面向21家店，以目标共识、物料与资源支持、目标过程管理、正反馈激励与标杆运营四项策略提供支持：通过全司、大区和单店多场景共识，将目标、责任与行动逐层落实到店、组和伙伴；通过贺卡、礼品、hmall图、线上及纸质报告等感性与理性工具，降低准备成本，让物料到店可取、使用场景清楚；通过面见数据看板、日晒话术和目标进度图支持每日推动，结合关键动作进展与卡点及时协调帮助；通过BP主动发现、核实和传播真实进步，带动学习与行动。销售中心据此开展感恩表达、顾客沟通、邀约、面见、专业服务与服务约定的持续履行。"
+      "text": "项目组面向21家店，通过以下四项策略提供支持：\n一、目标共识：通过全司、大区和单店多场景共识，将目标、责任与行动逐层落实到店、组和伙伴。\n二、物料与资源支持：通过贺卡、礼品、hmall图、线上及纸质报告等感性与理性工具，降低准备成本，让物料到店可取、使用场景清楚。\n三、目标过程管理：通过面见数据看板、日晒话术和目标进度图支持每日推动，结合关键动作进展与卡点及时协调帮助。\n四、正反馈激励与标杆运营：通过BP主动发现、核实和传播真实进步，带动学习与行动。\n销售中心据此开展感恩表达、顾客沟通、邀约、面见、专业服务与服务约定的持续履行。"
     },
     {
       "label": "进而",
@@ -933,7 +933,7 @@
   ],
   "measurement": [
     "同时看认知是否清楚、行为是否变化、目标是否推进、顾客是否有真实反馈。会议举办、方案发送、物料印刷和案例发布分别记录对应交付，还要继续看理解、取用、行动及学习效果。",
-    "业务结果和关键动作分别呈现，再结合分析。面见数据复用系统导入，统一组织范围、分母和截止时间；面见套数按房源去重，面见次数合计不去重，礼品送出单独记录。单店目标分解和执行结果以逐店确认及实际数据为准。",
+    "业务结果和关键动作分别呈现，再结合分析。面见数据复用系统导入，统一组织范围、分母和截止时间；面见套数按房源去重，面见次数合计不去重，礼品送出单独记录。单店面见量目标沿用已确认的大区与门店拆解，实际执行结果以导入数据及门店反馈为准。",
     "周月复盘连接“目标—进展—差距—原因—下一步支持”，以事实说明项目贡献和业务变化。顾客认可、关系变化与优质服务本身也是价值；业务结果由销售中心核实和持续经营。"
   ]
 };
@@ -961,7 +961,7 @@
   const metrics = [
     {value:'21家',label:'项目覆盖门店',note:'按现有组织名册承接，任务按授权BP负责范围分派。'},
     {value:'100%',label:'线上感恩表达',note:'以有效客户和业主名单为分母；服务协作群体单列。'},
-    {value:'300套',label:'11月全司面见目标',note:'工作台现有目标；单店分解与基数需逐店确认。'},
+    {id:'meeting-total',value:'300套',label:'11月全司面见目标',note:'已拆解至大区和门店，展开下方查看各组织目标。'},
     {value:'≥20%',label:'全盘在售面见率',note:'去重面见房源 ÷ 当月在售房源；重复面见次数另列。'},
     {value:'≥40%',label:'门店TOP / 户型TOP',note:'两类分别按本类在售基数核算，不直接相加。'}
   ];
@@ -1004,6 +1004,15 @@
   ]);
   const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const lines=s=>E(s).replace(/\n/g,'<br>');
+  function targetPlan(){return root.WBOperations?.novemberTargets?.()||null;}
+  function goalMetrics(){const p=targetPlan();return metrics.map(m=>m.id==='meeting-total'&&Number.isFinite(p?.total)?{...m,value:p.total+'套'}:m);}
+  const targetCoverageNote='项目执行覆盖21家店；现有面见量目标拆解表列明18家店。徐汇二店、Hmall中心店和Hmall旗舰店未在该表列示独立套数目标。';
+  function targetBreakdownHtml(){
+    const p=targetPlan();
+    if(!p)return '<details class="np-support"><summary>展开大区与单店面见目标</summary><div class="np-support-body"><p>目标明细暂未加载，请刷新页面后查看。</p></div></details>';
+    return `<details class="np-support np-target-breakdown" id="nov-target-breakdown"><summary>展开大区与单店面见目标｜${p.regions.length}个大区 · ${p.total}套</summary><div class="np-support-body"><p class="np-target-summary">全司目标 <strong>${p.total}套</strong>，已拆解至${p.regions.length}个大区、${p.stores.length}家门店；大区与门店目标合计均为${p.total}套。</p><div class="np-target-regions">${p.regions.map(region=>`<article class="np-target-region"><header><h3>${E(region.name)}</h3><strong>${region.target}<small>套</small></strong></header><table class="np-target-table"><caption>${E(region.name)}单店面见目标</caption><thead><tr><th scope="col">门店</th><th scope="col">11月目标</th></tr></thead><tbody>${p.stores.filter(store=>store.region===region.name).map(store=>`<tr><th scope="row">${E(store.store)}</th><td>${store.target}套</td></tr>`).join('')}</tbody></table></article>`).join('')}</div><p class="np-note">${E(targetCoverageNote)}</p></div></details>`;
+  }
+  function targetBreakdownText(){const p=targetPlan();return p?['','大区与单店面见目标','全司目标：'+p.total+'套（'+p.regions.length+'个大区、'+p.stores.length+'家门店已拆解）',...p.regions.flatMap(region=>['',region.name+'：'+region.target+'套',...p.stores.filter(store=>store.region===region.name).map(store=>'  '+store.store+'：'+store.target+'套')]),targetCoverageNote]:['','大区与单店面见目标：明细暂未加载'];}
   function section(id,no,title,subtitle,html){return `<section id="${id}" class="section np-section" aria-labelledby="${id}-title"><div class="section-head"><span class="section-no">${no}</span><h2 id="${id}-title">${E(title)}</h2></div><p class="section-summary">${E(subtitle)}</p>${html}</section>`;}
   function actionRow(a){
     return `<article class="np-action" id="nov-action-${E(a.id.replace('.','-'))}"><div class="np-action-main"><span class="np-action-id">行动 ${E(a.id)}</span><h4>${E(a.title)}</h4><p>${E(a.how)}</p>${a.knownFact?`<p class="np-fact"><strong>已知事实</strong>${E(a.knownFact)}</p>`:''}${a.trigger?`<p class="np-trigger"><strong>触发时跟进</strong>${E(a.trigger)}</p>`:''}<p class="np-business"><strong>连接业务</strong>${E(a.businessLink)}</p></div><dl class="np-action-meta"><div><dt>谁来干 · Who</dt><dd>${E(a.owner)}${a.collaborators?`<span>${E(a.collaborators)}</span>`:''}</dd></div><div><dt>什么时间 · When</dt><dd>${lines(a.when)}<small>${E(a.scheduleBasis)}</small></dd></div><div><dt>如何验收</dt><dd>${E(a.acceptance)}</dd></div></dl></article>`;
@@ -1013,14 +1022,14 @@
     const scopeName=view.scope==='store'?view.store||view.name:view.scope==='region'?view.region||view.name:'全司';
     const paragraphs=items=>items.map(text=>'<p>'+E(text)+'</p>').join('');
     const detail=(id,title,html)=>'<details class="np-support np-goal-detail" id="'+id+'"><summary>'+E(title)+'</summary><div class="np-support-body">'+html+'</div></details>';
-    const total=`<article class="np-total-goal"><div class="np-overline">总目标 · 完整呈现</div><h3>让感恩进入服务，让行动支撑目标</h3><div class="np-goal-flow">${goalNarrative.flow.map(part=>'<p><strong>'+E(part.label)+'</strong><span>'+E(part.text)+'</span></p>').join('')}</div><p class="np-goal-support">${E(goalNarrative.boundary)}</p></article>`;
+    const total=`<article class="np-total-goal"><div class="np-overline">总目标 · 完整呈现</div><h3>让感恩进入服务，让行动支撑目标</h3><div class="np-goal-flow">${goalNarrative.flow.map(part=>'<p><strong>'+E(part.label)+'</strong><span>'+lines(part.text)+'</span></p>').join('')}</div><p class="np-goal-support">${E(goalNarrative.boundary)}</p></article>`;
     const paths=detail('nov-goal-paths','通过什么｜顾客分层与四项支持路径',`<article class="np-goal-explanation"><h3>${E(goalNarrative.customerScope.title)}</h3>${paragraphs([goalNarrative.customerScope.text,goalNarrative.customerScope.more])}</article>${goalNarrative.pathways.map(path=>'<article class="np-goal-explanation"><h3>'+E(path.title)+'</h3>'+paragraphs(path.paragraphs)+'</article>').join('')}`);
     const changes=detail('nov-goal-changes','进而改变什么｜六类问题与预期变化',goalNarrative.problems.map((problem,i)=>`<article class="np-goal-explanation"><h3>${i+1}. ${E(problem.title)}</h3><p>${E(problem.situation)}</p><p class="np-goal-result"><strong>希望带来的变化</strong>${E(problem.resolve)}</p></article>`).join(''));
     const effects=detail('nov-goal-effects','最终实现什么｜顾客、伙伴、平台与协作效果',goalNarrative.outcomes.map(outcome=>`<article class="np-goal-explanation"><h3>${E(outcome.title)}</h3><p>${E(outcome.text)}</p><p class="np-goal-result"><strong>观察与复盘依据</strong>${E(outcome.evidence)}</p></article>`).join(''));
     const goalCards=`<div class="np-subgoals">${goals.map((g,i)=>`<article><span class="np-overline">子目标 0${i+1}</span><h3>${E(g.title)}</h3><p>${E(g.what)}</p><p class="np-evidence"><strong>看什么结果</strong>${E(g.evidence)}</p></article>`).join('')}</div>`;
-    const targetCards=`<div class="np-metrics">${metrics.map(m=>`<article><span>${E(m.label)}</span><strong>${E(m.value)}</strong><p>${E(m.note)}</p></article>`).join('')}</div><p class="np-note">量化目标沿用工作台现有11月口径，单店目标分解、分母和责任需逐店确认。数字是计划目标，实际达成以导入业务数据为准；礼品送出与面见分别记录。</p>`;
+    const targetCards=`<div class="np-metrics">${goalMetrics().map(m=>`<article><span>${E(m.label)}</span><strong>${E(m.value)}</strong><p>${E(m.note)}</p></article>`).join('')}</div><p class="np-note">全司面见量目标已完成大区与门店拆解，明细在下方展开查看。面见率按对应在售基数核算；此处展示计划目标，实际达成以导入业务数据为准，礼品送出与面见分别记录。</p>`;
     const background=detail('nov-goal-background','背景与定位｜感恩月的完整说明与衡量原则',`<article class="np-goal-explanation"><h3>为什么开展感恩月</h3>${paragraphs(goalNarrative.background)}</article><article class="np-goal-explanation"><h3>项目定位与服务对象</h3>${paragraphs(goalNarrative.positioning)}</article><article class="np-goal-explanation"><h3>怎样衡量项目价值</h3>${paragraphs(goalNarrative.measurement)}</article>`);
-    const planGoals=section('plan-goals','01','Part 1｜项目目标','总目标完整展开；实现路径、预期变化、各方效果与背景说明可展开阅读。复制方案时保留全部内容。',total+paths+changes+effects+goalCards+targetCards+background);
+    const planGoals=section('plan-goals','01','Part 1｜项目目标','总目标与全司量化目标直接展示；实现路径、效果说明及大区和单店目标可展开查看。复制方案时保留全部内容。',total+paths+changes+effects+goalCards+targetCards+targetBreakdownHtml()+background);
     const strategyOverview=`<div class="np-strategy-map">${strategies.map(s=>`<a href="#nov-strategy-${s.id}" data-np-open="${s.id}"><span>策略 ${s.id}</span><strong>${E(s.title)}</strong><small>${E(s.tagline)}</small></a>`).join('')}</div><p class="np-note"><strong>从策略到动作：</strong>展开下方任一策略，查看具体做法、负责人、时间与验收标准。35项动作保留完整明细，日常检核按角色和日期承接。</p>`;
     const planActions=section('plan-actions','02','Part 2｜核心策略与落地动作','四项策略共同支持销售中心目标。每项策略说明为什么做，并落实到谁在什么时间做什么。',strategyOverview+strategies.map(strategyCard).join(''));
     const schedule=`<div class="np-cadence">${cadence.map(c=>`<article><div><strong>${E(c.date)}</strong><span>${E(c.kind)}</span></div><div><h3>${E(c.title)}</h3><p>${E(c.text)}</p></div></article>`).join('')}</div>`;
@@ -1037,7 +1046,7 @@
     '','进而改变什么｜六类问题与预期变化',...goalNarrative.problems.flatMap((p,i)=>['',(i+1)+'. '+p.title,p.situation,'希望带来的变化：'+p.resolve]),
     '','最终实现什么｜顾客、伙伴、平台与协作效果',...goalNarrative.outcomes.flatMap(o=>['',o.title,o.text,'观察与复盘依据：'+o.evidence]),
     '','三个子目标',...goals.flatMap(g=>[g.title,g.what,'看什么结果：'+g.evidence]),
-    '','量化目标',...metrics.map(m=>m.label+'：'+m.value+'；'+m.note),
+    '','量化目标',...goalMetrics().map(m=>m.label+'：'+m.value+'；'+m.note),...targetBreakdownText(),
     '','项目背景',...goalNarrative.background,'','项目定位与服务对象',...goalNarrative.positioning,'','衡量原则',...goalNarrative.measurement,
     '','四项核心策略',...strategies.flatMap(s=>['','策略'+s.id+'｜'+s.title,'Why：'+s.why,'与业务的关联：'+s.businessLink,...actions.filter(a=>a.strategy===s.id).flatMap(a=>['',a.id+' '+a.title,'How：'+a.how,'Who：'+a.owner+'；'+a.collaborators,'When：'+a.when,'验收：'+a.acceptance,'业务关联：'+a.businessLink,a.knownFact?'已知事实：'+a.knownFact:''])])
   ].filter(x=>x!==undefined).join('\n');}
