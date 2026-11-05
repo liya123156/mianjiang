@@ -41,6 +41,36 @@
     }
     return {type:'table',variant:'progress',title:`${scope.store||scope.region||'全司'}面见及礼物进展`,columns,columnGroups:groups(month),rows:output};
   }
+  const rankedRates={met_rate:['met','stock'],store_top_rate:['store_top_met','store_top_stock'],unit_top_rate:['unit_top_met','unit_top_stock']};
+  const rateRankStoreKey=row=>JSON.stringify([text(row.region),text(row.store)]);
+  function rateRankCounts(row,key){
+    const fields=rankedRates[key];if(!fields||row?._level!=='store'||!text(row.store))return null;
+    const raw=fields.map(field=>row[field]);
+    if(raw.some(value=>value==null||typeof value==='boolean'||text(value)===''))return null;
+    const [count,base]=raw.map(Number);
+    return Number.isFinite(count)&&Number.isFinite(base)&&count>=0&&base>0?{count,base}:null;
+  }
+  // Keep display percentages untouched. Compare original counts across all company stores,
+  // so rounded percentages and the currently selected organization cannot change the ranks.
+  function withRateRanks(block,companyRows=[]){
+    if(!block)return block;
+    const ranks=new Map(),stores=(companyRows||[]).filter(row=>row._level==='store');
+    const compare=(a,b)=>a.count*b.base-b.count*a.base;
+    for(const key of Object.keys(rankedRates)){
+      const eligible=stores.map(row=>({row,counts:rateRankCounts(row,key)})).filter(entry=>entry.counts);
+      if(eligible.length<2)continue;
+      let lowest=eligible[0].counts,highest=lowest;
+      for(const {counts} of eligible){if(compare(counts,lowest)<0)lowest=counts;if(compare(counts,highest)>0)highest=counts;}
+      if(compare(lowest,highest)===0)continue;
+      for(const {row,counts} of eligible){
+        const rank=compare(counts,highest)===0?'highest':compare(counts,lowest)===0?'lowest':'';
+        if(rank){const id=rateRankStoreKey(row),marks=ranks.get(id)||{};marks[key]=rank;ranks.set(id,marks);}
+      }
+    }
+    return {...block,rows:(block.rows||[]).map(row=>({...row,_rateRanks:row._level==='store'?{...(ranks.get(rateRankStoreKey(row))||{})}:{}}))};
+  }
+  function rateRankSymbol(row,key){const rank=row?._level==='store'?row._rateRanks?.[key]:null;return rank==='highest'?'👍':rank==='lowest'?'❗':'';}
+  function rateRankLabel(row,key){const rank=row?._level==='store'?row._rateRanks?.[key]:null;return rank==='highest'?'全司单店最高（含并列）':rank==='lowest'?'全司单店最低（含并列）':'';}
   function snapshot(rows,goals,asOf){return unique(active(rows).map(r=>r['门店'])).map(store=>{const g=rows.filter(r=>r['门店']===store);return {region:g[0]['大区'],store,payload:{asOf,...metrics(g),target:goals[store]??null,groups:unique(active(g).map(r=>r['店组'])).map(group=>({group,...metrics(g.filter(r=>r['店组']===group))}))}};});}
   function delta(current,previous){
     if(!previous)return {known:false,newMet:0,newGift:0};
@@ -99,6 +129,6 @@
     }
     return {received,refunded,companyReceived,balances:[...balances].filter(([,amount])=>amount!==0).map(([name,amount])=>({name,amount}))};
   }
-  root.WBModel={text,number,flag,pct,unique,active,inScope,metrics,table,snapshot,delta,validateImport,split,ledger,expenseCandidates,expenseRecords,cashSettlement,uuid};
+  root.WBModel={text,number,flag,pct,unique,active,inScope,metrics,table,withRateRanks,rateRankSymbol,rateRankLabel,snapshot,delta,validateImport,split,ledger,expenseCandidates,expenseRecords,cashSettlement,uuid};
   if(typeof module==='object')module.exports=root.WBModel;
 })(typeof window==='object'?window:globalThis);

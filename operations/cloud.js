@@ -22,8 +22,13 @@
  function archiveUrl(path,downloadName=''){const base=url+'/storage/v1/object/public/'+archiveBucket+'/'+encodedPath(path);return downloadName?base+'?download='+encodeURIComponent(downloadName):base;}
  async function loadArchives(month){const rows=await request('wb_public_archives',{p_month:month});return (Array.isArray(rows)?rows:[]).map(x=>({...x,url:archiveUrl(x.object_path),downloadUrl:archiveUrl(x.object_path,x.original_name)}));}
  async function load(month){
-  const [data,archives,directory]=await Promise.all([member?api('load',{p_month:month}):request('wb_public_daily',{p_month:month}),loadArchives(month),member?api('load',{p_month:'2000-01'}):Promise.resolve(null)]);
-  return {...data,archives,directory:(directory?.items||[]).filter(x=>x.kind==='review'&&x.payload.recordType==='leadership'),loadedAt:new Date().toISOString()};
+  const scoped=Boolean(member);
+  // Private operations keep their authorized scope. Public progress supplies only the
+  // already-public company comparison, including when a BP is viewing one region/store.
+  const [data,archives,directory,publicProgress]=await Promise.all([scoped?api('load',{p_month:month}):request('wb_public_daily',{p_month:month}),loadArchives(month),scoped?api('load',{p_month:'2000-01'}):Promise.resolve(null),scoped?request('wb_public_daily',{p_month:month}).catch(()=>null):Promise.resolve(null)]);
+  const shownImport=data.imports?.[0],publicImport=publicProgress?.imports?.[0];
+  const sameImport=shownImport&&publicImport&&shownImport.as_of===publicImport.as_of&&shownImport.created_at===publicImport.created_at;
+  return {...data,companyProgress:scoped?(sameImport?publicProgress:null):data,archives,directory:(directory?.items||[]).filter(x=>x.kind==='review'&&x.payload.recordType==='leadership'),loadedAt:new Date().toISOString()};
  }
  const rpc=(name,body)=>api(name,body);
  async function plan(action,args={}){

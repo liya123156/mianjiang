@@ -60,6 +60,7 @@
 .progress-table tbody .progress-section-unit-top{--progress-bar:#dce9bd86}
 .progress-table .progress-cell-value{position:relative;z-index:1;display:block}
 .progress-table .progress-rate{white-space:nowrap}
+.progress-ranked-value{display:inline-flex;align-items:center;justify-content:center;gap:1px;white-space:nowrap}.progress-rank-mark{font-size:.9em;line-height:1}.progress-rank-legend{color:var(--muted);font-size:11px;margin-top:6px}@media(min-width:1001px) and (max-width:1250px){.progress-ranked-value{flex-wrap:wrap;column-gap:0}}
 .progress-table .progress-rate-bar{position:absolute;inset:7px;background:linear-gradient(to right,var(--progress-bar) 0,var(--progress-bar) var(--progress-value),transparent var(--progress-value),transparent 100%);border-radius:3px;pointer-events:none}
 .progress-table tbody .progress-zero .progress-cell-value{color:#b24148;font-weight:650}
 @media(max-width:760px){
@@ -153,9 +154,9 @@
 <script type="application/json" id="embedded-review">{"version":"20261026-r6","defaultMonth":"2026-10","years":[2026],"months":{"2026-10":{"meta":{"title":"10月在售业主面见复盘","cutoff":"系统数据截至2026年10月25日","week":"执行周期 10月27—31日","source_note":"数据来源：月度进展、面见及礼物底表、面见反馈明细；动作复盘来自10月26日BP复盘会","pace_note":"进度参考：10/25自然月时间进度80.65%，不替代正式周计划","month":"2026-10","updated_label":"10月26日更新"},"version":"20261026-r6","regions":[{"name":"花木大区","stores":["仁恒河滨城店","碧云店","御翠园店","浦东别墅旗舰店"]},{"name":"陆家嘴大区","stores":["星河湾店","陆家嘴金融中心店","陆家嘴旗舰店","陆家嘴滨江店","顶级豪宅部"]},{"name":"徐汇大区","stores":["嘉御庭公馆店","尚海湾店","徐汇滨江店"]},{"name":"滨江古北大区","stores":["融创滨江壹号院店","长宁古北店"]},{"name":"黄浦大区","stores":["黄浦滨江店","新天地一店","新天地二店","复兴香园店"]}],"views":{"company":{"scope":"company","role":"项目负责人","title":"10月在售业主面见复盘","name":"全司","region":null,"store":null,"kpis":[],"sections":[]}},"candidate_details":[],"word_url":null,"word_filename":""}}}</script>
 <script src="project-plan.js?v=20261104-01"></script>
 <script src="operations/cloud-config.js?v=20261027-11"></script>
-<script src="operations/core.js?v=20261027-11"></script>
+<script src="operations/core.js?v=20261105-ranks-01"></script>
 <script src="operations/xlsx-reader.js?v=20261027-11"></script>
-<script src="operations/cloud.js?v=20261104-01"></script>
+<script src="operations/cloud.js?v=20261105-ranks-01"></script>
 <script src="operations/proof-paste.js?v=20261027-11"></script>
 <script src="operations/voice.js?v=20261027-11"></script>
 <script src="operations/scene.js?v=20261027-11"></script>
@@ -164,11 +165,21 @@
 <script src="operations/workflow.js?v=20261027-11"></script>
 <script src="operations/november-plan.js?v=20261104-goals-03"></script>
 <script src="operations/plan-execution.js?v=20261104-01"></script>
-<script src="operations/ui.js?v=20261104-goals-03"></script>
+<script src="operations/ui.js?v=20261105-ranks-01"></script>
 <script>
 'use strict';
 let progressImageUrl = '';
 let progressImageBusy = false;
+const progressRankLegend = '单店全司排名：👍 最高 · ❗ 最低（并列均标注）';
+function progressRateSymbol(row, key) { return window.WBModel?.rateRankSymbol(row, key) || ''; }
+function progressRateValue(row, key) {
+  const symbol = progressRateSymbol(row, key), value = esc(row[key]);
+  if (!symbol) return value;
+  const label = symbol === '👍' ? '全司门店最高面见率（含并列）' : '全司门店最低面见率（含并列）';
+  return `<span class="progress-ranked-value"><span>${value}</span><span class="progress-rank-mark" role="img" aria-label="${label}" title="${label}">${symbol}</span></span>`;
+}
+function hasProgressRanks(block) { return (block.rows || []).some(row => ['met_rate','store_top_rate','unit_top_rate'].some(key => progressRateSymbol(row, key))); }
+
 
 function progressImagePlan(view, block, month, meta) {
   const identityCount = view.scope === 'company' ? 2 : 4;
@@ -186,7 +197,7 @@ function createProgressImage(view, block, month, meta) {
   const canvas = document.createElement('canvas');
   const scale = 1.5, headerTop = 178, groupHeight = 48, leafHeight = 72;
   const rowHeight = 44, tableBottom = headerTop + groupHeight + leafHeight + plan.rows.length * rowHeight;
-  const height = tableBottom + 74;
+  const height = tableBottom + (hasProgressRanks(block) ? 102 : 74);
   canvas.width = plan.width * scale; canvas.height = height * scale;
   const ctx = canvas.getContext('2d'); if (!ctx) throw Error('canvas unavailable');
   ctx.scale(scale,scale); ctx.fillStyle = '#fffefa'; ctx.fillRect(0,0,plan.width,height);
@@ -199,7 +210,7 @@ function createProgressImage(view, block, month, meta) {
   }
   function textIn(text,x,y,w,h,size,color,bold=false) {
     const compact = String(text ?? '').replace(/\s+/g,'');
-    if (/^\d+(\.\d+)?%$/.test(compact)) {
+    if (/^\d+(\.\d+)?%(?:👍|❗)?$/u.test(compact)) {
       let percentSize = Math.min(size,15);
       fontStyle(percentSize,bold);
       while (percentSize > 10 && ctx.measureText(compact).width > w - 8) { percentSize -= 1; fontStyle(percentSize,bold); }
@@ -233,10 +244,11 @@ function createProgressImage(view, block, month, meta) {
       const fill=rowFills[row._level]||'#fffefa';ctx.fillStyle=fill;ctx.fillRect(x,y,w,rowHeight);
       if(rateKeys.has(col.key)&&/^\d+(\.\d+)?%$/.test(String(value))){ctx.fillStyle=col.key.startsWith('unit_')?'#dce9bd':col.key.startsWith('store_')?'#cbe5d5':'#d9e3ee';ctx.fillRect(x+5,y+8,(w-10)*Math.min(100,parseFloat(value))/100,rowHeight-16);}
       ctx.strokeStyle='#d9d1dd';ctx.lineWidth=.65;ctx.strokeRect(x,y,w,rowHeight);
-      const size=ci<4?17:18;textIn(value,x,y,w,rowHeight,size,'#3d3045',['company','region','store'].includes(row._level));
+      const size=ci<4?17:18;const displayValue=String(value ?? '')+progressRateSymbol(row,col.key);textIn(displayValue,x,y,w,rowHeight,size,'#3d3045',['company','region','store'].includes(row._level));
     }
   }
   fontStyle(15);ctx.fillStyle='#86768d';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('上海丽兹行 · 在售业主面见项目   |   当前在售房源按套统计；“—”为未提供或不适用，“/”为顾问未设目标',plan.padding,tableBottom+23);
+  if(hasProgressRanks(block)){fontStyle(15);ctx.fillText(progressRankLegend,plan.padding,tableBottom+51);}
   return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('image generation failed')),'image/png'));
 }
 function showProgressImage(blob, filename) {
@@ -479,7 +491,7 @@ function renderTable(block) {
         const percent = rateKeys.has(c.key) ? parsedPercent(value) : null;
         const bar = percent == null ? '' : `<span class="progress-rate-bar" style="--progress-value:${percent}%" aria-hidden="true"></span>`;
         const hs = group ? `${id}-p${i}-g${group.index} ${headers[ci]}` : headers[ci];
-        return `<td class="${classes.join(' ')}" headers="${hs}">${bar}<span class="progress-cell-value">${esc(value)}</span></td>`;
+        return `<td class="${classes.join(' ')}" headers="${hs}">${bar}<span class="progress-cell-value">${progressRateValue(row,c.key)}</span></td>`;
       }).join('');
       return `<tr class="${classes}" data-row="${j}" ${progress ? `data-level="${level}"` : ''} ${max > 0 && j >= max ? 'hidden' : ''}>${cells}</tr>`;
     }).join('');
@@ -488,11 +500,11 @@ function renderTable(block) {
   }).join('');
   const mobile = isProgress ? `<div class="progress-mobile">${arr(block.rows).map(row => {
     const title = row._level === 'company' ? '全司' : row._level === 'region' ? row.region : row._level === 'advisor' ? row.name + ' · ' + row.group : row._level === 'group' ? row.group : row.store;
-    const field = col => `<div><dt>${esc(col.label)}</dt><dd>${esc(row[col.key])}</dd></div>`;
+    const field = col => `<div><dt>${esc(col.label)}</dt><dd>${progressRateValue(row,col.key)}</dd></div>`;
     return `<article class="progress-mobile-row level-${esc(row._level)}"><h4>${esc(title)}</h4><dl class="progress-mobile-identity">${block.columns.slice(0,4).map(field).join('')}</dl>${arr(block.columnGroups).map(group => `<h5>${esc(group.label)}</h5><dl class="progress-mobile-metrics">${block.columns.filter(c => group.keys.includes(c.key)).map(field).join('')}</dl>`).join('')}</article>`;
   }).join('')}</div>` : '';
   const candidateHint = tabs.some(t => arr(t.rows).some(row => row._candidate)) && Array.isArray(DATA.candidate_details) ? '<div class="candidate-table-hint">点击候选套数，查看项目、房间号、店组和维护人</div>' : '';
-  return `<div class="block table-box${isProgress ? ' progress-box' : ''}" id="${id}"><div class="table-top"><div><h3 class="table-title">${esc(block.title)}</h3>${block.subtitle ? `<div class="progress-table-subtitle">${esc(block.subtitle)}</div>` : ''}${block.note ? `<div class="table-note">${esc(block.note)}</div>` : ''}${candidateHint}</div>${isProgress ? '<div class="table-copy-actions"><button class="btn primary" type="button" data-copy-progress>复制图片</button></div>' : ''}</div>${tabs.length > 1 ? `<div class="tabs" role="tablist" aria-label="${esc(block.title)}">${tabs.map((t,i) => `<button class="tab" type="button" id="${id}-tab-${i}" role="tab" aria-selected="${!i}" aria-controls="${id}-panel-${i}" tabindex="${i ? -1 : 0}" data-table="${id}" data-tab="${i}">${esc(t.label || t.title)}</button>`).join('')}</div>` : ''}${panels}${mobile}<div class="table-bottom"><span data-count>${arr(tabs[0].rows).length}条记录</span>${max > 0 ? `<button class="show-more" type="button" data-expand="${id}" ${arr(tabs[0].rows).length <= max ? 'hidden' : ''}>显示全部记录 ↓</button>` : ''}</div></div>`;
+  return `<div class="block table-box${isProgress ? ' progress-box' : ''}" id="${id}"><div class="table-top"><div><h3 class="table-title">${esc(block.title)}</h3>${block.subtitle ? `<div class="progress-table-subtitle">${esc(block.subtitle)}</div>` : ''}${block.note ? `<div class="table-note">${esc(block.note)}</div>` : ''}${candidateHint}${isProgress && hasProgressRanks(block) ? `<div class="progress-rank-legend">${progressRankLegend}</div>` : ''}</div>${isProgress ? '<div class="table-copy-actions"><button class="btn primary" type="button" data-copy-progress>复制图片</button></div>' : ''}</div>${tabs.length > 1 ? `<div class="tabs" role="tablist" aria-label="${esc(block.title)}">${tabs.map((t,i) => `<button class="tab" type="button" id="${id}-tab-${i}" role="tab" aria-selected="${!i}" aria-controls="${id}-panel-${i}" tabindex="${i ? -1 : 0}" data-table="${id}" data-tab="${i}">${esc(t.label || t.title)}</button>`).join('')}</div>` : ''}${panels}${mobile}<div class="table-bottom"><span data-count>${arr(tabs[0].rows).length}条记录</span>${max > 0 ? `<button class="show-more" type="button" data-expand="${id}" ${arr(tabs[0].rows).length <= max ? 'hidden' : ''}>显示全部记录 ↓</button>` : ''}</div></div>`;
 }
 
 function renderBlock(b) {
