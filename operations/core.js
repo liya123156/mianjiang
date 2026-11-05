@@ -145,37 +145,81 @@
     return {month,asOf,rows,total,recordCount:rows.length,ignoredSummaryRows,ignoredBlankRows,stores};
   }
   function split(total,weights){const w=sum(weights,x=>x);if(!w)throw Error('超额承担比例合计须大于0');const exact=weights.map(x=>total*x/w),a=exact.map(Math.floor);let remain=total-sum(a,x=>x);const order=exact.map((x,i)=>({i,r:x-a[i]})).sort((x,y)=>y.r-x.r||x.i-y.i);for(let i=0;i<remain;i++)a[order[i].i]++;return a;}
+  function expenseId(e={}){return text(e.expenseId)||text(e.houseId)||(text(e.key).includes('|')?text(e.key).split('|').slice(3).join('|'):'')||text(e.id);}
+  function expenseQuantity(e={}){
+    const raw=e.quantity;
+    if(raw==null||text(raw)==='')return 1;
+    const value=typeof raw==='boolean'?NaN:Number(raw);
+    return Number.isSafeInteger(value)&&value>0?value:NaN;
+  }
+  function expenseAmount(e={}){
+    const unit=typeof e.priceCents==='boolean'?NaN:Number(e.priceCents),quantity=expenseQuantity(e),total=unit*quantity;
+    return Number.isSafeInteger(unit)&&unit>0&&Number.isSafeInteger(total)&&total>0?total:NaN;
+  }
+  const expenseAddressPart=value=>text(value).normalize('NFKC').replace(/[\s\u00a0]/g,'').toLowerCase();
+  const expenseAddress=e=>expenseAddressPart(e.project)&&expenseAddressPart(e.room)?expenseAddressPart(e.project)+'|'+expenseAddressPart(e.room):'';
+  function sameExpenseScope(a,b){return (!a.month||!b.month||a.month===b.month)&&(!a.region||!b.region||a.region===b.region)&&(!a.store||!b.store||canonicalStore(a.store)===canonicalStore(b.store));}
+  function findExpenseDuplicates(candidate,records=[]){
+    const id=expenseId(candidate),house=text(candidate.houseId),address=expenseAddress(candidate);
+    return records.filter(e=>!e.voided&&(!id||expenseId(e)!==id)&&sameExpenseScope(candidate,e)&&((house&&text(e.houseId)===house)||((!house||!text(e.houseId))&&address&&expenseAddress(e)===address)));
+  }
   function ledger(expenses,rules,head={}){
     const r={cap:3000,advisor:300,manager:500,storeContribution:30000,regionContribution:0,extraWeights:[1,1,1],...rules};
-    for(const key of ['cap','advisor','manager','storeContribution','regionContribution'])if(!Number.isInteger(r[key])||r[key]<0)throw Error('费用规则须为非负分币整数');
-    const result={actual:0,advisor:0,manager:0,store:0,region:0,company:0,storeConsumed:0,regionConsumed:0,extraStore:0,missing:0,lines:[],balances:[]};
+    for(const key of ['cap','advisor','manager','storeContribution','regionContribution'])if(!Number.isSafeInteger(r[key])||r[key]<0)throw Error('费用规则须为非负分币整数');
+    if(!Array.isArray(r.extraWeights)||r.extraWeights.length!==3||r.extraWeights.some(w=>!Number.isFinite(w)||w<0)||!Number.isFinite(sum(r.extraWeights,w=>w))||sum(r.extraWeights,w=>w)<=0)throw Error('超额承担比例须为非负数且合计大于0');
+    const result={actual:0,quantity:0,advisor:0,manager:0,store:0,region:0,company:0,storeConsumed:0,regionConsumed:0,extraStore:0,missing:0,lines:[],balances:[]};
     let remainder=0;
-    for(const e of expenses){const price=number(e.priceCents);if(!Number.isInteger(price)||price<=0){result.missing++;continue;}
+    for(const e of expenses){
+      if(e.voided)continue;
+      const price=typeof e.priceCents==='boolean'?NaN:Number(e.priceCents),quantity=expenseQuantity(e),amount=expenseAmount(e);
+      if(!Number.isSafeInteger(amount)||amount<=0){result.missing++;continue;}
       const base=Math.min(price,r.cap),a=Math.min(base,r.advisor),m=Math.min(base-a,r.manager),extra=split(Math.max(0,price-r.cap),r.extraWeights);
-      result.actual+=price;result.advisor+=a+extra[0];result.manager+=m+extra[1];result.extraStore+=extra[2];remainder+=base-a-m;
+      const advisorShare=(a+extra[0])*quantity,managerShare=(m+extra[1])*quantity,extraStoreShare=extra[2]*quantity;
+      result.actual+=amount;result.quantity+=quantity;result.advisor+=advisorShare;result.manager+=managerShare;result.extraStore+=extraStoreShare;remainder+=(base-a-m)*quantity;
+      if([result.actual,result.quantity,result.advisor,result.manager,result.extraStore,remainder].some(n=>!Number.isSafeInteger(n)))throw Error('费用金额或数量超出有效范围，请核对明细');
       if(!e.payer||!e.manager||!e.advisor||!e.proofPath)result.missing++;
-      result.lines.push({...e,advisorShare:a+extra[0],managerShare:m+extra[1],extraStoreShare:extra[2]});
+      if(e.duplicateWarning)result.missing++;
+      result.lines.push({...e,expenseId:expenseId(e),priceCents:price,quantity,amountCents:amount,advisorShare,managerShare,extraStoreShare});
     }
     const openingStore=number(head.openingStore),openingRegion=number(head.openingRegion);
-    if(!Number.isInteger(openingStore)||openingStore<0||!Number.isInteger(openingRegion)||openingRegion<0)throw Error('期初余额须为非负分币整数');
+    if(!Number.isSafeInteger(openingStore)||openingStore<0||!Number.isSafeInteger(openingRegion)||openingRegion<0||!Number.isSafeInteger(openingStore+r.storeContribution)||!Number.isSafeInteger(openingRegion+r.regionContribution))throw Error('期初余额须为有效的非负分币整数');
     result.storeConsumed=Math.min(remainder,openingStore+r.storeContribution);
     result.regionConsumed=Math.min(remainder-result.storeConsumed,openingRegion+r.regionContribution);
     result.company=remainder-result.storeConsumed-result.regionConsumed;
     result.store=result.storeConsumed+result.extraStore;result.region=result.regionConsumed;
     result.closingStore=openingStore+r.storeContribution-result.storeConsumed;result.closingRegion=openingRegion+r.regionContribution-result.regionConsumed;
-    const balances=new Map(),change=(name,v)=>{if(name)balances.set(name,(balances.get(name)||0)+v);};
-    result.lines.forEach(e=>{change(e.payer,e.priceCents);change(e.advisor,-e.advisorShare);change(e.manager,-e.managerShare);});
+    const balances=new Map(),change=(name,v)=>{if(name){const next=(balances.get(name)||0)+v;if(!Number.isSafeInteger(next))throw Error('收付款金额超出有效范围，请核对明细');balances.set(name,next);}};
+    result.lines.forEach(e=>{change(e.payer,e.amountCents);change(e.advisor,-e.advisorShare);change(e.manager,-e.managerShare);});
     change(head.storeHead,-r.storeContribution-result.extraStore);change(head.regionHead,-r.regionContribution);change('公司（待财务报销）',-result.company);
     result.balances=[...balances].filter(([,amount])=>amount!==0).map(([name,amount])=>({name,amount}));
     if(!head.storeHead||(r.regionContribution&&!head.regionHead))result.missing++;
     if(result.actual!==result.advisor+result.manager+result.store+result.region+result.company)throw Error('费用分摊未对平');
     return result;
   }
-  function expenseCandidates(rows,month){return active(rows).filter(r=>flag(r['本月是否送礼物'])).map(r=>({id:month+'|'+r['房源编号'],houseId:text(r['房源编号']),region:r['大区'],store:r['门店'],group:r['店组'],advisor:r['维护人姓名'],project:r['分盘']||r['总盘']||'',room:r['房间号']||''}));}
-  function expenseRecords(rows,items,month,scope){
-    const saved=items.filter(x=>x.kind==='expense'&&x.payload.houseId),assigned=new Map(saved.map(x=>[x.payload.houseId,x]));
-    const output=new Map(expenseCandidates(inScope(rows,scope),month).filter(x=>!assigned.has(x.houseId)||assigned.get(x.houseId).store===scope.store).map(x=>[x.houseId,x]));
-    for(const x of saved.filter(x=>(!scope.region||x.region===scope.region)&&(!scope.store||x.store===scope.store))){const existing=output.get(x.payload.houseId);output.set(x.payload.houseId,{...existing,...x.payload,region:x.region,store:x.store,retained:!existing});}
+  function expenseCandidates(rows,month){return active(rows).filter(r=>flag(r['本月是否送礼物'])&&text(r['房源编号'])).map(r=>({id:month+'|'+r['房源编号'],expenseId:text(r['房源编号']),month,source:'system',houseId:text(r['房源编号']),region:r['大区'],store:canonicalStore(r['门店']),group:r['店组'],advisor:r['维护人姓名'],project:r['分盘']||r['总盘']||'',room:r['房间号']||''}));}
+  function expenseRecords(rows,items,month,scope={}){
+    const saved=(items||[]).filter(x=>x.kind==='expense'&&(!x.month||x.month===month)&&x.payload&&(x.payload.recordType==='gift'||text(x.payload.houseId))).map(x=>({...x.payload,expenseId:expenseId({...x.payload,key:x.key}),month,region:x.region,store:canonicalStore(x.store),key:x.key,updated_at:x.updated_at}));
+    const inExpenseScope=e=>(!scope.region||e.region===scope.region)&&(!scope.store||canonicalStore(e.store)===canonicalStore(scope.store));
+    const assigned=new Map(saved.filter(e=>text(e.houseId)).map(e=>[text(e.houseId),e]));
+    const candidates=expenseCandidates(inScope(rows||[],scope),month).filter(e=>!assigned.has(e.houseId)||inExpenseScope(assigned.get(e.houseId)));
+    const output=new Map(candidates.map(e=>[e.expenseId,e]));
+    const local=saved.filter(inExpenseScope);
+    for(const e of local){
+      const id=expenseId(e);if(!id)continue;
+      const existing=text(e.houseId)?output.get(text(e.houseId)):output.get(id);
+      output.set(id,{...existing,...e,retained:!existing});
+    }
+    // A later import may supply a house ID for an already entered manual gift.
+    // Absorb only an unambiguous same-store address candidate; keep the saved ID
+    // stable until an explicit server-side link, and never merge two real IDs.
+    const unresolved=local.filter(e=>!e.voided&&!text(e.houseId)&&e.source==='manual'&&expenseAddress(e));
+    for(const manual of unresolved){
+      const matches=candidates.filter(c=>sameExpenseScope(manual,c)&&expenseAddress(c)===expenseAddress(manual));
+      const peers=unresolved.filter(e=>sameExpenseScope(e,manual)&&expenseAddress(e)===expenseAddress(manual));
+      if(matches.length===1&&peers.length===1&&!assigned.has(matches[0].houseId)){
+        const c=matches[0];output.delete(c.expenseId);output.set(expenseId(manual),{...c,...manual,matchedHouseId:c.houseId,houseId:'',retained:false});
+      }else if(matches.length||peers.length>1){const current=output.get(expenseId(manual));output.set(expenseId(manual),{...current,duplicateWarning:'同一门店存在相似房源费用，请核实是否重复后再结账。'});}
+    }
     return [...output.values()];
   }
   function cashSettlement(ledger,entries){
@@ -188,6 +232,6 @@
     }
     return {received,refunded,companyReceived,balances:[...balances].filter(([,amount])=>amount!==0).map(([name,amount])=>({name,amount}))};
   }
-  root.WBModel={text,number,flag,pct,unique,canonicalStore,storeCatalog,active,inScope,metrics,meetingCountValue,meetingCountLabel,table,withRateRanks,rateRankSymbol,rateRankLabel,snapshot,delta,validateImport,validateCustomerImport,split,ledger,expenseCandidates,expenseRecords,cashSettlement,uuid};
+  root.WBModel={text,number,flag,pct,unique,canonicalStore,storeCatalog,active,inScope,metrics,meetingCountValue,meetingCountLabel,table,withRateRanks,rateRankSymbol,rateRankLabel,snapshot,delta,validateImport,validateCustomerImport,split,ledger,expenseId,expenseQuantity,expenseAmount,findExpenseDuplicates,expenseCandidates,expenseRecords,cashSettlement,uuid};
   if(typeof module==='object')module.exports=root.WBModel;
 })(typeof window==='object'?window:globalThis);
