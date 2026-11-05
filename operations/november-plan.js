@@ -1006,7 +1006,7 @@
   const lines=s=>E(s).replace(/\n/g,'<br>');
   function targetPlan(){return root.WBOperations?.novemberTargets?.()||null;}
   function goalMetrics(){const p=targetPlan();return metrics.map(m=>m.id==='meeting-total'&&Number.isFinite(p?.total)?{...m,value:p.total+'套'}:m);}
-  const targetCoverageNote='项目执行覆盖21家店；现有面见量目标拆解表列明18家店。徐汇二店、Hmall中心店和Hmall旗舰店未在该表列示独立套数目标。';
+  const targetCoverageNote='项目执行覆盖21家店；现有面见量目标拆解表列明18家店。徐汇一店、Hmall中心店和Hmall旗舰店无在售房源，不涉及业主面见套数目标，单独跟进客户面见累计次数。';
   function targetBreakdownHtml(){
     const p=targetPlan();
     if(!p)return '<details class="np-support"><summary>展开大区与单店面见目标</summary><div class="np-support-body"><p>目标明细暂未加载，请刷新页面后查看。</p></div></details>';

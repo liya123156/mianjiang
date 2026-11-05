@@ -5,41 +5,76 @@
   function uuid(){if(root.crypto.randomUUID)return root.crypto.randomUUID();const b=root.crypto.getRandomValues(new Uint8Array(16));b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;return [...b].map((n,i)=>([4,6,8,10].includes(i)?'-':'')+n.toString(16).padStart(2,'0')).join('');}
   const flag=v=>v===true||['1','是','true'].includes(text(v).toLowerCase());
   const sum=(a,f)=>a.reduce((n,x)=>n+f(x),0), unique=a=>[...new Set(a)], pct=(n,d)=>d?`${(n/d*100).toFixed(2)}%`:'—';
+  function canonicalStore(value){const s=text(value).normalize('NFKC').replace(/\s/g,'');if(s==='徐汇二店')return '徐汇一店';if(/^hmall中心店$/i.test(s))return 'Hmall中心店';if(/^hmall旗舰店$/i.test(s))return 'Hmall旗舰店';return s;}
+  const storeCatalog=[
+    ['花木大区','仁恒河滨城店'],['花木大区','碧云店'],['花木大区','御翠园店'],['花木大区','浦东别墅旗舰店'],
+    ['陆家嘴大区','星河湾店'],['陆家嘴大区','陆家嘴金融中心店'],['陆家嘴大区','陆家嘴旗舰店'],['陆家嘴大区','陆家嘴滨江店'],['陆家嘴大区','顶级豪宅部'],
+    ['徐汇大区','嘉御庭公馆店'],['徐汇大区','尚海湾店'],['徐汇大区','徐汇滨江店'],['徐汇大区','徐汇一店',false],
+    ['滨江古北大区','融创滨江壹号院店'],['滨江古北大区','长宁古北店'],['滨江古北大区','Hmall中心店',false],['滨江古北大区','Hmall旗舰店',false],
+    ['黄浦大区','黄浦滨江店'],['黄浦大区','新天地一店'],['黄浦大区','新天地二店'],['黄浦大区','复兴香园店']
+  ].map(([region,store,ownerApplicable=true])=>Object.freeze({region,store,ownerApplicable}));
+  const catalogByStore=new Map(storeCatalog.map(s=>[s.store,s]));
+  const canonicalGroup=value=>text(value).replace(/^徐汇二店/,'徐汇一店');
+  function customerRow(r){const store=canonicalStore(r.store??r['店面']??r['门店']),aggregateOnly=r.aggregateOnly===true;return {region:text(r.region??r['大区'])||catalogByStore.get(store)?.region||'',store,group:aggregateOnly?'':canonicalGroup(r.group??r['店组'])||'未分组',name:aggregateOnly?'':text(r.name??r['客源维护人'])||'未填写',count:number(r.count??r['[A] 客户面见']??r['[A]客户面见']??r['客户面见次数']),aggregateOnly};}
+  function customerInScope(rows,scope={}){return rows.filter(r=>(!scope.region||r.region===scope.region)&&(!scope.store||r.store===canonicalStore(scope.store))&&(!scope.group||r.group===canonicalGroup(scope.group)));}
   const columns=[['region','大区'],['store','店面'],['group','店组'],['name','姓名'],['target','目标套数'],['target_rate','目标面见率'],['stock','在售套数'],['met','面见量'],['met_count','面见次数'],['met_rate','面见率'],['gift','面见送礼物数量'],['gift_rate','面见送礼物覆盖率'],['store_top_stock','在售套数'],['store_top_met','面见量'],['store_top_met_count','面见次数'],['store_top_rate','面见率'],['unit_top_stock','在售套数'],['unit_top_met','面见量'],['unit_top_met_count','面见次数'],['unit_top_rate','面见率']].map(([key,label])=>({key,label}));
   const groups=month=>[{label:`${Number(month.slice(5))}月目标制定`,keys:['target','target_rate'],tone:'target'},{label:'全盘（月度进展）',keys:['stock','met','met_count','met_rate','gift','gift_rate'],tone:'whole'},{label:'门店Top业主（月度进展）',keys:['store_top_stock','store_top_met','store_top_met_count','store_top_rate'],tone:'store-top'},{label:'户型Top业主（月度进展）',keys:['unit_top_stock','unit_top_met','unit_top_met_count','unit_top_rate'],tone:'unit-top'}];
   function active(rows){return rows.filter(r=>flag(r['细分在售户数']??r['在售户数']));}
-  function inScope(rows,scope){return rows.filter(r=>(!scope.region||r['大区']===scope.region)&&(!scope.store||r['门店']===scope.store)&&(!scope.group||r['店组']===scope.group));}
+  function inScope(rows,scope){return rows.filter(r=>(!scope.region||r['大区']===scope.region)&&(!scope.store||canonicalStore(r['门店'])===canonicalStore(scope.store))&&(!scope.group||canonicalGroup(r['店组'])===canonicalGroup(scope.group)));}
   function metrics(rows,meetings=[]){
     const a=active(rows), met=a.filter(r=>flag(r['本月是否面见'])), gift=met.filter(r=>flag(r['本月是否送礼物']));
     const top=a.filter(r=>flag(r['门店top户数'])),unit=a.filter(r=>flag(r['户型top户数']));
     const houseKey=value=>text(value).replace(/[\s\u00a0]/g,'');
-    const ids=new Set(a.map(r=>houseKey(r['房源编号']))), topIds=new Set(top.map(r=>houseKey(r['房源编号']))), unitIds=new Set(unit.map(r=>houseKey(r['房源编号'])));
-    const hasMeetingRows=Array.isArray(meetings)&&meetings.length>0;
-    const validMeetings=(meetings||[]).filter(r=>ids.has(houseKey(r['房源编号'])));
-    const meetingCount=hasMeetingRows?(validMeetings.length||met.length):met.length;
-    const topMeetingCount=hasMeetingRows?((meetings||[]).filter(r=>topIds.has(houseKey(r['房源编号']))).length||top.filter(r=>flag(r['本月是否面见'])).length):top.filter(r=>flag(r['本月是否面见'])).length;
-    const unitMeetingCount=hasMeetingRows?((meetings||[]).filter(r=>unitIds.has(houseKey(r['房源编号']))).length||unit.filter(r=>flag(r['本月是否面见'])).length):unit.filter(r=>flag(r['本月是否面见'])).length;
-    return {stock:a.length,met:met.length,met_count:meetingCount,gift:gift.length,met_rate:pct(met.length,a.length),gift_rate:pct(gift.length,met.length),store_top_stock:top.length,store_top_met:top.filter(r=>flag(r['本月是否面见'])).length,store_top_met_count:topMeetingCount,store_top_rate:pct(top.filter(r=>flag(r['本月是否面见'])).length,top.length),unit_top_stock:unit.length,unit_top_met:unit.filter(r=>flag(r['本月是否面见'])).length,unit_top_met_count:unitMeetingCount,unit_top_rate:pct(unit.filter(r=>flag(r['本月是否面见'])).length,unit.length),metIds:met.map(r=>text(r['房源编号'])),giftIds:gift.map(r=>text(r['房源编号']))};
+    const eventCounts=new Map();for(const r of meetings||[]){const id=houseKey(r['房源编号']);if(id)eventCounts.set(id,(eventCounts.get(id)||0)+1);}
+    // Reconcile each property before aggregation. A met flag without event detail is
+    // a known minimum of one, not a confirmed event; this keeps every level additive.
+    function counts(houses,key){let confirmed=0,pending=0;for(const r of houses){const n=eventCounts.get(houseKey(r['房源编号']))||0;confirmed+=n;if(!n&&flag(r['本月是否面见']))pending++;}return {[key]:confirmed+pending,[key+'_confirmed']:confirmed,[key+'_pending']:pending};}
+    return {stock:a.length,met:met.length,...counts(a,'met_count'),gift:gift.length,met_rate:pct(met.length,a.length),gift_rate:pct(gift.length,met.length),store_top_stock:top.length,store_top_met:top.filter(r=>flag(r['本月是否面见'])).length,...counts(top,'store_top_met_count'),store_top_rate:pct(top.filter(r=>flag(r['本月是否面见'])).length,top.length),unit_top_stock:unit.length,unit_top_met:unit.filter(r=>flag(r['本月是否面见'])).length,...counts(unit,'unit_top_met_count'),unit_top_rate:pct(unit.filter(r=>flag(r['本月是否面见'])).length,unit.length),metIds:met.map(r=>text(r['房源编号'])),giftIds:gift.map(r=>text(r['房源编号']))};
   }
+  function meetingCountValue(row,key){const value=row?.[key];return number(row?.[key+'_pending'])>0?'≥'+value:value;}
+  function meetingCountLabel(row,key){const pending=number(row?.[key+'_pending']);return pending?`至少${row[key]}次；已匹配${number(row[key+'_confirmed'])}条面见明细，${pending}套已面见房源待补明细`:'';}
   function target(rows,level,name,goals){
     if(level==='store')return goals[name]!=null&&Number.isFinite(Number(goals[name]))?Number(goals[name]):null;
     if(level==='group'||level==='advisor')return null;
     const stores=unique(active(rows).map(r=>r['门店']));
     return stores.length&&stores.every(s=>goals[s]!=null)?sum(stores,s=>number(goals[s])):null;
   }
-  function table(rows,scope,goals,month,meetings=[]){
-    const scoped=inScope(rows,scope), output=[];
-    function add(g,level,name,identity){const houseIds=new Set(g.map(r=>text(r['房源编号']).replace(/[\s\u00a0]/g,'')));const m=metrics(g,(meetings||[]).filter(x=>houseIds.has(text(x['房源编号']).replace(/[\s\u00a0]/g,'')))),t=target(g,level,name,goals);output.push({...identity,...m,target:t??'—',target_rate:t==null?'—':pct(t,m.stock),_level:level,_target:t,_tone:level==='company'||level==='region'?'purple':''});}
-    if(!scope.region&&!scope.store)add(scoped,'company','全司',{region:'全司',store:'/',group:'/',name:'—'});
-    const regions=unique(active(scoped).map(r=>r['大区']));
-    for(const region of regions){const r=scoped.filter(x=>x['大区']===region);if(!scope.store)add(r,'region',region,{region,store:'/',group:'/',name:'—'});
-      for(const store of unique(active(r).map(x=>x['门店']))){const s=r.filter(x=>x['门店']===store);add(s,'store',store,{region,store,group:'/',name:'—'});
-        if(scope.region||scope.store)for(const group of unique(active(s).map(x=>x['店组']))){const g=s.filter(x=>x['店组']===group);add(g,'group',group,{region,store,group,name:'—'});
-          if(scope.store)for(const name of unique(active(g).map(x=>x['维护人姓名']))){add(g.filter(x=>x['维护人姓名']===name),'advisor',name,{region,store,group,name});}
+  function table(rows,scope,goals,month,meetings=[],options={}){
+    scope={...scope,store:scope.store?canonicalStore(scope.store):''};
+    const customerEnabled=month==='2026-11'||options.customerImported===true||(options.customerRows||[]).length>0;
+    const catalog=(options.storeCatalog||(customerEnabled?storeCatalog:[])).map(s=>({...s,store:canonicalStore(s.store),ownerApplicable:s.ownerApplicable??catalogByStore.get(canonicalStore(s.store))?.ownerApplicable??true}));
+    const storeScope={...scope,group:''},selectedCatalog=customerInScope(catalog,storeScope),allCustomerRows=(options.customerRows||[]).map(customerRow),customerRows=customerInScope(allCustomerRows,scope),customerImported=options.customerImported===true;
+    const aggregateRows=customerInScope(allCustomerRows,storeScope).filter(r=>r.aggregateOnly);
+    const normalized=rows.map(r=>({...r,'门店':canonicalStore(r['门店']),'店组':canonicalGroup(r['店组'])}));
+    const scoped=inScope(normalized,scope).filter(r=>!customerEnabled||catalogByStore.get(r['门店'])?.ownerApplicable!==false), output=[];
+    function add(g,c,level,name,identity){
+      const m=metrics(g,meetings),t=target(g,level,name,goals),applicable=!(customerEnabled&&identity.store!=='/'&&catalogByStore.get(identity.store)?.ownerApplicable===false);
+      const row={...identity,...m,target:t??'—',target_rate:t==null?'—':pct(t,m.stock),_level:level,_target:t,_ownerApplicable:applicable,_tone:level==='company'||level==='region'?'purple':''};
+      if(!applicable){for(const column of columns.slice(4))row[column.key]='/';row._target=null;for(const key of ['met_count','store_top_met_count','unit_top_met_count']){row[key+'_confirmed']=0;row[key+'_pending']=0;}}
+      if(customerEnabled){
+        const hasAggregate=aggregateRows.some(r=>level==='company'||(level==='region'?r.region===identity.region:r.store===identity.store));
+        const unavailable=hasAggregate&&(!!scope.group||level==='group'||level==='advisor');
+        row._customerDetailAvailable=!hasAggregate;
+        row._customerCountUnavailable=unavailable;
+        row.customer_count=customerImported?(unavailable?'—':sum(c,r=>r.count)):'待导入';
+      }
+      output.push(row);
+    }
+    if(!scope.region&&!scope.store)add(scoped,customerRows,'company','全司',{region:'全司',store:'/',group:'/',name:'—'});
+    const regions=unique([...active(scoped).map(r=>r['大区']),...selectedCatalog.map(r=>r.region),...customerRows.map(r=>r.region)]).filter(Boolean);
+    for(const region of regions){const r=scoped.filter(x=>x['大区']===region),cr=customerRows.filter(x=>x.region===region),rc=selectedCatalog.filter(x=>x.region===region);if(!scope.store)add(r,cr,'region',region,{region,store:'/',group:'/',name:'—'});
+      for(const store of unique([...active(r).map(x=>x['门店']),...rc.map(x=>x.store),...cr.map(x=>x.store)])){
+        const s=r.filter(x=>x['门店']===store),cs=cr.filter(x=>x.store===store);add(s,cs,'store',store,{region,store,group:'/',name:'—'});
+        if(scope.region||scope.store)for(const group of unique([...active(s).map(x=>x['店组']),...cs.filter(x=>!x.aggregateOnly).map(x=>x.group)])){
+          if(scope.group&&group!==canonicalGroup(scope.group))continue;
+          const g=s.filter(x=>x['店组']===group),cg=cs.filter(x=>!x.aggregateOnly&&x.group===group);add(g,cg,'group',group,{region,store,group,name:'—'});
+          if(scope.store)for(const name of unique([...active(g).map(x=>x['维护人姓名']),...cg.map(x=>x.name)])){add(g.filter(x=>x['维护人姓名']===name),cg.filter(x=>x.name===name),'advisor',name,{region,store,group,name});}
         }
       }
     }
-    return {type:'table',variant:'progress',title:`${scope.store||scope.region||'全司'}面见及礼物进展`,columns,columnGroups:groups(month),rows:output};
+    const tableColumns=customerEnabled?[...columns,{key:'customer_count',label:'本月累计次数'}]:columns;
+    const columnGroups=groups(month);if(customerEnabled)columnGroups.push({label:'客户面见',keys:['customer_count'],tone:'customer'});
+    return {type:'table',variant:'progress',title:`${scope.store||scope.region||'全司'}面见及礼物进展`,columns:tableColumns,columnGroups,rows:output};
   }
   const rankedRates={met_rate:['met','stock'],store_top_rate:['store_top_met','store_top_stock'],unit_top_rate:['unit_top_met','unit_top_stock']};
   const rateRankStoreKey=row=>JSON.stringify([text(row.region),text(row.store)]);
@@ -85,6 +120,30 @@
     if(scopedMeetings.some(r=>text(r['面见时间']).slice(0,10)>asOf))throw Error('面见明细含晚于截止日的记录，请核对');
     return {housing:base.length,inSale:active(base).length,...metrics(base),meetingRecords:scopedMeetings.length};
   }
+  function validateCustomerImport(rawRows,month,asOf,today){
+    const date=new Date(asOf+'T00:00:00Z');
+    if(!/^20\d\d-(0[1-9]|1[0-2])$/.test(month)||!/^\d{4}-\d{2}-\d{2}$/.test(asOf)||!Number.isFinite(date.getTime())||date.toISOString().slice(0,10)!==asOf||asOf.slice(0,7)!==month||asOf>today)throw Error('请选择所选月份内且不晚于今天的数据截止日');
+    if(!Array.isArray(rawRows)||!rawRows.length||rawRows.length>20000)throw Error('客户面见原表须包含1—20000条明细记录');
+    const header=value=>text(value).normalize('NFKC').replace(/[\s\uFEFF]/g,'').toLowerCase();
+    const aliases={store:['店面','门店','store'],group:['店组','group'],name:['客源维护人','客户维护人','name'],count:['[a]客户面见','客户面见','客户面见次数','客户面见总次数','count']};
+    const fields={};for(const key of unique(rawRows.flatMap(r=>Object.keys(r||{})))){const h=header(key);for(const field of Object.keys(aliases))if(aliases[field].includes(h)){if(fields[field]&&fields[field]!==key)throw Error('客户原表存在重复的'+({store:'店面',group:'店组',name:'客源维护人',count:'客户面见次数'}[field])+'列，请保留一列');fields[field]=key;}}
+    for(const [field,label] of [['store','店面'],['group','店组'],['name','客源维护人'],['count','[A] 客户面见']])if(!fields[field])throw Error('客户原表缺少“'+label+'”列');
+    const rows=[];let ignoredSummaryRows=0,ignoredBlankRows=0;
+    const summary=value=>/^(?:全司|全部|总计|合计|小计|总合计|grand\s*total)$/i.test(text(value))||/(?:小计|合计)$/.test(text(value));
+    for(const [i,r] of rawRows.entries()){
+      if(Object.values(r||{}).every(v=>text(v)==='')){ignoredBlankRows++;continue;}
+      const store=canonicalStore(r[fields.store]),group=canonicalGroup(r[fields.group]),name=text(r[fields.name]),value=r[fields.count];
+      if([store,group,name].some(summary)){ignoredSummaryRows++;continue;}
+      const entry=catalogByStore.get(store);if(!entry)throw Error(`第${i+2}行门店“${store||'空白'}”无法匹配21家门店，请核对名称`);
+      if(typeof value==='boolean'||text(value)===''||!(/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.0+)?$/).test(text(value)))throw Error(`第${i+2}行客户面见次数须为非负整数`);
+      const count=Number(text(value).replace(/,/g,''));if(!Number.isSafeInteger(count)||count<0)throw Error(`第${i+2}行客户面见次数须为非负整数`);if(count>1000000000)throw Error(`第${i+2}行客户面见次数超出有效范围，请核对原表`);
+      rows.push({region:entry.region,store,group:group||'未分组',name:name||'未填写',count});
+    }
+    if(!rows.length)throw Error('客户原表没有可导入的门店明细，请保留明细行（次数可为0）');
+    const total=sum(rows,r=>r.count);if(!Number.isSafeInteger(total)||total>20000000000000)throw Error('客户面见合计超出有效整数范围，请核对原表');
+    const stores=storeCatalog.map(s=>({region:s.region,store:s.store,count:sum(rows.filter(r=>r.store===s.store),r=>r.count)}));
+    return {month,asOf,rows,total,recordCount:rows.length,ignoredSummaryRows,ignoredBlankRows,stores};
+  }
   function split(total,weights){const w=sum(weights,x=>x);if(!w)throw Error('超额承担比例合计须大于0');const exact=weights.map(x=>total*x/w),a=exact.map(Math.floor);let remain=total-sum(a,x=>x);const order=exact.map((x,i)=>({i,r:x-a[i]})).sort((x,y)=>y.r-x.r||x.i-y.i);for(let i=0;i<remain;i++)a[order[i].i]++;return a;}
   function ledger(expenses,rules,head={}){
     const r={cap:3000,advisor:300,manager:500,storeContribution:30000,regionContribution:0,extraWeights:[1,1,1],...rules};
@@ -129,6 +188,6 @@
     }
     return {received,refunded,companyReceived,balances:[...balances].filter(([,amount])=>amount!==0).map(([name,amount])=>({name,amount}))};
   }
-  root.WBModel={text,number,flag,pct,unique,active,inScope,metrics,table,withRateRanks,rateRankSymbol,rateRankLabel,snapshot,delta,validateImport,split,ledger,expenseCandidates,expenseRecords,cashSettlement,uuid};
+  root.WBModel={text,number,flag,pct,unique,canonicalStore,storeCatalog,active,inScope,metrics,meetingCountValue,meetingCountLabel,table,withRateRanks,rateRankSymbol,rateRankLabel,snapshot,delta,validateImport,validateCustomerImport,split,ledger,expenseCandidates,expenseRecords,cashSettlement,uuid};
   if(typeof module==='object')module.exports=root.WBModel;
 })(typeof window==='object'?window:globalThis);

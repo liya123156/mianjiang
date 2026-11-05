@@ -25,10 +25,14 @@
   const scoped=Boolean(member);
   // Private operations keep their authorized scope. Public progress supplies only the
   // already-public company comparison, including when a BP is viewing one region/store.
-  const [data,archives,directory,publicProgress]=await Promise.all([scoped?api('load',{p_month:month}):request('wb_public_daily',{p_month:month}),loadArchives(month),scoped?api('load',{p_month:'2000-01'}):Promise.resolve(null),scoped?request('wb_public_daily',{p_month:month}).catch(()=>null):Promise.resolve(null)]);
+  const [data,archives,directory,publicProgress,customer]=await Promise.all([scoped?api('load',{p_month:month}):request('wb_public_daily',{p_month:month}),loadArchives(month),scoped?api('load',{p_month:'2000-01'}):Promise.resolve(null),scoped?request('wb_public_daily',{p_month:month}).catch(()=>null):Promise.resolve(null),month==='2026-11'?request('wb_customer_api',{p_token:scoped?session?.token:null,p_action:'load',p_args:{month}}):Promise.resolve({})]);
   const shownImport=data.imports?.[0],publicImport=publicProgress?.imports?.[0];
   const sameImport=shownImport&&publicImport&&shownImport.as_of===publicImport.as_of&&shownImport.created_at===publicImport.created_at;
-  return {...data,companyProgress:scoped?(sameImport?publicProgress:null):data,archives,directory:(directory?.items||[]).filter(x=>x.kind==='review'&&x.payload.recordType==='leadership'),loadedAt:new Date().toISOString()};
+  return {...data,...customer,companyProgress:scoped?(sameImport?publicProgress:null):data,archives,directory:(directory?.items||[]).filter(x=>x.kind==='review'&&x.payload.recordType==='leadership'),loadedAt:new Date().toISOString()};
+ }
+ async function importCustomerSnapshot({month,asOf,rows,filenames=[]}){
+  if(!session?.token||member?.role!=='project')throw Error('仅项目负责人可导入全司客户面见明细');
+  return request('wb_customer_api',{p_token:session.token,p_action:'import',p_args:{month,asOf,rows,filenames}});
  }
  const rpc=(name,body)=>api(name,body);
  async function plan(action,args={}){
@@ -52,6 +56,6 @@
   if(!response.ok||result.error)throw Error(result.error||result.message||'文件上传失败：'+response.status);
   return {...result.asset,url:archiveUrl(result.asset.object_path),downloadUrl:archiveUrl(result.asset.object_path,result.asset.original_name)};
  }
- root.WBCloud={configured,validateCode,login,membership,logout,load,rpc,plan,saveItem,uploadProof,proofUrl,uploadArchive,archiveUrl,get member(){return member;},get hasSession(){return !!session;},get project(){return member?.role==='project';}};
+ root.WBCloud={configured,validateCode,login,membership,logout,load,rpc,plan,importCustomerSnapshot,saveItem,uploadProof,proofUrl,uploadArchive,archiveUrl,get member(){return member;},get hasSession(){return !!session;},get project(){return member?.role==='project';}};
 })(window);
 

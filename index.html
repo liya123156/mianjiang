@@ -40,6 +40,7 @@
 .progress-table thead .progress-section-target{background:#f6d5dc;color:#853d51}
 .progress-table thead .progress-section-whole{background:#dce8f8;color:#3a5c86}
 .progress-table thead .progress-section-store-top{background:#dcefe5;color:#376b53}
+.progress-table thead .progress-section-customer{background:#eee2fc;color:#7342a0}
 .progress-table thead .progress-section-unit-top{background:#edf3dc;color:#5d7139}
 .progress-table .progress-fixed-0{position:sticky;left:0;z-index:2;box-shadow:1px 0 0 #ddd8e3}
 .progress-table .progress-fixed-1{position:sticky;left:var(--progress-fixed-first);z-index:2;box-shadow:2px 0 0 #d8cfdf,5px 0 8px -7px #38264188}
@@ -152,20 +153,20 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <dialog id="image-dialog" class="image-dialog" aria-labelledby="image-dialog-title"><h2 id="image-dialog-title">面见及礼物进展图片</h2><p id="image-dialog-note">图片已生成，可下载或长按保存后分享。</p><div class="image-dialog-toolbar"><a class="btn primary" id="download-progress-image" href="#" download>下载图片</a><button class="btn" id="close-image-dialog" type="button">关闭</button></div><div class="image-dialog-preview"><img id="progress-image-preview" alt="当前月份与组织范围的完整面见及礼物进展表"></div></dialog>
 <script type="application/json" id="embedded-review">{"version":"20261026-r6","defaultMonth":"2026-10","years":[2026],"months":{"2026-10":{"meta":{"title":"10月在售业主面见复盘","cutoff":"系统数据截至2026年10月25日","week":"执行周期 10月27—31日","source_note":"数据来源：月度进展、面见及礼物底表、面见反馈明细；动作复盘来自10月26日BP复盘会","pace_note":"进度参考：10/25自然月时间进度80.65%，不替代正式周计划","month":"2026-10","updated_label":"10月26日更新"},"version":"20261026-r6","regions":[{"name":"花木大区","stores":["仁恒河滨城店","碧云店","御翠园店","浦东别墅旗舰店"]},{"name":"陆家嘴大区","stores":["星河湾店","陆家嘴金融中心店","陆家嘴旗舰店","陆家嘴滨江店","顶级豪宅部"]},{"name":"徐汇大区","stores":["嘉御庭公馆店","尚海湾店","徐汇滨江店"]},{"name":"滨江古北大区","stores":["融创滨江壹号院店","长宁古北店"]},{"name":"黄浦大区","stores":["黄浦滨江店","新天地一店","新天地二店","复兴香园店"]}],"views":{"company":{"scope":"company","role":"项目负责人","title":"10月在售业主面见复盘","name":"全司","region":null,"store":null,"kpis":[],"sections":[]}},"candidate_details":[],"word_url":null,"word_filename":""}}}</script>
-<script src="project-plan.js?v=20261104-01"></script>
+<script src="project-plan.js?v=20261105-customer-01"></script>
 <script src="operations/cloud-config.js?v=20261027-11"></script>
-<script src="operations/core.js?v=20261105-ranks-01"></script>
+<script src="operations/core.js?v=20261105-customer-01"></script>
 <script src="operations/xlsx-reader.js?v=20261027-11"></script>
-<script src="operations/cloud.js?v=20261105-ranks-01"></script>
+<script src="operations/cloud.js?v=20261105-customer-01"></script>
 <script src="operations/proof-paste.js?v=20261027-11"></script>
 <script src="operations/voice.js?v=20261027-11"></script>
 <script src="operations/scene.js?v=20261027-11"></script>
 <script src="operations/quality-feed.js?v=20261027-11"></script>
 <script src="operations/quality.js?v=20261027-11"></script>
 <script src="operations/workflow.js?v=20261027-11"></script>
-<script src="operations/november-plan.js?v=20261104-goals-03"></script>
+<script src="operations/november-plan.js?v=20261105-customer-01"></script>
 <script src="operations/plan-execution.js?v=20261104-01"></script>
-<script src="operations/ui.js?v=20261105-ranks-01"></script>
+<script src="operations/ui.js?v=20261105-customer-01"></script>
 <script>
 'use strict';
 let progressImageUrl = '';
@@ -173,12 +174,19 @@ let progressImageBusy = false;
 const progressRankLegend = '单店全司排名：👍 最高 · ❗ 最低（并列均标注）';
 function progressRateSymbol(row, key) { return window.WBModel?.rateRankSymbol(row, key) || ''; }
 function progressRateValue(row, key) {
-  const symbol = progressRateSymbol(row, key), value = esc(row[key]);
+  const symbol = progressRateSymbol(row, key), value = esc(window.WBModel?.meetingCountValue?.(row,key) ?? row[key]);
+  if (Number(row[key + '_pending']) > 0) return `<span title="${esc(window.WBModel?.meetingCountLabel?.(row,key) || '面见明细待补齐')}">${value}</span>`;
   if (!symbol) return value;
   const label = symbol === '👍' ? '全司门店最高面见率（含并列）' : '全司门店最低面见率（含并列）';
   return `<span class="progress-ranked-value"><span>${value}</span><span class="progress-rank-mark" role="img" aria-label="${label}" title="${label}">${symbol}</span></span>`;
 }
 function hasProgressRanks(block) { return (block.rows || []).some(row => ['met_rate','store_top_rate','unit_top_rate'].some(key => progressRateSymbol(row, key))); }
+function progressNotes(block) {
+  const notes = [];
+  if ((block.rows || []).some(row => ['met_count','store_top_met_count','unit_top_met_count'].some(key => Number(row[key+'_pending']) > 0))) notes.push('≥ 为已确认次数加待补明细房源的最低次数；补齐明细后更新准确次数。');
+  if ((block.columns || []).some(c => c.key === 'customer_count')) notes.push('客户面见为本月累计次数；完整月度表导入后，未出现门店计0；“待导入”表示尚未上传。');
+  return notes;
+}
 
 
 function progressImagePlan(view, block, month, meta) {
@@ -187,17 +195,18 @@ function progressImagePlan(view, block, month, meta) {
   const width = 2000, padding = 28, tableWidth = width - padding * 2;
   const fixed = identityCount === 2 ? [.12,.15] : [.07,.10,.11,.06];
   const rest = Math.max(1, columns.length - identityCount);
-  const proportions = [...fixed,...Array(rest).fill(.66 / rest)];
+  const proportions = [...fixed,...Array(rest).fill((1 - fixed.reduce((a,b)=>a+b,0)) / rest)];
   const widths = proportions.map(x => x * tableWidth);
   const x = [padding]; widths.forEach(w => x.push(x[x.length-1] + w));
-  return {width,padding,tableWidth,widths,x,title:monthLabel(month) + '在售业主面见及礼物进展',scope:view.name,subtitle:meta.cutoff,columns,identityCount,groups:block.columnGroups,rows:block.rows,kpis:view.kpis};
+  return {width,padding,tableWidth,widths,x,title:monthLabel(month) + '面见及礼物进展',scope:view.name,subtitle:[meta.cutoff,block.subtitle].filter(Boolean).join(' · '),columns,identityCount,groups:block.columnGroups,rows:block.rows,kpis:view.kpis};
 }
 function createProgressImage(view, block, month, meta) {
   const plan = progressImagePlan(view,block,month,meta);
   const canvas = document.createElement('canvas');
   const scale = 1.5, headerTop = 178, groupHeight = 48, leafHeight = 72;
   const rowHeight = 44, tableBottom = headerTop + groupHeight + leafHeight + plan.rows.length * rowHeight;
-  const height = tableBottom + (hasProgressRanks(block) ? 102 : 74);
+  const notes = progressNotes(block);
+  const height = tableBottom + (hasProgressRanks(block) ? 102 : 74) + notes.length * 28;
   canvas.width = plan.width * scale; canvas.height = height * scale;
   const ctx = canvas.getContext('2d'); if (!ctx) throw Error('canvas unavailable');
   ctx.scale(scale,scale); ctx.fillStyle = '#fffefa'; ctx.fillRect(0,0,plan.width,height);
@@ -228,11 +237,11 @@ function createProgressImage(view, block, month, meta) {
   fontStyle(17);ctx.fillStyle='#817087';ctx.fillText(plan.scope + ' · ' + plan.subtitle,plan.padding,80);
   const summary=plan.kpis.map(k => k.label+' '+k.value).join('     ｜     ');
   fontStyle(20,true);ctx.fillStyle='#5e3873';ctx.fillText(summary,plan.padding,124);
-  const headFills={target:'#f6d5dc',whole:'#dce8f8','store-top':'#dcefe5','unit-top':'#edf3dc'};
+  const headFills={target:'#f6d5dc',whole:'#dce8f8','store-top':'#dcefe5','unit-top':'#edf3dc',customer:'#eee2fc'};
   for(let i=0;i<plan.identityCount;i++)cell(plan.columns[i].label,plan.x[i],headerTop,plan.widths[i],groupHeight+leafHeight,'#eae1f0','#5b3d6e',20,true);
   for(const group of plan.groups){
     const indices=group.keys.map(key=>plan.columns.findIndex(c=>c.key===key)).filter(i=>i>=plan.identityCount);if(!indices.length)continue;const start=indices[0];const w=indices.reduce((a,i)=>a+plan.widths[i],0);const fill=headFills[group.tone]||'#ece5f1';
-    cell(group.label,plan.x[start],headerTop,w,groupHeight,fill,'#44334e',21,true);
+    cell(group.label,plan.x[start],headerTop,w,groupHeight,fill,'#44334e',indices.length===1?17:21,true);
     for(const i of indices)cell(plan.columns[i].label,plan.x[i],headerTop+groupHeight,plan.widths[i],leafHeight,fill,'#44334e',18,true);
   }
   const rowFills={company:'#ece0f1',region:'#f5e9ee',store:'#f0edf7',group:'#eef5e8',advisor:'#fffefa'};
@@ -244,11 +253,12 @@ function createProgressImage(view, block, month, meta) {
       const fill=rowFills[row._level]||'#fffefa';ctx.fillStyle=fill;ctx.fillRect(x,y,w,rowHeight);
       if(rateKeys.has(col.key)&&/^\d+(\.\d+)?%$/.test(String(value))){ctx.fillStyle=col.key.startsWith('unit_')?'#dce9bd':col.key.startsWith('store_')?'#cbe5d5':'#d9e3ee';ctx.fillRect(x+5,y+8,(w-10)*Math.min(100,parseFloat(value))/100,rowHeight-16);}
       ctx.strokeStyle='#d9d1dd';ctx.lineWidth=.65;ctx.strokeRect(x,y,w,rowHeight);
-      const size=ci<4?17:18;const displayValue=String(value ?? '')+progressRateSymbol(row,col.key);textIn(displayValue,x,y,w,rowHeight,size,'#3d3045',['company','region','store'].includes(row._level));
+      const size=ci<4?17:18;const displayValue=String(window.WBModel?.meetingCountValue?.(row,col.key) ?? value ?? '')+progressRateSymbol(row,col.key);textIn(displayValue,x,y,w,rowHeight,size,'#3d3045',['company','region','store'].includes(row._level));
     }
   }
-  fontStyle(15);ctx.fillStyle='#86768d';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('上海丽兹行 · 在售业主面见项目   |   当前在售房源按套统计；“—”为未提供或不适用，“/”为顾问未设目标',plan.padding,tableBottom+23);
+  fontStyle(15);ctx.fillStyle='#86768d';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('上海丽兹行 · 面见项目   |   业主面见量按房源套数统计；“/”为不适用或未设目标。',plan.padding,tableBottom+23);
   if(hasProgressRanks(block)){fontStyle(15);ctx.fillText(progressRankLegend,plan.padding,tableBottom+51);}
+  notes.forEach((note,i)=>ctx.fillText(note,plan.padding,tableBottom+(hasProgressRanks(block)?79:51)+i*28));
   return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('image generation failed')),'image/png'));
 }
 function showProgressImage(blob, filename) {
@@ -445,7 +455,7 @@ function renderTable(block) {
     {label:'门店Top业主（月度进展）', keys:['store_top_stock','store_top_met','store_top_met_count','store_top_rate'], tone:'store-top'},
     {label:'户型Top业主（月度进展）', keys:['unit_top_stock','unit_top_met','unit_top_met_count','unit_top_rate'], tone:'unit-top'}
   ];
-  const groupTone = value => ['target','whole','store-top','unit-top'].includes(value) ? value : 'whole';
+  const groupTone = value => ['target','whole','store-top','unit-top','customer'].includes(value) ? value : 'whole';
   function parsedPercent(value) {
     const match = String(value == null ? '' : value).trim().match(/^(-?\d+(?:\.\d+)?)\s*%$/);
     return match ? Math.min(100,Math.max(0,Number(match[1]))) : null;
@@ -504,7 +514,7 @@ function renderTable(block) {
     return `<article class="progress-mobile-row level-${esc(row._level)}"><h4>${esc(title)}</h4><dl class="progress-mobile-identity">${block.columns.slice(0,4).map(field).join('')}</dl>${arr(block.columnGroups).map(group => `<h5>${esc(group.label)}</h5><dl class="progress-mobile-metrics">${block.columns.filter(c => group.keys.includes(c.key)).map(field).join('')}</dl>`).join('')}</article>`;
   }).join('')}</div>` : '';
   const candidateHint = tabs.some(t => arr(t.rows).some(row => row._candidate)) && Array.isArray(DATA.candidate_details) ? '<div class="candidate-table-hint">点击候选套数，查看项目、房间号、店组和维护人</div>' : '';
-  return `<div class="block table-box${isProgress ? ' progress-box' : ''}" id="${id}"><div class="table-top"><div><h3 class="table-title">${esc(block.title)}</h3>${block.subtitle ? `<div class="progress-table-subtitle">${esc(block.subtitle)}</div>` : ''}${block.note ? `<div class="table-note">${esc(block.note)}</div>` : ''}${candidateHint}${isProgress && hasProgressRanks(block) ? `<div class="progress-rank-legend">${progressRankLegend}</div>` : ''}</div>${isProgress ? '<div class="table-copy-actions"><button class="btn primary" type="button" data-copy-progress>复制图片</button></div>' : ''}</div>${tabs.length > 1 ? `<div class="tabs" role="tablist" aria-label="${esc(block.title)}">${tabs.map((t,i) => `<button class="tab" type="button" id="${id}-tab-${i}" role="tab" aria-selected="${!i}" aria-controls="${id}-panel-${i}" tabindex="${i ? -1 : 0}" data-table="${id}" data-tab="${i}">${esc(t.label || t.title)}</button>`).join('')}</div>` : ''}${panels}${mobile}<div class="table-bottom"><span data-count>${arr(tabs[0].rows).length}条记录</span>${max > 0 ? `<button class="show-more" type="button" data-expand="${id}" ${arr(tabs[0].rows).length <= max ? 'hidden' : ''}>显示全部记录 ↓</button>` : ''}</div></div>`;
+  return `<div class="block table-box${isProgress ? ' progress-box' : ''}" id="${id}"><div class="table-top"><div><h3 class="table-title">${esc(block.title)}</h3>${block.subtitle ? `<div class="progress-table-subtitle">${esc(block.subtitle)}</div>` : ''}${block.note ? `<div class="table-note">${esc(block.note)}</div>` : ''}${candidateHint}${isProgress ? progressNotes(block).map(note=>`<div class="progress-table-subtitle">${esc(note)}</div>`).join('') : ''}${isProgress && hasProgressRanks(block) ? `<div class="progress-rank-legend">${progressRankLegend}</div>` : ''}</div>${isProgress ? '<div class="table-copy-actions"><button class="btn primary" type="button" data-copy-progress>复制图片</button></div>' : ''}</div>${tabs.length > 1 ? `<div class="tabs" role="tablist" aria-label="${esc(block.title)}">${tabs.map((t,i) => `<button class="tab" type="button" id="${id}-tab-${i}" role="tab" aria-selected="${!i}" aria-controls="${id}-panel-${i}" tabindex="${i ? -1 : 0}" data-table="${id}" data-tab="${i}">${esc(t.label || t.title)}</button>`).join('')}</div>` : ''}${panels}${mobile}<div class="table-bottom"><span data-count>${arr(tabs[0].rows).length}条记录</span>${max > 0 ? `<button class="show-more" type="button" data-expand="${id}" ${arr(tabs[0].rows).length <= max ? 'hidden' : ''}>显示全部记录 ↓</button>` : ''}</div></div>`;
 }
 
 function renderBlock(b) {

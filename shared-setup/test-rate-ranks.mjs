@@ -55,7 +55,7 @@ assert.ok(M.withRateRanks(ranked,[]).rows.every(row=>Object.keys(row._rateRanks)
 const uiSource=await readFile(new URL('../operations/ui.js',import.meta.url),'utf8');
 const rankingSource=uiSource.slice(uiSource.indexOf(' function archivedProgress('),uiSource.indexOf(' function daily('));
 assert.ok(rankingSource.includes('function rankProgress('));
-const uiContext={M,currentMonth:'2026-10',goals:()=>({}),viewKey:view=>view.scope==='company'?'company':view.scope+':'+view.name,
+const uiContext={M,currentMonth:'2026-10',goals:()=>({}),customerOptions:()=>({}),viewKey:view=>view.scope==='company'?'company':view.scope+':'+view.name,
   ARCHIVE:{months:{'2026-10':{views:{company:{sections:[{blocks:[block]}]}}}}}};
 vm.runInNewContext(rankingSource,uiContext);
 const archiveRank=uiContext.rankProgress({rows:[rows[0]]},{housing:[]});
@@ -68,14 +68,17 @@ const cloudSource=await readFile(new URL('../operations/cloud.js',import.meta.ur
 const stamp={as_of:'2026-11-05',created_at:'2026-11-05T01:00:00Z'};
 const publicData={housing:[{store:'A'},{store:'B'}],imports:[stamp],items:[]};
 const privateData={housing:[{store:'A'}],imports:[stamp],items:[]};
-async function cloudCase({loggedIn=false,publicFailure=false,changedStamp=false}={}){
+const customerData={customerRows:[{region:'大区A',store:'A',group:'A组',name:'测试甲',count:3},{region:'大区A',store:'B',group:'B组',name:'测试乙',count:1}],customerImported:true,customerImport:{month:'2026-11',as_of:'2026-11-04',total:4},storeCatalog:[]};
+async function cloudCase({loggedIn=false,role='store',publicFailure=false,changedStamp=false,customerImported=true}={}){
   const requests=[];
   const context={window:{WORKBENCH_CLOUD:{url:'https://testproject.supabase.co',anonKey:'public-test-key-'.repeat(4)}},sessionStorage:{getItem:()=>null,setItem(){},removeItem(){}},URL,Date,console};
   context.fetch=async(url,options)=>{
     const name=url.split('/').at(-1),body=JSON.parse(options.body);requests.push({name,body});
     let value;
-    if(name==='wb_code_login')value={token:'test-only-token',expires_at:9999999999,member:{role:'store',store:'A',region:'大区A'}};
+    if(name==='wb_code_login')value={token:'test-only-token',expires_at:9999999999,member:{role,store:'A',region:'大区A'}};
     else if(name==='wb_public_archives')value=[];
+    else if(name==='wb_customer_api'&&body.p_action==='load')value=customerImported?customerData:{customerRows:[],customerImported:false,customerImport:null,storeCatalog:[]};
+    else if(name==='wb_customer_api'&&body.p_action==='import')value={month:body.p_args.month,total:body.p_args.rows.reduce((n,r)=>n+r.count,0)};
     else if(name==='wb_public_daily'){
       if(publicFailure)return {ok:false,text:async()=>JSON.stringify({message:'unavailable'})};
       value=changedStamp?{...publicData,imports:[{...stamp,created_at:'2026-11-05T02:00:00Z'}]}:publicData;
@@ -87,11 +90,16 @@ async function cloudCase({loggedIn=false,publicFailure=false,changedStamp=false}
   const cloud=context.window.WBCloud;
   if(loggedIn)await cloud.login('1234');
   const loaded=await cloud.load('2026-11');
-  return {loaded,requests};
+  return {loaded,requests,cloud};
 }
 const anonymous=await cloudCase();
 assert.equal(anonymous.requests.filter(x=>x.name==='wb_public_daily').length,1,'anonymous read reuses one public request');
 assert.equal(anonymous.loaded.companyProgress.housing,anonymous.loaded.housing);
+assert.equal(anonymous.loaded.customerImported,true);
+assert.equal(anonymous.loaded.customerRows.reduce((n,r)=>n+r.count,0),4);
+assert.equal(anonymous.loaded.customerImport.as_of,'2026-11-04','customer and owner data retain independent cutoff dates');
+assert.equal(anonymous.requests.find(x=>x.name==='wb_customer_api').body.p_token,null,'reading public business totals needs no private session token');
+assert.equal((await cloudCase({customerImported:false})).loaded.customerImport,null,'no customer import remains distinguishable from an imported zero snapshot');
 const scoped=await cloudCase({loggedIn:true});
 assert.equal(scoped.loaded.housing.length,1,'private display remains restricted to the assigned store');
 assert.equal(scoped.loaded.companyProgress.housing.length,2,'rank comparison uses already-public full-company progress');
@@ -100,4 +108,18 @@ for(const options of [{loggedIn:true,publicFailure:true},{loggedIn:true,changedS
   assert.equal(loaded.housing.length,1);
   assert.equal(loaded.companyProgress,null,'unavailable or mismatched company data must not imply a scoped company ranking');
 }
-console.log('Rate ranking: exact ratios, ties, filters, missing bases, source isolation and import consistency passed.');
+const customerSnapshot={month:'2026-11',asOf:'2026-11-04',rows:customerData.customerRows,filenames:['synthetic.csv']};
+for(const state of [anonymous,scoped]){
+  const before=state.requests.length;
+  await assert.rejects(()=>state.cloud.importCustomerSnapshot(customerSnapshot),/仅项目负责人/);
+  assert.equal(state.requests.length,before,'anonymous and store roles cannot issue customer-import requests');
+}
+const project=await cloudCase({loggedIn:true,role:'project'});
+const saved=await project.cloud.importCustomerSnapshot(customerSnapshot);
+assert.equal(saved.total,4);
+const write=project.requests.at(-1);
+assert.equal(write.name,'wb_customer_api');
+assert.equal(write.body.p_action,'import');
+assert.equal(write.body.p_token,'test-only-token','import passes the existing scoped session to the server for authorization');
+assert.deepEqual(write.body.p_args,customerSnapshot);
+console.log('Rate ranking: exact ratios, ties, filters, source isolation, import consistency, and customer public-read/project-write boundary passed.');

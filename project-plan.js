@@ -716,7 +716,7 @@ function applyProjectPlans(archive) {
   // Keep October's historical reporting scope unchanged.
   const november=archive.months['2026-11'];
   if(november){
-    for(const [region,store] of [['徐汇大区','徐汇二店'],['滨江古北大区','Hmall中心店'],['滨江古北大区','Hmall旗舰店']]){
+    for(const [region,store] of [['徐汇大区','徐汇一店'],['滨江古北大区','Hmall中心店'],['滨江古北大区','Hmall旗舰店']]){
       const group=november.regions.find(r=>r.name===region);
       if(group&&!group.stores.includes(store))group.stores.push(store);
       november.views['store:'+store]||={scope:'store',role:'店总',name:store,region,store,sections:[],kpis:[],title:store};
