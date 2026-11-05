@@ -480,11 +480,11 @@
     "title": "上海城市报告培训",
     "strategy": 2,
     "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
-    "how": "项目负责人对接海燕确认内容、讲师和培训方式，管理者先学习，再组织伙伴学习；结合实际顾客需求练习报告讲解。可使用线上定稿版本先培训，纸质印刷与配送同步推进。",
+    "how": "预计11月12日面向全体伙伴开展上海城市报告培训。项目负责人对接海燕落实培训内容、讲师和参训安排；使用线上定稿版本开展学习，纸质印刷与配送同步推进。当晚在全司店总会上再次同步培训内容、门店通关标准及配套物料，明确由门店承接通关。",
     "owner": "统筹：项目负责人",
-    "collaborators": "内容与讲师协调：海燕；组织：店总；参训与问题跟进：BP",
-    "when": "本周先确认培训方案和日期\n管理者先学、伙伴后学；具体组织路径待确认",
-    "acceptance": "确认讲师、组织方式、培训日期及参训安排；培训后核实伙伴能否讲清核心内容、结合顾客需求使用，并记录需补训的问题。仅有排期不代表培训完成。",
+    "collaborators": "内容与讲师协调：海燕；全员参训与门店承接：店总；参训及物料接收跟进：BP",
+    "when": "预计11月12日开展全员培训\n预计11月12日晚全司店总会再次同步培训、通关标准及相关物料",
+    "acceptance": "分别核实全员培训的实际开展与参训情况、当晚店总会同步情况，以及各店是否收到并理解通关标准和配套物料；记录缺席、需补学的问题及门店后续承接安排。预计排期不代表已经完成。",
     "businessLink": "把报告内容转化为伙伴可用于顾客沟通和面见的专业服务能力。",
     "scope": "company",
     "frequency": "once",
@@ -494,11 +494,11 @@
     "endDate": null,
     "dailyBundle": "物料与能力支持",
     "status": "待确认排期",
-    "scheduleBasis": "待确认排期；具体日期及承接安排确认后启用任务，不将建议节奏视为已确认安排。",
+    "scheduleBasis": "预计11月12日；具体培训时段、讲师及最终会期仍需落实，确认后启用对应任务。",
     "assigneeRole": "项目负责人",
     "enabled": false,
     "pendingSchedule": true,
-    "trigger": "线上报告定稿后启动培训，不等待纸质到货；具体讲师、组织方式和日期确认后启用。",
+    "trigger": "线上报告定稿后，按预计11月12日的安排落实全员培训和当晚店总会同步；不等待纸质报告到货。",
     "dependencies": [
       "2.3"
     ]
@@ -508,11 +508,11 @@
     "title": "报告使用通关与补训",
     "strategy": 2,
     "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
-    "how": "建议店总组织、经理通过模拟面见检核伙伴能否结合顾客需求讲清报告；BP记录已通关、待补训及复查安排，未通过的补训后再次通关。通关标准随培训方案确认。",
+    "how": "承接预计11月12日的全员培训及当晚全司店总会同步的通关标准、配套物料，由店总组织、经理实施单店通关。结合实际顾客需求，通过模拟面见检核伙伴能否讲清报告并用于服务；BP记录已通关、待补训及复查安排，未通过的补训后再次通关。",
     "owner": "组织：店总；实施：经理",
     "collaborators": "跟进：店面BP；共性问题与资源支持：项目负责人",
-    "when": "首次使用报告开展顾客服务前完成\n具体通关日期、标准与补训安排待确认",
-    "acceptance": "逐店记录参训及通关结果、待补训对象、问题和复查日期；根据实际演练与复核确认完成，不能以收到报告或参加培训代替会使用。",
+    "when": "11月12日培训及当晚店总会标准、物料同步后，由门店承接通关\n单店具体通关、补训及复查日期与店总确认；首次使用报告服务前完成",
+    "acceptance": "核实本店已收到通关标准及配套物料，并明确组织人、通关日期和参与人员；逐人记录通关结果、待补训问题和复查日期。依据实际演练与复核确认完成，参加培训或收到物料不等于通关。",
     "businessLink": "帮助伙伴将报告转化为有针对性的专业讲解，支持面见质量。",
     "scope": "store",
     "frequency": "once",
@@ -522,11 +522,11 @@
     "endDate": null,
     "dailyBundle": "物料与能力支持",
     "status": "待确认排期",
-    "scheduleBasis": "待确认排期；具体日期及承接安排确认后启用任务，不将建议节奏视为已确认安排。",
+    "scheduleBasis": "前置培训及店总会预计11月12日；各店通关完成日期待确认，不将培训日期作为单店通关截止日。",
     "assigneeRole": "店面BP",
     "enabled": false,
     "pendingSchedule": true,
-    "trigger": "承接2.13培训，正式使用报告服务前完成通关；未通过的补训、复核。",
+    "trigger": "承接2.13全员培训和当晚店总会的标准、物料同步，再由门店组织通关；未通过的补训、复核。",
     "dependencies": [
       "2.13"
     ]
@@ -909,7 +909,7 @@
     ]
   }
 ];
-  const version = 'november-2026-v2';
+  const version = 'november-2026-v3';
   const strategies = [
     {id:1,title:'目标共识',tagline:'让目标进入店面行动',why:actions.find(a=>a.strategy===1).why,businessLink:'店总把目标转成管理安排，经理明确到组和伙伴；BP以理解、安排、行为三层结果检核。',roles:'项目负责人 → 全司月会、店总会、研讨方案；店总 → 启动、研讨、早会；大区BP → 大区店总会、晒数据共识；店面BP → 协助落地、检核效果。'},
     {id:2,title:'物料与资源支持',tagline:'物料可取用，报告会使用',why:actions.find(a=>a.strategy===2).why,businessLink:'礼品与贺卡表达心意；hmall图、线上及纸质报告提供专业内容；报告培训与通关帮助伙伴用于带看、面见及顾客沟通。',roles:'项目负责人统筹物料、培训和资源协调；店总决定需求并组织学习通关；经理实施演练；店面BP协助采购印刷、接收、取用和通关结果跟进。'},
@@ -957,7 +957,7 @@
         "项目负责人统筹资源信息、文件版本和交付节点，并检核各店准备情况；店面BP协助礼品选购落地、贺卡及hmall图印刷。贺卡由BP与店总结合目标量，确定伙伴线上定制、批量印刷空白贺卡手写或组合使用；礼品持续确认哪些店、哪些组已选购、受阻在哪里、需要什么帮助。",
         "hmall图先确认现有印刷数量、版本和可用情况，按需求补齐；建议单店准备约20份A3卡纸或A3塑封版本供本月使用。到店后明确公用存放位置、领取归还方式，以及带看、面见客户等使用场景，方便伙伴随取随用并由BP统一保管。",
         "《韧性向前》上海城市报告按本周确认供应商、定稿并发送线上版本，下周推进纸质印刷、预计11月15日前分发的计划执行；逐店确认接收、数量与取用方式。物料支持与现有费用规则相衔接，采购、分摊和报销核对进入费用核销模块。",
-        "上海城市报告培训和使用通关单独安排：项目负责人对接海燕确认内容、讲师及组织方式，管理者先学习，再组织伙伴学习；建议店总组织、经理实施模拟面见通关，BP跟进结果，未通过的补训并复核。线上版本可先用于培训，印刷同步推进，首次使用报告服务前完成通关；具体培训路径、讲师和排期待确认。",
+        "上海城市报告预计11月12日面向全体伙伴培训，当晚在全司店总会上再次同步培训内容、通关标准及配套物料；随后由门店承接，店总组织、经理实施通关，BP跟进结果，未通过的补训并复核。线上定稿版本用于培训，印刷同步推进；单店通关日期与店总确认，首次使用报告服务前完成。",
         "纸质报告按人员、房源、顾客服务需求及库存确定分配标准，总印量与单店配额待确认。BP汇总贺卡和hmall图印刷需求，有共性需求时由项目负责人评估统一供应商支持。"
       ]
     },
@@ -1092,8 +1092,9 @@
   ];
   const cadence = [
     {date:'11月3日',title:'启动与发布',text:'月会启动及行动包发布已完成；研讨方案已输出。接收、理解和单店落地继续检核。',kind:'已知事实'},
-    {date:'本周 · 11月2—8日',title:'承接、定稿与首轮检核',text:'补启动效果检核；确认研讨排期、月目标与店组承接；推进礼品选购、贺卡及hmall图准备；确认报告供应商、定稿和线上版本；确认报告培训路径与排期、BP跟店排班、首批门店及启动日期。',kind:'执行计划'},
-    {date:'本周或下周 · 与店总确认',title:'文化研讨与报告学习承接',text:'逐店确认文化研讨实际日期与状态，开展后看具体行动；报告按线上定稿、管理者学习、伙伴学习、通关补训的顺序推进，具体讲师与排期待确认。培训与印刷并行。',kind:'待确认排期'},
+    {date:'本周 · 11月2—8日',title:'承接、定稿与首轮检核',text:'补启动效果检核；确认研讨排期、月目标与店组承接；推进礼品选购、贺卡及hmall图准备；确认报告供应商、定稿和线上版本；落实预计11月12日全员培训及当晚店总会的内容、讲师和物料准备；确认BP跟店排班、首批门店及启动日期。',kind:'执行计划'},
+    {date:'本周或下周 · 与店总确认',title:'文化研讨承接',text:'逐店确认文化研讨实际日期与状态，开展后看具体行动。',kind:'待确认排期'},
+    {date:'预计11月12日及当晚',title:'全员培训与店总会同步',text:'面向全体伙伴开展上海城市报告培训；当晚全司店总会再次同步培训、通关标准及配套物料。随后由门店承接通关、补训和复查，具体日期与店总确认。培训与印刷并行。',kind:'预计节点'},
     {date:'预计11月15日前',title:'纸质报告分发到店',text:'下周跟进校样、印刷和配送；逐店核对数量、质量、接收人及取用方式，延期事项明确补齐时间。',kind:'预计节点'},
     {date:'每日',title:'BP更新 · 管理者验收',text:'共识与行动变化、目标差距与卡点、正反馈三项合并为单店日检核；节点物料任务到期单独检查；跟店安排确认后进入日任务，报告通关与物料接收分别检核。',kind:'日常承接'},
     {date:'每周',title:'回看支持效果，调整下周动作',text:'建议11月6、13、20、27日归集；大区店总会沿实际会期。回看未解决问题、未行动店组、培训通关、跟店支持和首批做法采用；更新整月排期及接手人说明。',kind:'建议节奏'},
@@ -1136,7 +1137,7 @@
   function actionRow(a){
     return `<article class="np-action" id="nov-action-${E(a.id.replace('.','-'))}"><div class="np-action-main"><span class="np-action-id">行动 ${E(a.id)}</span><h4>${E(a.title)}</h4><p>${E(a.how)}</p>${a.knownFact?`<p class="np-fact"><strong>已知事实</strong>${E(a.knownFact)}</p>`:''}${a.trigger?`<p class="np-trigger"><strong>触发时跟进</strong>${E(a.trigger)}</p>`:''}<p class="np-business"><strong>连接业务</strong>${E(a.businessLink)}</p></div><dl class="np-action-meta"><div><dt>谁来干 · Who</dt><dd>${E(a.owner)}${a.collaborators?`<span>${E(a.collaborators)}</span>`:''}</dd></div><div><dt>什么时间 · When</dt><dd>${lines(a.when)}<small>${E(a.scheduleBasis)}</small></dd></div><div><dt>如何验收</dt><dd>${E(a.acceptance)}</dd></div></dl></article>`;
   }
-  function strategyCard(s){const group=actions.filter(a=>a.strategy===s.id);return `<details class="np-strategy" id="nov-strategy-${s.id}"><summary><span class="np-strategy-number">0${s.id}</span><span class="np-strategy-heading"><strong>${E(s.title)}</strong><span>${E(s.tagline)}</span></span><span class="np-count">${group.length}项动作</span><span class="np-expand" aria-hidden="true">＋</span></summary><div class="np-strategy-content"><div class="np-strategy-why"><span>为什么这样做 · Why</span><p>${E(s.why)}</p></div><div class="np-strategy-context"><p><strong>销售中心的业务承接</strong>${E(s.businessLink)}</p><p><strong>角色分工</strong>${E(s.roles)}</p></div>${s.id===2?'<div class="np-strategy-context"><h3>专业报告培训与通关</h3><p>线上定稿 → 管理者学习 → 伙伴学习与演练 → 通关／补训复核。培训与印刷并行，首次使用报告服务前完成通关；具体讲师、组织方式和日期待确认。</p></div><div class="np-action-list">'+group.filter(a=>['2.13','2.14'].includes(a.id)).map(actionRow).join('')+'</div><div class="np-strategy-context"><h3>物料准备、到店与取用支持</h3></div>':''}<div class="np-action-list">${group.filter(a=>s.id!==2||!['2.13','2.14'].includes(a.id)).map(actionRow).join('')}</div></div></details>`;}
+  function strategyCard(s){const group=actions.filter(a=>a.strategy===s.id);return `<details class="np-strategy" id="nov-strategy-${s.id}"><summary><span class="np-strategy-number">0${s.id}</span><span class="np-strategy-heading"><strong>${E(s.title)}</strong><span>${E(s.tagline)}</span></span><span class="np-count">${group.length}项动作</span><span class="np-expand" aria-hidden="true">＋</span></summary><div class="np-strategy-content"><div class="np-strategy-why"><span>为什么这样做 · Why</span><p>${E(s.why)}</p></div><div class="np-strategy-context"><p><strong>销售中心的业务承接</strong>${E(s.businessLink)}</p><p><strong>角色分工</strong>${E(s.roles)}</p></div>${s.id===2?'<div class="np-strategy-context"><h3>专业报告培训与通关</h3><p>线上定稿 → 预计11月12日全员培训 → 当晚全司店总会同步培训、通关标准及配套物料 → 门店承接通关／补训复核。培训与印刷并行；单店通关日期待确认，首次使用报告服务前完成。</p></div><div class="np-action-list">'+group.filter(a=>['2.13','2.14'].includes(a.id)).map(actionRow).join('')+'</div><div class="np-strategy-context"><h3>物料准备、到店与取用支持</h3></div>':''}<div class="np-action-list">${group.filter(a=>s.id!==2||!['2.13','2.14'].includes(a.id)).map(actionRow).join('')}</div></div></details>`;}
   function render(view={}){
     const scopeName=view.scope==='store'?view.store||view.name:view.scope==='region'?view.region||view.name:'全司';
     const paragraphs=items=>items.map(text=>'<p>'+E(text)+'</p>').join('');
