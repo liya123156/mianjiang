@@ -73,7 +73,7 @@ await db.exec('TRUNCATE wb_plan_events,wb_plan_tasks,wb_plan_actions,wb_plan_sto
 const context={};context.window=context;vm.createContext(context);vm.runInContext(fs.readFileSync(repo+'/operations/november-plan.js','utf8'),context);
 const real=context.WBNovemberPlan.executionActions;
 await api('p','save-actions',{actions:real});await api('p','save-stores',{stores});g=await api('p','generate',{});
-ok(g.created>0&&real.length===24,'all 24 actual November task definitions validate and generate');
+ok(g.created>0&&real.length===28,'all 28 actual November task definitions validate and generate');
 await db.exec(fs.readFileSync(repo+'/shared-setup/database-plan-execution.sql','utf8'));
 ok((await api('p','load',{})).tasks.length===g.created,'migration rerun preserves task data');
 const today=(await db.query("SELECT (now() AT TIME ZONE 'Asia/Shanghai')::date::text AS today")).rows[0].today;
@@ -88,6 +88,23 @@ ok(seeded.stores.length===21&&seeded.actions.length===24&&seeded.tasks.every(t=>
 ok(seeded.events.length===1&&seeded.events[0].actorName==='规划初始化'&&seeded.events[0].type==='generated','seed records system planning identity without login impersonation');
 await db.exec(seed);let repeated=await api('p','load',{});
 ok(repeated.tasks.length===seeded.tasks.length&&repeated.events.length===1,'seed and generation are idempotent');
+const beforeTasks=JSON.stringify(repeated.tasks),beforeEvents=JSON.stringify(repeated.events);
+const beforeSchedule=new Map(repeated.actions.map(a=>[a.id,JSON.stringify([a.scope,a.ownerRole,a.frequency,a.startDate,a.endDate,a.dueDate,a.weekday,a.enabled])]));
+const rubySql=fs.readFileSync(repo+'/shared-setup/database-plan-ruby-update.sql','utf8');
+await db.exec(rubySql);let updated=await api('p','load',{});
+ok(updated.actions.length===28&&updated.actions.filter(a=>!a.enabled).length===4,'Ruby update adds four disabled draft actions');
+ok(updated.actions.filter(a=>['2.13','2.14','3.8','4.8'].includes(a.id)).every(a=>!a.startDate&&!a.endDate&&!a.dueDate),'new draft dates remain unconfirmed');
+ok(JSON.stringify(updated.tasks)===beforeTasks&&JSON.stringify(updated.events)===beforeEvents,'Ruby update preserves every task snapshot, result, version and event');
+ok(updated.actions.filter(a=>beforeSchedule.has(a.id)).every(a=>JSON.stringify([a.scope,a.ownerRole,a.frequency,a.startDate,a.endDate,a.dueDate,a.weekday,a.enabled])===beforeSchedule.get(a.id)),'Ruby update preserves all existing scheduling and enabled states');
+const beforeVersions=updated.actions.map(a=>[a.id,a.version]);
+await db.exec(rubySql);updated=await api('p','load',{});
+ok(JSON.stringify(updated.actions.map(a=>[a.id,a.version]))===JSON.stringify(beforeVersions),'repeated Ruby update does not bump versions');
+const rubyGenerated=await api('p','generate',{});
+ok(rubyGenerated.created===0&&(await api('p','load',{})).tasks.length===seeded.tasks.length,'disabled new actions generate no duplicate or premature tasks');
+await api('p','save-actions',{actions:updated.actions});
+const savedDraft=(await api('p','load',{})).actions.find(a=>a.id==='3.8');
+ok(savedDraft.enabled===false&&!savedDraft.startDate&&!savedDraft.endDate,'disabled blank-date drafts can be saved through existing API');
+
 await db.exec('SET ROLE anon');let external=await api('p','load',{});
 ok(external.tasks.length===seeded.tasks.length,'granted RPC works under anon role with valid code session');
 await fail(()=>db.query("UPDATE wb_plan_tasks SET status='accepted'"),/permission denied/,'direct review mutation denied');

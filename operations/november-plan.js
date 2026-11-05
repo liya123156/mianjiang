@@ -33,7 +33,7 @@
     "how": "项目负责人向店总讲清月目标、重点对象、管理动作、资源支持及反馈要求，结合门店实际讨论承接办法。",
     "owner": "主责：项目负责人",
     "collaborators": "承接：各店店总；协同：大区总",
-    "when": "本周安排共识\n具体全司店总会会期待确认",
+    "when": "周二店总会已共识物料包与落地规划\n本周继续核实单店目标与职责承接",
     "acceptance": "店总能讲清本店目标、重点动作、谁来承接、何时开始；记录需支持事项。后续行为检核纳入3.3及3.5。",
     "businessLink": "使项目目标进入店面经营安排，支持经理和伙伴执行。",
     "scope": "company",
@@ -45,18 +45,19 @@
     "dailyBundle": "目标共识",
     "status": "待核实",
     "scheduleBasis": "建议排期，可按实际承接日期调整",
-    "assigneeRole": "项目负责人"
+    "assigneeRole": "项目负责人",
+    "knownFact": "周二店总会已进行物料包和落地规划共识；各店实际承接与行为变化仍需检核。"
   },
   {
     "id": "1.3",
     "title": "文化研讨方案输出与BP接收",
     "strategy": 1,
     "why": "通过全司、大区、单店多场景共识，让管理者和伙伴理解目标与服务价值，明确各自行动，并通过行为变化判断共识是否有效。",
-    "how": "项目负责人将主持框架、研讨问题及预期产出交付BP并解读；BP确认获取方案，理解如何与店总协同组织。",
+    "how": "项目负责人将主持框架、研讨问题及预期产出交付BP并解读，补充历史视频与真实服务反馈作为共识工具；BP打开物料包，确认理解并与店总落实研讨排期。",
     "owner": "主责：项目负责人",
     "collaborators": "承接：大区BP、店面BP",
     "when": "方案已输出，BP接收与解读待补\n建议11月5日完成",
-    "acceptance": "确认BP已打开、理解并知道下一步；形成单店研讨排期。未接收到的当日补发并确认，不能以发群消息代替接收。",
+    "acceptance": "确认BP已打开、理解并知道下一步；每店记录研讨实际状态、具体日期和店总安排。未接收到的当日补发并确认，状态未核实的标记待确认。",
     "businessLink": "为店总研讨提供可用方案，让文化理解转化为具体服务意愿。",
     "scope": "store",
     "frequency": "once",
@@ -75,7 +76,7 @@
     "title": "单店启动大会承接",
     "strategy": 1,
     "why": "通过全司、大区、单店多场景共识，让管理者和伙伴理解目标与服务价值，明确各自行动，并通过行为变化判断共识是否有效。",
-    "how": "店总结合本店目标解读感恩月重点、对象和支持，明确组别承接。店面BP协助物料、现场演示及记录。",
+    "how": "店总结合本店目标解读感恩月重点、对象和支持，明确店组承接。店面BP逐店确认是否已开展，协助物料、现场演示及记录；未核实状态先补确认，需要补共识的与店总约定时间。",
     "owner": "主责：店总",
     "collaborators": "协助：店面BP；承接：经理",
     "when": "按单店启动安排\n本周确认是否已开展；未开展的补排期",
@@ -97,11 +98,11 @@
     "title": "单店文化研讨",
     "strategy": 1,
     "why": "通过全司、大区、单店多场景共识，让管理者和伙伴理解目标与服务价值，明确各自行动，并通过行为变化判断共识是否有效。",
-    "how": "店总围绕真实服务经历、希望感谢的顾客、准备多做的一步组织讨论；店面BP协助准备并整理行动产出。",
+    "how": "店总结合历史视频、真实服务反馈和本店经历，围绕希望感谢的顾客、准备多做的一步组织讨论；店面BP协助准备、确认排期并整理行动产出。",
     "owner": "主责：店总",
     "collaborators": "协助：店面BP；参与：经理、伙伴",
-    "when": "建议11月6日前排期\n11月8日前完成首轮，结束后次日检核",
-    "acceptance": "形成具体对象、服务动作、责任人和时间。BP了解伙伴是否理解，并核实是否已开始执行；未转化为行动的再次沟通。",
+    "when": "本周先与店总确认具体日期\n建议本周或下周完成，避免拖到下半月；结束后次日检核",
+    "acceptance": "每店明确研讨状态、日期、组织人；开展后形成具体对象、服务动作、责任人和时间。BP了解伙伴是否理解并已开始执行；未转化为行动的再次沟通。",
     "businessLink": "激发主动服务，帮助伙伴将感谢表达落实到真实顾客需要。",
     "scope": "store",
     "frequency": "once",
@@ -111,7 +112,7 @@
     "endDate": "2026-11-30",
     "dailyBundle": "目标共识",
     "status": "待核实",
-    "scheduleBasis": "建议排期，可按实际承接日期调整",
+    "scheduleBasis": "沿用原建议节点作为首次检核；各店实际研讨日期需与店总确认，已生成任务与历史记录保留。",
     "assigneeRole": "店面BP"
   },
   {
@@ -187,7 +188,7 @@
     "title": "共识效果检核与再次拉齐",
     "strategy": 1,
     "why": "通过全司、大区、单店多场景共识，让管理者和伙伴理解目标与服务价值，明确各自行动，并通过行为变化判断共识是否有效。",
-    "how": "店面BP从理解、安排、行为三个层次检核；将没有转化为行动的店组及原因反馈项目负责人，项目负责人再次与店总共识并约定复查。",
+    "how": "店面BP从理解、安排、行为三个层次检核，区分已开展、待开展和状态待确认；将未转化为行动的店组、原因及所需支持反馈项目负责人，再次与店总共识并约定复查。",
     "owner": "主责：店面BP检核",
     "collaborators": "再次共识：项目负责人；承接：店总、经理",
     "when": "每次集中共识后次日检核（建议）\n日常发现未行动及时反馈",
@@ -209,7 +210,7 @@
     "id": "2.1",
     "title": "基础物料和礼品方案统一交付",
     "strategy": 2,
-    "why": "解决伙伴开展顾客服务时的准备障碍，让礼品、贺卡、hmall图和专业报告能按时到位、方便取用，并有清晰的采购制作支持。",
+    "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
     "how": "项目负责人统一礼品建议、可用物料、取用入口及现行费用口径，并向销售中心共识；BP实际试用贺卡、下载与打印文件。",
     "owner": "主责：项目负责人",
     "collaborators": "承接：店总、经理；落地协助：店面BP",
@@ -232,7 +233,7 @@
     "id": "2.2",
     "title": "纸质报告供应商确认与定稿",
     "strategy": 2,
-    "why": "解决伙伴开展顾客服务时的准备障碍，让礼品、贺卡、hmall图和专业报告能按时到位、方便取用，并有清晰的采购制作支持。",
+    "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
     "how": "确认印刷供应商、纸张规格、报价、交期和交付范围；组织内容定稿，确定印刷文件版本。",
     "owner": "统筹：项目负责人",
     "collaborators": "协同：报告内容负责人、采购或印刷承接人（姓名待补）",
@@ -254,7 +255,7 @@
     "id": "2.3",
     "title": "线上报告发布到销售中心",
     "strategy": 2,
-    "why": "解决伙伴开展顾客服务时的准备障碍，让礼品、贺卡、hmall图和专业报告能按时到位、方便取用，并有清晰的采购制作支持。",
+    "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
     "how": "定稿后向销售中心发送线上版本及固定入口，说明使用场景；店面BP确认伙伴可以打开、下载和取用。",
     "owner": "主责：项目负责人",
     "collaborators": "传递与使用确认：店面BP",
@@ -276,12 +277,12 @@
     "id": "2.4",
     "title": "报告印量与到店分发计划",
     "strategy": 2,
-    "why": "解决伙伴开展顾客服务时的准备障碍，让礼品、贺卡、hmall图和专业报告能按时到位、方便取用，并有清晰的采购制作支持。",
-    "how": "汇总各店需求及库存情况，确认总印量、各店配额、费用支付与报销安排；明确各店收件人、地址和分发方式。",
+    "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
+    "how": "汇总门店人员、在售房源、顾客服务需求及现有库存，提出纸质报告分配标准；据此确认总印量、各店配额、费用支付与报销安排，以及收件人、地址和分发方式。",
     "owner": "统筹：项目负责人",
     "collaborators": "需求与收件信息：店面BP、店总；下单承接人待补",
     "when": "建议11月6日前汇总门店需求；必须在印刷下单前确认印量、配额和收件信息。",
-    "acceptance": "印量、门店配额、费用、收件人和配送方式清楚。纸质报告份数单独确认，不能套用hmall图20份建议。",
+    "acceptance": "总印量、单店配额及分配依据经确认后下单，按实际服务需求分配；费用、收件人和配送方式清楚。报告数量尚待确认，不能套用hmall图20份建议或平均分配。",
     "businessLink": "保障21家店按需获得报告，避免分配不清或到货后无法取用。",
     "scope": "store",
     "frequency": "once",
@@ -298,7 +299,7 @@
     "id": "2.5",
     "title": "纸质报告印刷与分发",
     "strategy": 2,
-    "why": "解决伙伴开展顾客服务时的准备障碍，让礼品、贺卡、hmall图和专业报告能按时到位、方便取用，并有清晰的采购制作支持。",
+    "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
     "how": "与供应商确认校样和制作进度，按门店配额分发；BP到店核对数量和印刷质量，告知领取方式。",
     "owner": "统筹检核：项目负责人",
     "collaborators": "制作：供应商；到店接收：店面BP",
@@ -320,8 +321,8 @@
     "id": "2.6",
     "title": "hmall图印刷情况确认",
     "strategy": 2,
-    "why": "解决伙伴开展顾客服务时的准备障碍，让礼品、贺卡、hmall图和专业报告能按时到位、方便取用，并有清晰的采购制作支持。",
-    "how": "店面BP先确认本店是否已印刷、现有数量、规格及可用情况。未印刷或数量不足的，协助对接打印店补齐；建议单店备20份，采用A3卡纸或A3塑封，按实际需求确认。",
+    "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
+    "how": "店面BP先确认本店是否已印刷、现有数量、规格及可用情况。未印刷或数量不足的，协助对接打印店补齐；建议单店备20份，采用A3卡纸或A3塑封，按实际需求确认。 BP同步汇总印刷需求；有共性需求时由项目负责人协调统一供应商与报价，是否统一制作按实际需求确认。",
     "owner": "核实与补印协助：店面BP",
     "collaborators": "需求确认：店总；提供原文件、检核：项目负责人",
     "when": "建议本周先完成印刷情况确认\n未印或不足的明确补齐时间",
@@ -342,7 +343,7 @@
     "id": "2.7",
     "title": "hmall图店面公用与使用场景说明",
     "strategy": 2,
-    "why": "解决伙伴开展顾客服务时的准备障碍，让礼品、贺卡、hmall图和专业报告能按时到位、方便取用，并有清晰的采购制作支持。",
+    "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
     "how": "印刷情况确认、物料到位后，由店面BP在店内统一存放，供伙伴公用；说明带看、面见客户等使用场景，以及存放位置、取还方式。伙伴随取随用，用后归还，BP统一保管。",
     "owner": "存放与场景说明：店面BP",
     "collaborators": "公用取还：店面伙伴",
@@ -364,8 +365,8 @@
     "id": "2.8",
     "title": "贺卡方式和目标用量确认",
     "strategy": 2,
-    "why": "解决伙伴开展顾客服务时的准备障碍，让礼品、贺卡、hmall图和专业报告能按时到位、方便取用，并有清晰的采购制作支持。",
-    "how": "店面BP与店总根据目标量确定：伙伴线上个性化定制，或店内批量印刷空白贺卡供手写，也可组合使用；明确数量与费用。",
+    "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
+    "how": "店面BP与店总根据目标量确定：伙伴线上个性化定制，或店内批量印刷空白贺卡供手写，也可组合使用；明确数量与费用。 店面BP将需要印刷的数量与规格汇总，便于协调制作支持。",
     "owner": "决定：店总",
     "collaborators": "协调执行：店面BP；模板支持：项目负责人",
     "when": "本周确认\n首批集中服务前完成",
@@ -386,8 +387,8 @@
     "id": "2.9",
     "title": "贺卡印刷与实际取用",
     "strategy": 2,
-    "why": "解决伙伴开展顾客服务时的准备障碍，让礼品、贺卡、hmall图和专业报告能按时到位、方便取用，并有清晰的采购制作支持。",
-    "how": "BP协助对接打印店、确认纸张和样张、组织制作；个性化卡片由伙伴核对称呼和署名，空白卡按店面需求备好。",
+    "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
+    "how": "BP协助对接打印店、确认纸张和样张、组织制作；个性化卡片由伙伴核对称呼和署名，空白卡按店面需求备好。 如存在多店共性需求，项目负责人评估统一供应商支持，再确认样张、报价和交期。",
     "owner": "执行协助：店面BP",
     "collaborators": "内容核对：伙伴；需求及费用确认：店总",
     "when": "方式确认后推进，首批集中服务前到位；建议11月8日前首轮检核，按本店首次使用日期校准。",
@@ -408,12 +409,12 @@
     "id": "2.10",
     "title": "礼品选购落实到店组",
     "strategy": 2,
-    "why": "解决伙伴开展顾客服务时的准备障碍，让礼品、贺卡、hmall图和专业报告能按时到位、方便取用，并有清晰的采购制作支持。",
+    "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
     "how": "店面BP与店总、经理确认本周选购什么礼品、多少份、谁采购、何时到货，再下钻到组，区分已选、已下单、已到货和未行动。",
     "owner": "统筹共识：项目负责人",
     "collaborators": "决定：店总、经理；落地协助：店面BP；采购：门店实际指定人",
     "when": "本周推进各店选购\n首轮集中检核建议11月6日",
-    "acceptance": "形成门店及店组的实际状态、所选礼品和预计到货时间。未行动的说明原因并反馈项目负责人；不默认BP个人垫付采购。",
+    "acceptance": "形成门店及店组的实际状态、所选礼品和预计到货时间。未行动的说明原因并反馈项目负责人；不默认BP个人垫付采购。 物料包已发布与各店组实际选购状态分开记录。",
     "businessLink": "让礼品准备与本店目标对象及服务安排匹配。",
     "scope": "store",
     "frequency": "once",
@@ -430,12 +431,12 @@
     "id": "2.11",
     "title": "21店物料落地检核与补齐",
     "strategy": 2,
-    "why": "解决伙伴开展顾客服务时的准备障碍，让礼品、贺卡、hmall图和专业报告能按时到位、方便取用，并有清晰的采购制作支持。",
-    "how": "项目负责人检查各店报告、hmall图、贺卡和礼品的实际准备情况；对未准备的店组了解原因，补充资源或再次共识。",
+    "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
+    "how": "项目负责人检查各店报告、hmall图、贺卡和礼品的实际准备情况；分别看收到、制作、可取用和使用情况，并关联报告培训通关结果。对未准备的店组了解原因，补充资源或再次共识。",
     "owner": "主责：项目负责人",
     "collaborators": "事实反馈：店面BP；行动承接：店总、经理",
     "when": "本周首轮检核\n之后按各项到位节点复查",
-    "acceptance": "分别看已收到、已制作、可取用、已使用。问题有原因、承接人和补齐时间；已解决的复核关闭。",
+    "acceptance": "逐店区分已收到、已制作、可取用、已使用；报告是否会用另看培训与通关结果。问题有原因、承接人和补齐时间；已解决的复核关闭。",
     "businessLink": "把“已提供物料”推进到“单店具备服务条件并实际使用”。",
     "scope": "company",
     "frequency": "weekly",
@@ -454,7 +455,7 @@
     "id": "2.12",
     "title": "采购印刷费用与库存核对",
     "strategy": 2,
-    "why": "解决伙伴开展顾客服务时的准备障碍，让礼品、贺卡、hmall图和专业报告能按时到位、方便取用，并有清晰的采购制作支持。",
+    "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
     "how": "沿现有台账登记采购、印刷、实际付款、礼品送出和库存；印刷费是否计入礼品预算、谁垫付和如何报销，制作前说明。",
     "owner": "核对：门店指定费用承接人",
     "collaborators": "协助：店面BP；口径统筹：项目负责人",
@@ -473,6 +474,62 @@
     "status": "待核实",
     "scheduleBasis": "建议排期，可按实际承接日期调整",
     "assigneeRole": "店面BP"
+  },
+  {
+    "id": "2.13",
+    "title": "上海城市报告培训",
+    "strategy": 2,
+    "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
+    "how": "项目负责人对接海燕确认内容、讲师和培训方式，管理者先学习，再组织伙伴学习；结合实际顾客需求练习报告讲解。可使用线上定稿版本先培训，纸质印刷与配送同步推进。",
+    "owner": "统筹：项目负责人",
+    "collaborators": "内容与讲师协调：海燕；组织：店总；参训与问题跟进：BP",
+    "when": "本周先确认培训方案和日期\n管理者先学、伙伴后学；具体组织路径待确认",
+    "acceptance": "确认讲师、组织方式、培训日期及参训安排；培训后核实伙伴能否讲清核心内容、结合顾客需求使用，并记录需补训的问题。仅有排期不代表培训完成。",
+    "businessLink": "把报告内容转化为伙伴可用于顾客沟通和面见的专业服务能力。",
+    "scope": "company",
+    "frequency": "once",
+    "date": null,
+    "weekdays": [],
+    "startDate": null,
+    "endDate": null,
+    "dailyBundle": "物料与能力支持",
+    "status": "待确认排期",
+    "scheduleBasis": "待确认排期；具体日期及承接安排确认后启用任务，不将建议节奏视为已确认安排。",
+    "assigneeRole": "项目负责人",
+    "enabled": false,
+    "pendingSchedule": true,
+    "trigger": "线上报告定稿后启动培训，不等待纸质到货；具体讲师、组织方式和日期确认后启用。",
+    "dependencies": [
+      "2.3"
+    ]
+  },
+  {
+    "id": "2.14",
+    "title": "报告使用通关与补训",
+    "strategy": 2,
+    "why": "通过可取用的礼品、贺卡、hmall图和专业报告，以及报告培训与通关支持，降低准备成本，帮助伙伴既拿到工具，也能结合顾客需求开展专业服务。",
+    "how": "建议店总组织、经理通过模拟面见检核伙伴能否结合顾客需求讲清报告；BP记录已通关、待补训及复查安排，未通过的补训后再次通关。通关标准随培训方案确认。",
+    "owner": "组织：店总；实施：经理",
+    "collaborators": "跟进：店面BP；共性问题与资源支持：项目负责人",
+    "when": "首次使用报告开展顾客服务前完成\n具体通关日期、标准与补训安排待确认",
+    "acceptance": "逐店记录参训及通关结果、待补训对象、问题和复查日期；根据实际演练与复核确认完成，不能以收到报告或参加培训代替会使用。",
+    "businessLink": "帮助伙伴将报告转化为有针对性的专业讲解，支持面见质量。",
+    "scope": "store",
+    "frequency": "once",
+    "date": null,
+    "weekdays": [],
+    "startDate": null,
+    "endDate": null,
+    "dailyBundle": "物料与能力支持",
+    "status": "待确认排期",
+    "scheduleBasis": "待确认排期；具体日期及承接安排确认后启用任务，不将建议节奏视为已确认安排。",
+    "assigneeRole": "店面BP",
+    "enabled": false,
+    "pendingSchedule": true,
+    "trigger": "承接2.13培训，正式使用报告服务前完成通关；未通过的补训、复核。",
+    "dependencies": [
+      "2.13"
+    ]
   },
   {
     "id": "3.1",
@@ -501,11 +558,11 @@
     "title": "检核店总向店组和伙伴落地",
     "strategy": 3,
     "why": "将月目标落实到单店、店组和具体行动，持续看清目标差距与未行动原因，通过再共识和针对性支持推动进展。",
-    "how": "店总带经理把月目标转成周重点及具体对象。BP了解各组目标、责任伙伴、已安排动作和日期，反馈项目负责人。",
+    "how": "店总带经理把已确认的月目标拆成周目标、店组目标及具体对象；明确责任伙伴、已约面见、待邀约和行动日期。BP核实实际安排并反馈项目负责人，每周按进展校准。",
     "owner": "主责：店总",
     "collaborators": "落实：经理；检核：店面BP；复核：项目负责人",
     "when": "店总共识后尽快向下落实\n建议次日检查；每周校准",
-    "acceptance": "看到店组承接与实际安排，不能以店总表示收到代替完成。未下达或无人执行的，再次与店总共识并复查。",
+    "acceptance": "每店能说清本周目标、各组承接、重点对象及下一步日期；能看到实际邀约和行动安排。未下达或无人执行的，再次与店总共识并复查。",
     "businessLink": "支持经理按具体对象组织邀约和面见，避免目标停留在店总层。",
     "scope": "store",
     "frequency": "weekly",
@@ -525,11 +582,11 @@
     "title": "日进度查看到店到组",
     "strategy": 3,
     "why": "将月目标落实到单店、店组和具体行动，持续看清目标差距与未行动原因，通过再共识和针对性支持推动进展。",
-    "how": "BP结合已有数据和行为变化，看各店组目标、已约、已完成、还差多少，以及礼品物料准备和使用情况；项目组看全司差异。",
+    "how": "BP结合统一导入的数据、未面见与未送礼明细及行为变化，看各店组目标、已约、已完成、还差多少；推动经理确认具体对象和下一步，核实礼品物料准备及使用情况。跟店发现同步进入原有反馈流程，避免重复填报。",
     "owner": "单店：店面BP、经理",
     "collaborators": "大区：大区BP；全司：项目负责人",
     "when": "每日沿现有数据与管理节奏\n建议11月5日起执行",
-    "acceptance": "形成已行动、未行动及信息待核实的店组情况。缺少数据先核实，不能直接判未行动；不给伙伴增加重复系统填报。",
+    "acceptance": "形成已行动、未行动及信息待核实的店组情况，重点对象有邀约、面见或卡点的具体安排。缺少数据先核实，不能直接判未行动；不给伙伴增加重复系统填报。",
     "businessLink": "及时识别目标推进速度，帮助管理者确定当天重点。",
     "scope": "store",
     "frequency": "daily",
@@ -547,7 +604,7 @@
     "title": "未行动店组及时反馈",
     "strategy": 3,
     "why": "将月目标落实到单店、店组和具体行动，持续看清目标差距与未行动原因，通过再共识和针对性支持推动进展。",
-    "how": "店面BP先与经理核实具体未行动环节、原因和已尝试动作，再向项目负责人反馈店组、责任人和所需支持。",
+    "how": "店面BP先与经理核实具体未行动环节、原因和已尝试动作，再向项目负责人反馈店组、责任人和所需支持。 BP跟店时发现的问题也在同一记录中承接，写明下次复查时间。",
     "owner": "发现反馈：店面BP",
     "collaborators": "事实核实：经理、店总；接收：项目负责人",
     "when": "发现后及时反馈\n建议当日说明承接安排",
@@ -570,7 +627,7 @@
     "title": "项目负责人再次共识并跟进变化",
     "strategy": 3,
     "why": "将月目标落实到单店、店组和具体行动，持续看清目标差距与未行动原因，通过再共识和针对性支持推动进展。",
-    "how": "项目负责人针对未行动或持续无进展的店组，与店总重新拉齐目标、价值和组织安排；资源问题同步解决，必要时协调大区BP和大区总。",
+    "how": "项目负责人针对未行动或持续无进展的店组，与店总重新拉齐目标、价值和组织安排；资源问题同步解决，必要时协调大区BP和大区总。 结合目标体量与实际差距，优先投入陆家嘴、黄浦、花木的跟进支持，全项目仍覆盖21家店。",
     "owner": "主责：项目负责人",
     "collaborators": "行动承接：店总、经理；跟踪：店面BP；协调：大区BP、大区总",
     "when": "收到反馈后及时介入\n建议下一工作日内约定动作；按承诺日期复查",
@@ -593,7 +650,7 @@
     "title": "周复盘与下周重点调整",
     "strategy": 3,
     "why": "将月目标落实到单店、店组和具体行动，持续看清目标差距与未行动原因，通过再共识和针对性支持推动进展。",
-    "how": "汇总21店及重点店组进展，回看上周动作与支持效果，定位目标差距，确定下周重点店、对象方向和资源安排。",
+    "how": "汇总21店及重点店组进展，回看上周动作与支持效果，定位目标差距，确定下周重点店、对象方向和资源安排。 同步回看报告培训与通关、BP跟店问题处理、首批门店做法及其他店组采用情况。",
     "owner": "主责：项目负责人",
     "collaborators": "大区整合：大区BP；事实与落实：店总、店面BP",
     "when": "建议11月6、13、20、27日\n结合实际会议安排微调",
@@ -635,6 +692,34 @@
     "assigneeRole": "项目负责人"
   },
   {
+    "id": "3.8",
+    "title": "BP跟店支持与现场检核",
+    "strategy": 3,
+    "why": "将月目标落实到单店、店组和具体行动，持续看清目标差距与未行动原因，通过再共识和针对性支持推动进展。",
+    "how": "大区BP安排固定承接人，店面BP协同进入选房、议房等业务场景，了解经理是否安排邀约与面见、伙伴遇到什么卡点；现场协调支持，并把问题和下一步记入原有反馈流程。优先支持陆家嘴、黄浦、花木，全项目持续覆盖21店。",
+    "owner": "安排与协调：大区BP",
+    "collaborators": "协同：店面BP；业务落实：店总、经理；跨区支持：项目负责人",
+    "when": "建议每个大区每日跟进至少一家店\n固定承接人、跟进门店及开始日期待确认后执行",
+    "acceptance": "每次记录所跟门店、实际业务安排、发现的问题、已提供支持、责任人和复查日期；回看约定动作是否执行。未记录或信息不足先核实。",
+    "businessLink": "在实际业务场景中帮助经理落实邀约、面见安排，及时解决影响目标推进的卡点。",
+    "scope": "region",
+    "frequency": "daily",
+    "date": null,
+    "weekdays": [],
+    "startDate": null,
+    "endDate": null,
+    "dailyBundle": "目标过程",
+    "status": "待确认排期",
+    "scheduleBasis": "待确认排期；具体日期及承接安排确认后启用任务，不将建议节奏视为已确认安排。",
+    "assigneeRole": "大区BP",
+    "enabled": false,
+    "pendingSchedule": true,
+    "trigger": "大区明确固定承接人和跟店排班后启用；按门店实际需要跟进并复查，不默认所有BP每天各跟一家店。",
+    "dependencies": [
+      "3.2"
+    ]
+  },
+  {
     "id": "4.1",
     "title": "明确每日正反馈发现与分享安排",
     "strategy": 4,
@@ -661,7 +746,7 @@
     "title": "每天从数据和行为变化主动发现",
     "strategy": 4,
     "why": "让BP主动发现数据、行为和顾客反馈中的进步，及时认可伙伴，传播可学习的做法，增强行动意愿并带动其他伙伴采用。",
-    "how": "店面BP查看本店当天进展，关注面见新增、邀约突破、物料首次使用、组别开始行动、主动准备和顾客回应等线索。",
+    "how": "店面BP查看本店当天进展，从面见新增、首次使用物料、邀约突破、组别开始行动、主动准备和顾客回应中发现线索，主动联系伙伴了解实际反馈；首批启动门店同步跟进。",
     "owner": "主责：店面BP",
     "collaborators": "线索协同：经理、伙伴",
     "when": "每日查看进展时主动发现\n可结合早会后和日结",
@@ -683,7 +768,7 @@
     "title": "主动追问并核实标杆事实",
     "strategy": 4,
     "why": "让BP主动发现数据、行为和顾客反馈中的进步，及时认可伙伴，传播可学习的做法，增强行动意愿并带动其他伙伴采用。",
-    "how": "BP对有线索的伙伴简短追问：遇到什么情况、做了什么、顾客怎样回应、哪一步值得学习，复用现有记录补足事实。",
+    "how": "BP对有线索的伙伴主动追问：遇到什么情况、具体做了什么、顾客怎样回应、哪一步值得学习；结合现有面见记录、现场反馈与可核实素材补足事实。",
     "owner": "主责：店面BP",
     "collaborators": "事实提供：伙伴；业务核实：经理",
     "when": "发现线索后及时了解\n建议当日完成事实核实",
@@ -751,7 +836,7 @@
     "title": "让标杆做法在其他店组被采用",
     "strategy": 4,
     "why": "让BP主动发现数据、行为和顾客反馈中的进步，及时认可伙伴，传播可学习的做法，增强行动意愿并带动其他伙伴采用。",
-    "how": "店总和经理在早会或店组沟通中选择适用案例，说明适用对象与具体方法；BP关注尝试后的行为或结果变化。",
+    "how": "店总和经理在早会或店组沟通中选择适用案例，讲清适用对象、准备方法、邀约与面见做法；BP关注其他店组是否尝试，以及尝试后的行为或结果变化。首批门店的做法及时接入这一流程。",
     "owner": "带动采用：店总、经理",
     "collaborators": "跟进：店面BP；方法支持：项目组",
     "when": "分享后结合实际对象及时尝试\n建议下一次周复盘回看",
@@ -793,14 +878,43 @@
     "status": "待核实",
     "scheduleBasis": "建议排期，可按实际承接日期调整",
     "assigneeRole": "项目负责人"
+  },
+  {
+    "id": "4.8",
+    "title": "首批门店启动与做法提炼",
+    "strategy": 4,
+    "why": "让BP主动发现数据、行为和顾客反馈中的进步，及时认可伙伴，传播可学习的做法，增强行动意愿并带动其他伙伴采用。",
+    "how": "项目负责人联动大区BP选择准备充分的门店，店总组织物料准备、邀约和首轮面见，店面BP主动跟进实际反馈；及时提炼准备、邀约、面见做法和真实顾客回应，衔接4.2—4.6的分享与采用流程。",
+    "owner": "统筹选店：项目负责人、大区BP",
+    "collaborators": "组织启动：店总；事实跟进与分享：店面BP",
+    "when": "建议本周确定首批门店及启动日期\n具体门店和日期待确认，启动后及时分享并复查采用情况",
+    "acceptance": "确认首批门店、负责人和启动日期；实际行动后形成具体做法、真实反馈与可学习的一步，回看其他店组是否尝试。仅有选店或分享安排不代表完成。",
+    "businessLink": "主动支持门店先行动，形成其他店组可参考、可尝试的服务做法。",
+    "scope": "company",
+    "frequency": "once",
+    "date": null,
+    "weekdays": [],
+    "startDate": null,
+    "endDate": null,
+    "dailyBundle": "正反馈",
+    "status": "待确认排期",
+    "scheduleBasis": "待确认排期；具体日期及承接安排确认后启用任务，不将建议节奏视为已确认安排。",
+    "assigneeRole": "项目负责人",
+    "enabled": false,
+    "pendingSchedule": true,
+    "trigger": "首批门店、启动日期及所需物料确认后执行；使用报告时需衔接培训与通关。",
+    "dependencies": [
+      "2.1",
+      "3.2"
+    ]
   }
 ];
-  const version = 'november-2026-v1';
+  const version = 'november-2026-v2';
   const strategies = [
     {id:1,title:'目标共识',tagline:'让目标进入店面行动',why:actions.find(a=>a.strategy===1).why,businessLink:'店总把目标转成管理安排，经理明确到组和伙伴；BP以理解、安排、行为三层结果检核。',roles:'项目负责人 → 全司月会、店总会、研讨方案；店总 → 启动、研讨、早会；大区BP → 大区店总会、晒数据共识；店面BP → 协助落地、检核效果。'},
-    {id:2,title:'物料与资源支持',tagline:'让伙伴拿到就能使用',why:actions.find(a=>a.strategy===2).why,businessLink:'礼品与贺卡表达心意；hmall图、线上及纸质报告提供专业内容，支持带看、面见与顾客沟通。',roles:'项目负责人统一交付、协调和检核；店总决定单店需求；店面BP协助采购印刷、接收、店内公用和实际取用。'},
-    {id:3,title:'目标过程管理',tagline:'把差距落实为下一步',why:actions.find(a=>a.strategy===3).why,businessLink:'销售中心承担邀约、面见质量和业务推进；项目组与BP看清到店到组的进度、行为变化和所需支持。',roles:'项目负责人逐店共识并推动卡点解决；店总向下承接；大区BP汇总协调；店面BP跟进事实、反馈和复查。'},
-    {id:4,title:'正反馈激励与标杆运营',tagline:'主动发现，及时认可',why:actions.find(a=>a.strategy===4).why,businessLink:'从真实行动和顾客反馈提炼可学的一步，经店总、经理带动其他伙伴尝试，回看是否出现行为和结果变化。',roles:'店面BP主动发现、追问核实、及时分享；大区BP汇聚；项目组每日运营；店总、经理认可并带动学习。'}
+    {id:2,title:'物料与资源支持',tagline:'物料可取用，报告会使用',why:actions.find(a=>a.strategy===2).why,businessLink:'礼品与贺卡表达心意；hmall图、线上及纸质报告提供专业内容；报告培训与通关帮助伙伴用于带看、面见及顾客沟通。',roles:'项目负责人统筹物料、培训和资源协调；店总决定需求并组织学习通关；经理实施演练；店面BP协助采购印刷、接收、取用和通关结果跟进。'},
+    {id:3,title:'目标过程管理',tagline:'把差距落实为下一步',why:actions.find(a=>a.strategy===3).why,businessLink:'销售中心承担邀约、面见质量和业务推进；项目组与BP看清到店到组的进度、行为变化和所需支持。',roles:'项目负责人逐店共识并推动卡点解决；店总向下承接；大区BP安排跟店并协调卡点；店面BP跟进事实、现场支持和复查。'},
+    {id:4,title:'正反馈激励与标杆运营',tagline:'主动发现，及时认可',why:actions.find(a=>a.strategy===4).why,businessLink:'从真实行动和顾客反馈提炼可学的一步，经店总、经理带动其他伙伴尝试，回看是否出现行为和结果变化。',roles:'店面BP主动发现、追问核实、及时分享；大区BP汇聚；项目组支持首批门店启动并每日运营；店总、经理组织行动、认可并带动学习。'}
   ];
   const goalNarrative = {
   "flow": [
@@ -810,7 +924,7 @@
     },
     {
       "label": "通过",
-      "text": "项目组面向21家店，通过以下四项策略提供支持：\n一、目标共识：通过全司、大区和单店多场景共识，将目标、责任与行动逐层落实到店、组和伙伴。\n二、物料与资源支持：通过贺卡、礼品、hmall图、线上及纸质报告等感性与理性工具，降低准备成本，让物料到店可取、使用场景清楚。\n三、目标过程管理：通过面见数据看板、日晒话术和目标进度图支持每日推动，结合关键动作进展与卡点及时协调帮助。\n四、正反馈激励与标杆运营：通过BP主动发现、核实和传播真实进步，带动学习与行动。\n销售中心据此开展感恩表达、顾客沟通、邀约、面见、专业服务与服务约定的持续履行。"
+      "text": "项目组面向21家店，通过以下四项策略提供支持：\n一、目标共识：通过全司、大区和单店多场景共识，将目标、责任与行动逐层落实到店、组和伙伴。\n二、物料与资源支持：通过贺卡、礼品、hmall图、线上及纸质报告等感性与理性工具，降低准备成本，让物料到店可取、使用场景清楚，并以报告培训、练习和通关支持伙伴会用。\n三、目标过程管理：通过面见数据看板、日晒话术和目标进度图支持每日推动，将月目标落实到周、店组及具体对象，通过BP跟店了解实际安排，结合关键动作进展与卡点及时协调帮助。\n四、正反馈激励与标杆运营：通过首批门店启动、BP主动发现、核实和传播真实进步，带动其他店组学习、尝试与行动。\n销售中心据此开展感恩表达、顾客沟通、邀约、面见、专业服务与服务约定的持续履行。"
     },
     {
       "label": "进而",
@@ -821,7 +935,7 @@
       "text": "对顾客，形成专业、主动、有温度的服务体验与长期连接；对伙伴，在创造顾客价值、获得顾客认可和优秀做法被学习的过程中，获得价值感、成就感和持续行动的动力；对平台，让丽兹行的品牌价值在真实服务中被理解、信任和选择，沉淀可持续使用的服务工具、顾客关系与优秀案例，进一步支撑委托、再次合作、转介绍、开单、成交及11月业务目标；对项目协作，形成从规划承接、日常推动、问题支持到周月复盘的完整闭环。"
     }
   ],
-  "boundary": "项目组和BP服务销售中心的店总、经理与伙伴，负责共识、资源、工具、过程支持与正反馈运营；店总负责单店组织和结果，经理与伙伴负责具体顾客服务和业务推进。以下说明目标的实现逻辑，具体做法、负责人、时间和验收标准在Part 2的四项策略、35项动作中逐项展开。",
+  "boundary": "项目组和BP服务销售中心的店总、经理与伙伴，负责共识、资源、工具、过程支持与正反馈运营；店总负责单店组织和结果，经理与伙伴负责具体顾客服务和业务推进。以下说明目标的实现逻辑，具体做法、负责人、时间和验收标准在Part 2的四项策略的动作明细中逐项展开。",
   "customerScope": {
     "title": "明确全量顾客对象、行动优先级和连接深度",
     "text": "按照在售业主、非在售业主、已成交客户、未成交客户，以及保安、物业、管家等服务协作群体分类，明确不同对象的行动方式；其中在售业主为★S级重点，重点推动深度服务与线下面见。",
@@ -831,7 +945,7 @@
     {
       "title": "策略一｜目标共识：从理解价值到真实行动",
       "paragraphs": [
-        "通过全司启动视频、单店文化研讨和管理者层层共识，让伙伴理解为什么开展感恩月、为什么要感恩顾客、要向谁表达，以及如何把感恩落实到具体服务中。",
+        "通过全司启动视频、单店文化研讨和管理者层层共识，让伙伴理解为什么开展感恩月、为什么要感恩顾客、要向谁表达，以及如何把感恩落实到具体服务中。 共识材料结合历史视频和真实服务反馈；逐店核实开展状态，本周或下周的文化研讨日期与店总确认。",
         "项目负责人负责全司月会、全司店总会共识与文化研讨方案输出，并将目标共识到单店店总；店总主持单店启动大会、文化研讨和日常早会；大区BP承接每周大区店总会及每日晒数据时的目标共识；店面BP协助落地并确认实际效果。",
         "共识的结果要体现为管理者和伙伴能讲清目的、对象、目标、责任与下一步，并已有具体安排和行为变化。启动和行动包发布、研讨方案输出后，继续确认接收、理解、承接与执行；行为没有变化时查明原因，再共识或补充支持。"
       ]
@@ -842,7 +956,9 @@
         "为伙伴提供贺卡、分场景表达话术、礼品选择，以及hmall图、市场报告、成交信息等专业服务工具，帮助伙伴减少准备成本，把更多时间用于理解顾客和提供服务。",
         "项目负责人统筹资源信息、文件版本和交付节点，并检核各店准备情况；店面BP协助礼品选购落地、贺卡及hmall图印刷。贺卡由BP与店总结合目标量，确定伙伴线上定制、批量印刷空白贺卡手写或组合使用；礼品持续确认哪些店、哪些组已选购、受阻在哪里、需要什么帮助。",
         "hmall图先确认现有印刷数量、版本和可用情况，按需求补齐；建议单店准备约20份A3卡纸或A3塑封版本供本月使用。到店后明确公用存放位置、领取归还方式，以及带看、面见客户等使用场景，方便伙伴随取随用并由BP统一保管。",
-        "《韧性向前》上海城市报告按本周确认供应商、定稿并发送线上版本，下周推进纸质印刷、预计11月15日前分发的计划执行；逐店确认接收、数量与取用方式。物料支持与现有费用规则相衔接，采购、分摊和报销核对进入费用核销模块。"
+        "《韧性向前》上海城市报告按本周确认供应商、定稿并发送线上版本，下周推进纸质印刷、预计11月15日前分发的计划执行；逐店确认接收、数量与取用方式。物料支持与现有费用规则相衔接，采购、分摊和报销核对进入费用核销模块。",
+        "上海城市报告培训和使用通关单独安排：项目负责人对接海燕确认内容、讲师及组织方式，管理者先学习，再组织伙伴学习；建议店总组织、经理实施模拟面见通关，BP跟进结果，未通过的补训并复核。线上版本可先用于培训，印刷同步推进，首次使用报告服务前完成通关；具体培训路径、讲师和排期待确认。",
+        "纸质报告按人员、房源、顾客服务需求及库存确定分配标准，总印量与单店配额待确认。BP汇总贺卡和hmall图印刷需求，有共性需求时由项目负责人评估统一供应商支持。"
       ]
     },
     {
@@ -851,7 +967,8 @@
         "由店总和经理结合本店顾客名单、历史达成和当前资源，明确重点对象、服务场景、责任人、行动节奏及量化目标，确保全司行动能够被每家门店真正承接。",
         "日目标管理聚焦面见：复用统一导入的业务数据，形成全司、大区、单店数据看板，提供对应范围的日晒话术与目标进度图，支持BP结合全盘、门店TOP和户型TOP的目标、进展、差距，推动店总和经理明确下一步。数值以导入数据及明确的统计截止时间为准，BP补充现场判断、卡点与下一步。",
         "项目负责人从全司视角查看21家店关键动作的实际结果，必要时追踪到组；区分尚未更新、经核实未行动、正在推进、等待支持和已完成。共识、物料准备等节点动作保留已有结果，发生变化时更新；日常推动记录当天的进展和问题，完成后按标准验收，每周回看支持是否有效。",
-        "提醒同时给出下一步做法、可用物料和协助入口。BP提出的问题需要明确承接人、下一步、反馈时间及复查结果；项目负责人和大区BP根据原因协调资源、再次共识或介入推动，让过程管理帮助门店解决问题、推进目标。"
+        "提醒同时给出下一步做法、可用物料和协助入口。BP提出的问题需要明确承接人、下一步、反馈时间及复查结果；项目负责人和大区BP根据原因协调资源、再次共识或介入推动，让过程管理帮助门店解决问题、推进目标。",
+        "月目标继续拆到周、店组和具体对象，每日结合未面见、未送礼明细推动经理明确下一步。建议大区明确固定承接人，每日跟进至少一家店，进入选房、议房等实际业务场景提供支持；具体排班待确认。陆家嘴、黄浦、花木优先投入跟进支持，21店均纳入项目管理。"
       ]
     },
     {
@@ -860,7 +977,8 @@
         "持续记录伙伴行动、顾客反馈、关系变化和业务变化，通过内部征集、正向传播、即时激励和标杆分享，让好的服务被看见、被学习、被复制。",
         "店面BP每日结合所负责门店的数据变化和行为变化，主动留意哪些店、组、伙伴开始行动，哪些服务方式得到顾客认可，哪些小进步值得分享；从系统记录、店会、现场观察和伙伴交流中发现线索，补全真实场景、具体动作、顾客回应及可学习的一步。",
         "有核实的正反馈及时分享，由店总、经理给予即时认可，大区BP汇聚，项目负责人组织全司每日正反馈运营和周度学习。以每天都有真实内容可传播为运营方向，大小进步都可以；当天暂无素材如实记录并继续寻找，不给每店设置每日硬性案例配额。",
-        "持续回看分享后哪些伙伴尝试了做法、发生了什么变化；未行动或长期无进展的门店，BP将具体原因和所需帮助反馈项目负责人，再次共识、协调并跟进结果。"
+        "持续回看分享后哪些伙伴尝试了做法、发生了什么变化；未行动或长期无进展的门店，BP将具体原因和所需帮助反馈项目负责人，再次共识、协调并跟进结果。",
+        "项目负责人联动大区BP，主动选择准备充分的首批门店，由店总组织行动、店面BP跟进真实反馈；及时提炼准备、邀约、面见中的可学做法，推动其他店组尝试。具体首批门店及启动日期待确认。"
       ]
     }
   ],
@@ -966,23 +1084,24 @@
     {value:'≥40%',label:'门店TOP / 户型TOP',note:'两类分别按本类在售基数核算，不直接相加。'}
   ];
   const roleRows = [
-    ['项目负责人','全司目标与职责共识；研讨方案、物料和资源统筹；全司日检核、周复盘、问题再推动。','检核逐店承接与行为变化，不能以向店总传达完成代替落地。'],
-    ['店总','主持单店启动大会、文化研讨和日常早会；决定单店目标、资源与店组安排。','对本店组织落地和业务结果负责，带动经理把动作落实到伙伴。'],
-    ['大区BP','每周大区店总会共识；每日晒数据并点明差距、对象和下一步；汇聚标杆与资源问题。','复核本大区进展，协调卡点，按授权验收门店提交结果。'],
-    ['店面BP','协助共识；礼品贺卡与hmall图印刷取用；逐店组检核；主动发现、核实和分享正反馈。','每天更新事实、卡点和下一步，提交结果后由管理者验收。'],
-    ['经理与伙伴','经理明确到组、到对象、到伙伴；伙伴完成顾客沟通、邀约、面见和专业服务。','销售中心负责服务质量及业务推进；项目记录复用既有业务数据。']
+    ['项目负责人','全司目标与职责共识；研讨方案、物料、报告培训及首批门店统筹；全司日检核、周复盘、问题再推动。','检核逐店承接与行为变化，不能以向店总传达完成代替落地。'],
+    ['店总','主持单店启动大会、文化研讨和日常早会；决定单店目标、资源与店组安排；组织报告学习、通关与首轮行动。','对本店组织落地和业务结果负责，带动经理把动作落实到伙伴。'],
+    ['大区BP','每周大区店总会共识；每日晒数据并点明差距、对象和下一步；安排固定承接人跟店支持（排班待确认）；汇聚标杆与资源问题。','复核本大区进展，协调卡点，按授权验收门店提交结果。'],
+    ['店面BP','协助共识；礼品贺卡与hmall图印刷取用；逐店组检核与现场支持；跟进报告参训、通关和补训；主动发现、核实和分享正反馈。','每天更新事实、卡点和下一步，提交结果后由管理者验收。'],
+    ['经理与伙伴','经理明确到组、到对象、到伙伴；伙伴完成顾客沟通、邀约、面见和专业服务，并结合报告培训开展讲解演练。','销售中心负责服务质量及业务推进；项目记录复用既有业务数据。']
   ];
   const cadence = [
     {date:'11月3日',title:'启动与发布',text:'月会启动及行动包发布已完成；研讨方案已输出。接收、理解和单店落地继续检核。',kind:'已知事实'},
-    {date:'本周 · 11月2—8日',title:'承接、定稿与首轮检核',text:'补启动效果检核；确认研讨排期、月目标与店组承接；推进礼品选购、贺卡及hmall图准备；确认报告供应商、定稿和线上版本。',kind:'执行计划'},
+    {date:'本周 · 11月2—8日',title:'承接、定稿与首轮检核',text:'补启动效果检核；确认研讨排期、月目标与店组承接；推进礼品选购、贺卡及hmall图准备；确认报告供应商、定稿和线上版本；确认报告培训路径与排期、BP跟店排班、首批门店及启动日期。',kind:'执行计划'},
+    {date:'本周或下周 · 与店总确认',title:'文化研讨与报告学习承接',text:'逐店确认文化研讨实际日期与状态，开展后看具体行动；报告按线上定稿、管理者学习、伙伴学习、通关补训的顺序推进，具体讲师与排期待确认。培训与印刷并行。',kind:'待确认排期'},
     {date:'预计11月15日前',title:'纸质报告分发到店',text:'下周跟进校样、印刷和配送；逐店核对数量、质量、接收人及取用方式，延期事项明确补齐时间。',kind:'预计节点'},
-    {date:'每日',title:'BP更新 · 管理者验收',text:'共识与行动变化、目标差距与卡点、正反馈三项合并为单店日检核；节点物料任务到期单独检查。',kind:'日常承接'},
-    {date:'每周',title:'回看支持效果，调整下周动作',text:'建议11月6、13、20、27日归集；大区店总会沿实际会期。回看未解决问题、未行动店组和标杆采用。',kind:'建议节奏'},
+    {date:'每日',title:'BP更新 · 管理者验收',text:'共识与行动变化、目标差距与卡点、正反馈三项合并为单店日检核；节点物料任务到期单独检查；跟店安排确认后进入日任务，报告通关与物料接收分别检核。',kind:'日常承接'},
+    {date:'每周',title:'回看支持效果，调整下周动作',text:'建议11月6、13、20、27日归集；大区店总会沿实际会期。回看未解决问题、未行动店组、培训通关、跟店支持和首批做法采用；更新整月排期及接手人说明。',kind:'建议节奏'},
     {date:'11月30日—12月1日',title:'月度结果与方法沉淀',text:'11月30日统计截止，建议12月1日完成复盘；分开呈现项目交付、实际行动、顾客反馈与业务进展。',kind:'建议节奏'}
   ];
   const roleMap={company:'project',region:'region',store:'store'};
   function executionAction(a){
-    return {id:a.id,strategyId:String(a.strategy),title:a.title,why:a.why,how:a.how,acceptance:a.acceptance,scope:a.scope,ownerRole:roleMap[a.scope],frequency:a.frequency,startDate:a.startDate,endDate:a.endDate,dueDate:a.date||null,weekday:a.weekdays[0]||null,enabled:true,version,linkedActionIds:[a.id],when:a.when,scheduleBasis:a.scheduleBasis,collaborators:a.collaborators};
+    return {id:a.id,strategyId:String(a.strategy),title:a.title,why:a.why,how:a.how,acceptance:a.acceptance,scope:a.scope,ownerRole:roleMap[a.scope],frequency:a.frequency,startDate:a.startDate,endDate:a.endDate,dueDate:a.date||null,weekday:a.weekdays[0]||null,enabled:a.enabled!==false,pendingSchedule:a.pendingSchedule===true,dependencies:a.dependencies||[],trigger:a.trigger||'',version,linkedActionIds:[a.id],when:a.when,scheduleBasis:a.scheduleBasis,collaborators:a.collaborators};
   }
   function bundle(id,title,scope,frequency,ids,how,acceptance){
     return {id,strategyId:'cross',title,scope,ownerRole:roleMap[scope],frequency,startDate:'2026-11-05',endDate:'2026-11-30',dueDate:null,weekday:frequency==='weekly'?5:null,enabled:true,version,linkedActionIds:ids,why:'把同一天、同一门店需要检核的事实合并更新，连接规划动作与日常推动。',how,acceptance,scheduleBasis:frequency==='weekly'?'建议每周五归集，实际会期可按安排调整。':'建议11月5日起按新安排运行；按当天实际结果更新。'};
@@ -990,16 +1109,16 @@
   const bundledIds=['1.6','1.9','3.3','3.4','4.2','4.3','4.4','3.5','4.5','2.11','3.6','4.7','2.12','3.2','4.6'];
   const executionActions = actions.filter(a=>!bundledIds.includes(a.id)).map(executionAction).concat([
     bundle('store-daily','单店日检核｜共识、目标进度与正反馈','store','daily',['1.6','1.9','3.3','3.4','4.2','4.3','4.4'],
-      '①共识与行为：早会后看各组是否明确当天重点；集中共识后次日核实理解、安排和行为变化。\n②目标与卡点：结合已有数据记录已行动、未行动及待核实店组，说明差距、原因、所需支持和下一步。\n③正反馈：主动从数据和行为变化发现线索，追问真实场景、动作、顾客回应和可学的一步；有核实事实及时分享。当天暂无素材如实记录。',
+      '①共识与行为：早会后看各组是否明确当天重点；集中共识后次日核实理解、安排和行为变化。\n②目标与卡点：结合已有数据和未面见、未送礼明细，记录周目标、店组及具体对象的已约、已完成和下一步；跟店发现同处反馈，说明差距、原因、所需支持和复查时间。\n③正反馈：主动从数据和行为变化发现线索，追问真实场景、动作、顾客回应和可学的一步；有核实事实及时分享。当天暂无素材如实记录。',
       '三个维度均有当日事实或明确的“待核实/暂无”；卡点有承接人及复查时间；标杆有具体动作与真实变化。无案例不等于未行动，不要求每店每日硬性产出案例。管理者核实结果后验收，退回项补充后再提交。'),
     bundle('company-daily','全司日检核｜问题承接与每日正反馈运营','company','daily',['3.5','4.5'],
       '查看各店提交结果，聚焦未行动、持续无进展和资源阻碍；与店总再次共识，必要时协调大区BP及大区总，明确动作和复查日。汇聚各区已核实素材，选定当天可传播内容和发布承接人；保留案例真实发生日期。',
       '需要介入的问题有承接人、下一步和复查时间；不以“已沟通”关闭问题。全司每日正反馈据实运营，暂无已核实素材时明确补充来源，不将旧案例写成当日新发生。'),
     bundle('store-weekly','单店周检核｜目标承接、物料费用与标杆采用','store','weekly',['2.12','3.2','4.6'],
-      '回看店总目标是否落实到店组、伙伴和具体对象；复盘本周行动与卡点。沿费用核销和既有台账核对采购、印刷、付款、送出与库存，印刷费用口径单独确认。了解伙伴尝试了哪些标杆做法及实际变化。',
+      '回看月目标是否落实为周目标、店组目标、责任伙伴和具体对象；复盘本周行动与跟店卡点，形成下周安排。沿费用核销和既有台账核对采购、印刷、付款、送出与库存，印刷费用口径单独确认。了解伙伴尝试了哪些标杆做法及实际变化。',
       '说明本周目标承接和结果、未解决问题、下周目标动作及责任日期；费用和库存与既有明细对应，不重复登记账目；区分案例传播和实际采用。'),
     bundle('company-weekly','全司周复盘｜21店进度、资源补齐与标杆运营','company','weekly',['2.11','3.6','4.7'],
-      '按21店及重点店组汇总目标进展，回看上周动作及问题闭环；核实报告、hmall图、贺卡和礼品是否收到、制作、可取用和已使用；回看每日正反馈、BP主动发现和案例采用情况，调整下周重点及支持。',
+      '按21店及重点店组汇总目标进展，回看上周动作及问题闭环；核实报告、hmall图、贺卡和礼品是否收到、制作、可取用和已使用；回看报告培训与通关、BP跟店卡点、首批门店启动、每日正反馈及案例采用，调整下周重点、整月排期和接手人说明。',
       '产出下周目标、重点店组、动作、责任人和复查日；未准备物料明确补齐时间；无案例门店区分未行动、已行动未反馈、已有事实未挖掘。已解决问题需有复查结论。')
   ]);
   const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1017,7 +1136,7 @@
   function actionRow(a){
     return `<article class="np-action" id="nov-action-${E(a.id.replace('.','-'))}"><div class="np-action-main"><span class="np-action-id">行动 ${E(a.id)}</span><h4>${E(a.title)}</h4><p>${E(a.how)}</p>${a.knownFact?`<p class="np-fact"><strong>已知事实</strong>${E(a.knownFact)}</p>`:''}${a.trigger?`<p class="np-trigger"><strong>触发时跟进</strong>${E(a.trigger)}</p>`:''}<p class="np-business"><strong>连接业务</strong>${E(a.businessLink)}</p></div><dl class="np-action-meta"><div><dt>谁来干 · Who</dt><dd>${E(a.owner)}${a.collaborators?`<span>${E(a.collaborators)}</span>`:''}</dd></div><div><dt>什么时间 · When</dt><dd>${lines(a.when)}<small>${E(a.scheduleBasis)}</small></dd></div><div><dt>如何验收</dt><dd>${E(a.acceptance)}</dd></div></dl></article>`;
   }
-  function strategyCard(s){const group=actions.filter(a=>a.strategy===s.id);return `<details class="np-strategy" id="nov-strategy-${s.id}"><summary><span class="np-strategy-number">0${s.id}</span><span class="np-strategy-heading"><strong>${E(s.title)}</strong><span>${E(s.tagline)}</span></span><span class="np-count">${group.length}项动作</span><span class="np-expand" aria-hidden="true">＋</span></summary><div class="np-strategy-content"><div class="np-strategy-why"><span>为什么这样做 · Why</span><p>${E(s.why)}</p></div><div class="np-strategy-context"><p><strong>销售中心的业务承接</strong>${E(s.businessLink)}</p><p><strong>角色分工</strong>${E(s.roles)}</p></div><div class="np-action-list">${group.map(actionRow).join('')}</div></div></details>`;}
+  function strategyCard(s){const group=actions.filter(a=>a.strategy===s.id);return `<details class="np-strategy" id="nov-strategy-${s.id}"><summary><span class="np-strategy-number">0${s.id}</span><span class="np-strategy-heading"><strong>${E(s.title)}</strong><span>${E(s.tagline)}</span></span><span class="np-count">${group.length}项动作</span><span class="np-expand" aria-hidden="true">＋</span></summary><div class="np-strategy-content"><div class="np-strategy-why"><span>为什么这样做 · Why</span><p>${E(s.why)}</p></div><div class="np-strategy-context"><p><strong>销售中心的业务承接</strong>${E(s.businessLink)}</p><p><strong>角色分工</strong>${E(s.roles)}</p></div>${s.id===2?'<div class="np-strategy-context"><h3>专业报告培训与通关</h3><p>线上定稿 → 管理者学习 → 伙伴学习与演练 → 通关／补训复核。培训与印刷并行，首次使用报告服务前完成通关；具体讲师、组织方式和日期待确认。</p></div><div class="np-action-list">'+group.filter(a=>['2.13','2.14'].includes(a.id)).map(actionRow).join('')+'</div><div class="np-strategy-context"><h3>物料准备、到店与取用支持</h3></div>':''}<div class="np-action-list">${group.filter(a=>s.id!==2||!['2.13','2.14'].includes(a.id)).map(actionRow).join('')}</div></div></details>`;}
   function render(view={}){
     const scopeName=view.scope==='store'?view.store||view.name:view.scope==='region'?view.region||view.name:'全司';
     const paragraphs=items=>items.map(text=>'<p>'+E(text)+'</p>').join('');
@@ -1030,17 +1149,17 @@
     const targetCards=`<div class="np-metrics">${goalMetrics().map(m=>`<article><span>${E(m.label)}</span><strong>${E(m.value)}</strong><p>${E(m.note)}</p></article>`).join('')}</div><p class="np-note">全司面见量目标已完成大区与门店拆解，明细在下方展开查看。面见率按对应在售基数核算；此处展示计划目标，实际达成以导入业务数据为准，礼品送出与面见分别记录。</p>`;
     const background=detail('nov-goal-background','背景与定位｜感恩月的完整说明与衡量原则',`<article class="np-goal-explanation"><h3>为什么开展感恩月</h3>${paragraphs(goalNarrative.background)}</article><article class="np-goal-explanation"><h3>项目定位与服务对象</h3>${paragraphs(goalNarrative.positioning)}</article><article class="np-goal-explanation"><h3>怎样衡量项目价值</h3>${paragraphs(goalNarrative.measurement)}</article>`);
     const planGoals=section('plan-goals','01','Part 1｜项目目标','总目标与全司量化目标直接展示；实现路径、效果说明及大区和单店目标可展开查看。复制方案时保留全部内容。',total+paths+changes+effects+goalCards+targetCards+targetBreakdownHtml()+background);
-    const strategyOverview=`<div class="np-strategy-map">${strategies.map(s=>`<a href="#nov-strategy-${s.id}" data-np-open="${s.id}"><span>策略 ${s.id}</span><strong>${E(s.title)}</strong><small>${E(s.tagline)}</small></a>`).join('')}</div><p class="np-note"><strong>从策略到动作：</strong>展开下方任一策略，查看具体做法、负责人、时间与验收标准。35项动作保留完整明细，日常检核按角色和日期承接。</p>`;
+    const strategyOverview=`<div class="np-strategy-map">${strategies.map(s=>`<a href="#nov-strategy-${s.id}" data-np-open="${s.id}"><span>策略 ${s.id}</span><strong>${E(s.title)}</strong><small>${E(s.tagline)}</small></a>`).join('')}</div><p class="np-note"><strong>从策略到动作：</strong>展开下方任一策略，查看具体做法、负责人、时间与验收标准。${actions.length}项动作保留完整明细，日常检核按角色和日期承接。</p>`;
     const planActions=section('plan-actions','02','Part 2｜核心策略与落地动作','四项策略共同支持销售中心目标。每项策略说明为什么做，并落实到谁在什么时间做什么。',strategyOverview+strategies.map(strategyCard).join(''));
     const schedule=`<div class="np-cadence">${cadence.map(c=>`<article><div><strong>${E(c.date)}</strong><span>${E(c.kind)}</span></div><div><h3>${E(c.title)}</h3><p>${E(c.text)}</p></div></article>`).join('')}</div>`;
     const roles=`<details class="np-support"><summary>展开项目负责人、店总与BP的分工边界</summary><div class="np-role-list">${roleRows.map(r=>`<article><h3>${E(r[0])}</h3><p>${E(r[1])}</p><p><strong>交付与责任</strong>${E(r[2])}</p></article>`).join('')}</div></details>`;
-    const planTargets=section('plan-targets','03','执行节奏与角色承接','排期与实际状态分开：已知完成的只有启动、行动包发布和方案输出，其余按实际结果更新。',schedule+roles);
+    const planTargets=section('plan-targets','03','执行节奏与角色承接','排期与实际状态分开：已知交付包括启动、行动包发布、方案输出及店总会物料与落地规划共识；单店承接、培训和执行结果逐项核实。',schedule+(root.WBNovemberSchedule?.render?.(view)||'')+roles);
     const daily=`<div class="np-handoff"><article><span>01</span><h3>规划形成任务</h3><p>以同一份行动定义按日期、门店和BP负责范围生成任务；一次性物料节点保留独立验收，日常共识、进度和标杆合并更新。</p></article><article><span>02</span><h3>BP更新事实</h3><p>填写当天实际推进、店组行动、卡点及下一步。有正反馈补充具体场景、动作和变化；暂无素材如实记录。</p></article><article><span>03</span><h3>每日验收</h3><p>管理者查看结果与验收标准，确认通过或退回补充。提交结果与验收完成分开，未解决问题持续跟进。</p></article><article><span>04</span><h3>每周复盘</h3><p>汇总完成、待验收、退回和未推进事项，回看目标差距与支持效果，明确下周重点、责任人和复查日期。</p></article></div><div class="np-bottom-note"><div><strong>当前查看：${E(scopeName||'全司')}</strong><p>规划面向全体BP共享；实际任务按登录账号的授权范围查看和更新。费用核销继续承接系统导入明细、礼品费用分摊与报销核对。</p></div><div class="np-buttons"><button type="button" class="btn primary" data-plan-mode="daily">进入日常推动</button><button type="button" class="btn" data-plan-mode="expense">查看费用核销</button><a class="btn" href="https://liya123156.github.io/gan-en-yue/" target="_blank" rel="noopener">打开感恩月行动包</a></div></div>`;
-    const hero=`<header class="hero plan-hero np-hero"><div class="eyebrow">LANDZ · NOVEMBER 2026</div><div class="plan-title-line"><h1>11月感恩月｜项目规划与执行</h1><span class="plan-badge">11月4日共创更新</span></div><p class="plan-theme">感恩相连，服务有光</p><div class="meta-row"><span>${E(scopeName||'全司')} · 共享规划</span><span>2026年11月1日—11月30日</span><span>21家店 · 四项策略 · 35项行动</span></div><p class="np-hero-note">规划明确目标和动作，实际推进与验收结果在日常推动中持续更新。</p></header>`;
-    return `<div class="november-plan">${hero}${planGoals}${planActions}${planTargets}${section('plan-delivery','04','从规划承接到日检核与周复盘','规划、执行与复盘使用对应的行动编号，保留推进和验收结果。',daily)}<footer class="footer"><span>上海丽兹行 · 11月感恩月项目</span><span>2026/11/04 共创更新</span></footer></div>`;
+    const hero=`<header class="hero plan-hero np-hero"><div class="eyebrow">LANDZ · NOVEMBER 2026</div><div class="plan-title-line"><h1>11月感恩月｜项目规划与执行</h1><span class="plan-badge">11月5日共创更新</span></div><p class="plan-theme">感恩相连，服务有光</p><div class="meta-row"><span>${E(scopeName||'全司')} · 共享规划</span><span>2026年11月1日—11月30日</span><span>21家店 · 四项策略 · ${actions.length}项行动</span></div><p class="np-hero-note">规划明确目标和动作，实际推进与验收结果在日常推动中持续更新。</p></header>`;
+    return `<div class="november-plan">${hero}${planGoals}${planActions}${planTargets}${section('plan-delivery','04','从规划承接到日检核与周复盘','规划、执行与复盘使用对应的行动编号，保留推进和验收结果。',daily)}<footer class="footer"><span>上海丽兹行 · 11月感恩月项目</span><span>2026/11/05 共创更新</span></footer></div>`;
   }
   function exportText(){return [
-    '11月感恩月｜项目规划','2026年11月4日共创更新','',goal,'',goalNarrative.boundary,
+    '11月感恩月｜项目规划','2026年11月5日共创更新','',goal,'',goalNarrative.boundary,
     '','通过什么｜顾客分层与四项支持路径',goalNarrative.customerScope.title,goalNarrative.customerScope.text,goalNarrative.customerScope.more,
     ...goalNarrative.pathways.flatMap(path=>['',path.title,...path.paragraphs]),
     '','进而改变什么｜六类问题与预期变化',...goalNarrative.problems.flatMap((p,i)=>['',(i+1)+'. '+p.title,p.situation,'希望带来的变化：'+p.resolve]),
@@ -1049,7 +1168,8 @@
     '','量化目标',...goalMetrics().map(m=>m.label+'：'+m.value+'；'+m.note),...targetBreakdownText(),
     '','项目背景',...goalNarrative.background,'','项目定位与服务对象',...goalNarrative.positioning,'','衡量原则',...goalNarrative.measurement,
     '','四项核心策略',...strategies.flatMap(s=>['','策略'+s.id+'｜'+s.title,'Why：'+s.why,'与业务的关联：'+s.businessLink,...actions.filter(a=>a.strategy===s.id).flatMap(a=>['',a.id+' '+a.title,'How：'+a.how,'Who：'+a.owner+'；'+a.collaborators,'When：'+a.when,'验收：'+a.acceptance,'业务关联：'+a.businessLink,a.knownFact?'已知事实：'+a.knownFact:''])])
+    ,root.WBNovemberSchedule?.exportText?.()||''
   ].filter(x=>x!==undefined).join('\n');}
   if(typeof document!=='undefined')document.addEventListener('click',e=>{const link=e.target.closest('[data-np-open]');if(link){const target=document.getElementById('nov-strategy-'+link.dataset.npOpen);if(target)target.open=true;}});
-  root.WBNovemberPlan={version,title:'11月感恩月｜项目规划与执行',status:'11月4日共创更新 · 按实际结果逐项检核',theme:'感恩相连，服务有光',period:'2026年11月1日—11月30日',goalNarrative,goal,goals,metrics,strategies,actions,executionActions,render,exportText,text:exportText,navigation:[['plan-goals','Part 1 · 项目目标'],['plan-actions','Part 2 · 核心策略与动作'],['plan-targets','执行节奏与角色承接'],['plan-delivery','日检核与周复盘承接']],nav:[{id:'plan-goals',title:'Part 1 · 项目目标'},{id:'plan-actions',title:'Part 2 · 核心策略与动作'},{id:'plan-targets',title:'执行节奏与角色承接'},{id:'plan-delivery',title:'日检核与周复盘承接'}]};
+  root.WBNovemberPlan={version,title:'11月感恩月｜项目规划与执行',status:'11月5日共创更新 · 按实际结果逐项检核',theme:'感恩相连，服务有光',period:'2026年11月1日—11月30日',goalNarrative,goal,goals,metrics,strategies,actions,executionActions,render,exportText,text:exportText,navigation:[['plan-goals','Part 1 · 项目目标'],['plan-actions','Part 2 · 核心策略与动作'],['plan-targets','执行节奏与角色承接'],['plan-delivery','日检核与周复盘承接']],nav:[{id:'plan-goals',title:'Part 1 · 项目目标'},{id:'plan-actions',title:'Part 2 · 核心策略与动作'},{id:'plan-targets',title:'执行节奏与角色承接'},{id:'plan-delivery',title:'日检核与周复盘承接'}]};
 })(window);

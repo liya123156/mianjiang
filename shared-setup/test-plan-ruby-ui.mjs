@@ -1,0 +1,71 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const repo=new URL('../',import.meta.url).pathname;
+const handlers={},calls=[];
+const document={addEventListener:(name,handler)=>handlers[name]=handler,getElementById:()=>null,createElement:()=>({setAttribute(){}})};
+const context={document,Intl,Date,Promise,Event,dispatchEvent(){}};context.window=context;
+vm.createContext(context);vm.runInContext(fs.readFileSync(repo+'operations/november-plan.js','utf8'),context);
+const definitions=JSON.parse(JSON.stringify(context.WBNovemberPlan.executionActions));
+const old=definitions.filter(a=>!['2.13','2.14','3.8','4.8'].includes(a.id)).map(a=>({...a,version:4,how:'旧版做法',acceptance:'旧版依据'}));
+old.find(a=>a.id==='1.3').dueDate='2026-11-09';
+const snapshot={id:'1.3',title:'原任务标题',frequency:'once',how:'原任务做法',acceptance:'原验收标准'};
+let payload={actions:old,stores:[],events:[],tasks:[
+ {id:'a',actionId:'1.3',scope:'store',ownerRole:'store',region:'甲区',store:'甲店',dueDate:'2026-11-01',status:'accepted',actionSnapshot:snapshot,result:'私密结果',evidence:'私密证据'},
+ {id:'b',actionId:'1.3',scope:'store',ownerRole:'store',region:'乙区',store:'乙店',dueDate:'2026-11-01',status:'submitted',actionSnapshot:snapshot,result:'其他门店结果'},
+ {id:'c',actionId:'1.3',scope:'store',ownerRole:'store',region:'甲区',store:'甲店',dueDate:'2099-11-01',status:'open',actionSnapshot:snapshot}
+]};
+context.WBCloud={member:{id:'project',role:'project'},plan:async(action,args)=>{calls.push({action,args});return JSON.parse(JSON.stringify(payload));}};
+vm.runInContext(fs.readFileSync(repo+'operations/plan-execution.js','utf8'),context);
+const app=context.WBPlanExecution;
+assert.equal(app.scheduleSummary({}).loaded,false);
+await app.load();
+let summary=app.scheduleSummary({scope:'store',region:'甲区',store:'甲店'});
+assert.equal(summary.actions.length,28);
+assert.equal(summary.actions.filter(a=>a.pendingSchedule).length,4);
+const row=summary.actions.find(a=>a.id==='1.3');
+assert.equal(row.dueDate,'2026-11-09');
+assert.equal(row.total,2);
+assert.equal(row.due,1);
+assert.equal(row.accepted,1);
+assert.equal(row.open,0);
+assert.equal(row.submitted,0);
+assert.ok(!JSON.stringify(summary).includes('私密'));
+assert.ok(!JSON.stringify(summary).includes('其他门店'));
+assert.ok(!JSON.stringify(summary).includes('甲店'));
+const admin=app.renderAdmin({scope:'company'});
+for(const id of ['2.13','2.14','3.8','4.8']){
+ const html=admin.split(`data-action-id="${id}"`)[1].split('</details>')[0];
+ assert.match(html,/待确认排期/);
+ assert.doesNotMatch(html,/name="enabled"[^>]*checked/);
+ assert.match(html,/name="startDate"[^>]*value=""/);
+ assert.match(html,/name="endDate"[^>]*value=""/);
+ assert.match(html,/name="dueDate"[^>]*value=""/);
+}
+app.state.date='2026-11-01';
+const daily=app.renderDaily({scope:'company'});
+assert.match(daily,/11月5日补充推进指引/);
+assert.match(daily,/原验收标准/);
+assert.equal(payload.tasks[0].actionSnapshot.acceptance,'原验收标准');
+let message='';
+const draftRow={dataset:{actionId:'3.8',version:''},querySelector(selector){const name=selector.match(/name="(.*?)"/)?.[1];return {checked:true,value:({frequency:'daily',dueDate:'',startDate:'',endDate:'',weekday:'1'})[name]||''};}};
+const form={id:'pe-schedule-form',querySelectorAll:selector=>selector==='button'?[]:[draftRow],querySelector:()=>null,prepend:el=>message=el.textContent};
+const callCount=calls.length;
+await handlers.submit({target:form,preventDefault(){},submitter:{value:'generate'}});
+assert.match(message,/核对开始日和结束日/);
+assert.equal(calls.length,callCount);
+context.WBCloud.member={id:'store',role:'store',region:'乙区',store:'乙店'};
+summary=app.scheduleSummary({scope:'company'});
+assert.equal(summary.loaded,false);
+assert.equal(summary.actions.length,0);
+context.WBCloud.member=null;
+assert.equal(app.scheduleSummary({}).loggedIn,false);
+assert.equal(app.scheduleSummary({}).actions.length,0);
+context.WBCloud.member={id:'project',role:'project'};
+payload.actions.push({...definitions.find(a=>a.id==='3.8'),enabled:true,version:1,startDate:'2026-11-10',endDate:'2026-11-30'});
+await app.load();
+const confirmed=app.scheduleSummary({}).actions.find(a=>a.id==='3.8');
+assert.equal(confirmed.pendingSchedule,false);
+assert.equal(confirmed.startDate,'2026-11-10');
+assert.equal(confirmed.enabled,true);
+console.log('PASS Ruby execution UI: pending dates, preserved schedules/snapshots, scoped aggregate privacy, identity reset and date validation');
