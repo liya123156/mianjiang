@@ -243,7 +243,39 @@ ${strategyText}
 
 感恩相连服务物料包：${plan.materialPack}`;
  }
+
+ function reviewWeekTwoPlan(){return root.WBNovemberPlan?.week2Plan||null;}
+ function reviewWeekTwoActions(items){
+  return `<ul class="review-action-list">${(items||[]).map(item=>`<li>${E(item)}</li>`).join('')}</ul>`;
+ }
+ function reviewWeekTwoHtml(plan){
+  const cards=[['执行周期',plan.period],['本周面见目标','至少70套'],['核心策略',String((plan.strategies||[]).length)+'项'],['统一标准','面见必带礼物']];
+  const cardGrid=`<div class="review-summary-grid compact">${cards.map(([label,value])=>`<article class="review-summary-card"><span>${E(label)}</span><strong>${E(value)}</strong></article>`).join('')}</div>`;
+  const rows=(plan.strategies||[]).map(item=>`<tr><td><strong>${E('策略'+item.id+'｜'+item.title)}</strong></td><td>${E(item.timing)}</td><td>${reviewWeekTwoActions(item.actions)}</td><td>${E(item.owners)}</td><td>${E(item.acceptance)}</td></tr>`).join('');
+  return `<div class="review-report">
+   <div class="review-subhead"><span>WEEK 2 · 11月感恩月</span><h3>${E(plan.title)}｜${E(plan.period)}</h3><p>从月度规划进入第二周执行，按四项策略集中呈现本周动作、角色分工与验收标准。</p></div>
+   ${cardGrid}
+   <div class="review-callout"><strong>本周定性目标</strong><p>${E(plan.qualitativeGoal)}</p><strong>统一执行标准</strong><p>${E(plan.executionStandard)}</p></div>
+   <div class="review-table-card"><h3>本周四项策略与动作</h3><div class="review-table-scroll"><table class="review-tier-table" aria-label="11月第二周四项策略与动作"><thead><tr><th>策略</th><th>时间与频次</th><th>本周核心动作</th><th>负责人及承接角色</th><th>验收标准</th></tr></thead><tbody>${rows}</tbody></table></div></div>
+  </div>`;
+ }
+ function reviewWeekTwoText(plan){
+  const strategies=(plan.strategies||[]).map(item=>`策略${item.id}｜${item.title}
+时间与频次：${item.timing}
+本周核心动作：
+${(item.actions||[]).map(action=>'• '+action).join('\n')}
+负责人及承接角色：${item.owners}
+验收标准：${item.acceptance}`).join('\n\n');
+  return `${plan.title}｜${plan.period}
+本周定量目标：${plan.quantitativeGoal}
+本周定性目标：${plan.qualitativeGoal}
+统一执行标准：${plan.executionStandard}
+
+${strategies}`;
+ }
  function reviewNextHtmlV2(ctx){
+  const week=reviewWeekTwoPlan();
+  if(currentMonth==='2026-11'&&week)return reviewWeekTwoHtml(week);
   const scoped=reviewNovemberScope(ctx);
   if(!scoped)return '<div class="review-report"><p class="ops-muted">11月承接目标待确认。</p></div>';
   const {plan,summary,regions,stores}=scoped;
@@ -267,11 +299,17 @@ ${strategyText}
  }
  function reviewTextWithNovember(view=currentView){
   const text=reviewText(view),ctx=reviewContext(view),marker='六、11月份目标及核心策略\n';
+  if(currentMonth==='2026-11'){
+   const week=reviewWeekTwoPlan();
+   if(!week||!text.includes(marker))return text;
+   const start=text.indexOf(marker);
+   return text.slice(0,start)+'六、'+reviewWeekTwoText(week);
+  }
   if(!ctx||!ctx.facts?.november||!text.includes(marker))return text;
   const start=text.indexOf(marker);
   return text.slice(0,start)+marker+'以感恩连接为主题，将文化共识转化为全量顾客服务、在售业主面见和重点房源经营行动；管理方式升级为“组织进展＋逐套机会池”双层管理。\n\n'+reviewNovemberPlanTextV2(ctx);
  }
- function review(view){const d=data(),old=ARCHIVE.months[currentMonth]?.views[viewKey(view)],hasData=Boolean(d?.housing.length),source=`<div class="ops-actions">${old?.sections.length?'<button class="btn" data-ops="archive-review">查看已归档复盘</button>':''}${hasData?'<button class="btn primary" data-ops="copy-review">复制当前复盘</button>':''}</div>`;if(!hasData)return hero('周／月复盘 · '+view.name,'导入日常数据后，目标、质量和动作结果自动汇总')+source+(old?.sections||[]).map(x=>block(x.id,x.title,x.blocks.map(renderBlock).join(''))).join('');const ctx=reviewContext(view);currentView={...view,sections:[{id:'review-progress',blocks:[ctx.progress]}]};const month=Number(currentMonth.slice(5));return hero(`${month}月月度复盘 · ${view.name}`,`汇报型阅读复盘 · 数据截至${d.imports[0]?.as_of||'待导入'} · 筛选仅用于聚焦`)+source+block('review-progress','本月目标达成结果',reviewProgressHtml(ctx),'全司视角直接呈现大区与门店完整结果；筛选后同步聚焦当前范围。')+block('review-gifts','面见伴手礼',reviewGiftHtml(ctx))+block('review-quality','面见质量与业务转化',reviewQualityHtml(ctx))+block('review-highlights','标杆门店与重点提醒',reviewHighlightsHtml(ctx))+block('review-actions',currentMonth==='2026-11'?'上周策略复盘与本周承接':`${month}月关键动作复盘`,reviewActionsHtml(ctx))+block('review-next','11月份目标及核心策略',reviewNextHtmlV2(ctx));}
+ function review(view){const d=data(),old=ARCHIVE.months[currentMonth]?.views[viewKey(view)],hasData=Boolean(d?.housing.length),source=`<div class="ops-actions">${old?.sections.length?'<button class="btn" data-ops="archive-review">查看已归档复盘</button>':''}${hasData?'<button class="btn primary" data-ops="copy-review">复制当前复盘</button>':''}</div>`;if(!hasData)return hero('周／月复盘 · '+view.name,'导入日常数据后，目标、质量和动作结果自动汇总')+source+(old?.sections||[]).map(x=>block(x.id,x.title,x.blocks.map(renderBlock).join(''))).join('');const ctx=reviewContext(view);currentView={...view,sections:[{id:'review-progress',blocks:[ctx.progress]}]};const month=Number(currentMonth.slice(5));return hero(`${month}月月度复盘 · ${view.name}`,`汇报型阅读复盘 · 数据截至${d.imports[0]?.as_of||'待导入'} · 筛选仅用于聚焦`)+source+block('review-progress','本月目标达成结果',reviewProgressHtml(ctx),'全司视角直接呈现大区与门店完整结果；筛选后同步聚焦当前范围。')+block('review-gifts','面见伴手礼',reviewGiftHtml(ctx))+block('review-quality','面见质量与业务转化',reviewQualityHtml(ctx))+block('review-highlights','标杆门店与重点提醒',reviewHighlightsHtml(ctx))+block('review-actions',currentMonth==='2026-11'?'上周策略复盘与本周承接':`${month}月关键动作复盘`,reviewActionsHtml(ctx))+block('review-next',currentMonth==='2026-11'?'11月第二周目标及核心策略':'11月份目标及核心策略',reviewNextHtmlV2(ctx));}
  function emptyData(month){const base=ARCHIVE.months[ARCHIVE.defaultMonth];return {meta:{month,cutoff:'本月日常数据待导入',week:'按实际快照查看'},regions:base.regions,views:Object.fromEntries(Object.entries(base.views).map(([k,v])=>[k,{scope:v.scope,role:v.role,name:v.name,region:v.region,store:v.store,sections:[],kpis:[],title:month+'项目工作台 · '+v.name}]))};}
  function goals(){const stored=payload('goals','monthly');if(Object.keys(stored).length)return stored;const archive=ARCHIVE.months[currentMonth];if(!archive)return {};return Object.fromEntries(Object.values(archive.views).filter(v=>v.scope==='store').map(v=>{const p=v.sections.flatMap(s=>s.blocks).find(b=>b.variant==='progress');const r=p?.rows.find(r=>r._level==='store');return [v.name,typeof r?.target==='number'?r.target:null];}));}
  function memberScopes(){const m=C.member;return m?.role==='store'?[{region:m.region,store:m.store},...(m.stores||[])].map(x=>({...x,store:canonicalStore(x.store)})):[];}
@@ -500,8 +538,8 @@ TOP重点房源
   const reviewButton=document.querySelector('[data-view-mode="review"]');if(reviewButton)reviewButton.textContent=archiveMonth?'历史复盘':'周/月复盘';
   document.getElementById('report').hidden=false;document.getElementById('status').hidden=true;document.getElementById('scope-panel').hidden=archiveMonth||currentMode==='admin';document.getElementById('toolbar').hidden=false;document.getElementById('word-download').hidden=true;
   document.getElementById('copy-progress-image').hidden=archiveMonth||!['daily','review'].includes(currentMode);document.getElementById('copy-progress-image').disabled=archiveMonth;document.getElementById('copy-report').hidden=archiveMonth;document.getElementById('copy-report').disabled=archiveMonth||!['daily','review'].includes(currentMode);document.getElementById('print-report').disabled=false;
-  let nav=archiveMonth?(currentMode==='admin'?[['admin-archive','上传复盘文件'],['admin-archive-list','已归档文件']]:[['history-files','复盘文件']]):currentMode==='daily'?[['daily-progress','面见及礼物进展'],['daily-quality','面见质量'],['daily-message','今日重点与话术'],['daily-actions','动作追踪与结果']]:currentMode==='review'?[['review-progress','本月目标达成结果'],['review-gifts','面见伴手礼'],['review-quality','面见质量与业务转化'],['review-highlights','标杆门店与重点提醒'],['review-actions',currentMonth==='2026-11'?'上周策略复盘与本周承接':Number(currentMonth.slice(5))+'月关键动作复盘'],['review-next','11月份目标及核心策略']]:currentMode==='expense'?[['expense-todo','BP核账待办'],['expense-head','账本与当月规则'],['expense-records','送礼明细与凭证'],['expense-settlement','分摊与收付款'],['expense-cash','实际收付款登记']]:[['admin-import','导入基础数据'],['admin-goals','本月门店目标'],['admin-history','更新与备份']];
-  if(currentMonth==='2026-11'&&root.WBPlanExecution){const n={daily:['pe-daily','每日动作与单店检核'],admin:['pe-admin','计划分包与门店配置']}[currentMode];if(n)nav.unshift(n);}
+  let nav=archiveMonth?(currentMode==='admin'?[['admin-archive','上传复盘文件'],['admin-archive-list','已归档文件']]:[['history-files','复盘文件']]):currentMode==='daily'?[['daily-progress','面见及礼物进展'],['daily-quality','面见质量'],['daily-message','今日重点与话术'],['daily-actions','动作追踪与结果']]:currentMode==='review'?[['review-progress','本月目标达成结果'],['review-gifts','面见伴手礼'],['review-quality','面见质量与业务转化'],['review-highlights','标杆门店与重点提醒'],['review-actions',currentMonth==='2026-11'?'上周策略复盘与本周承接':Number(currentMonth.slice(5))+'月关键动作复盘'],['review-next',currentMonth==='2026-11'?'11月第二周目标及核心策略':'11月份目标及核心策略']]:currentMode==='expense'?[['expense-todo','BP核账待办'],['expense-head','账本与当月规则'],['expense-records','送礼明细与凭证'],['expense-settlement','分摊与收付款'],['expense-cash','实际收付款登记']]:[['admin-import','导入基础数据'],['admin-goals','本月门店目标'],['admin-history','更新与备份']];
+  if(currentMonth==='2026-11'&&root.WBPlanExecution){const n={daily:['pe-daily','本周动作与检核'],admin:['pe-admin','计划分包与门店配置']}[currentMode];if(n)nav.unshift(n);}
   document.getElementById('nav').innerHTML=nav.map(([id,label],i)=>`<a href="#${id}"><span class="nav-no">0${i+1}</span><span>${E(label)}</span></a>`).join('');
   document.querySelector('.nav-label').textContent='CONTENTS / '+(archiveMonth?(currentMode==='admin'?'文件管理':'历史复盘'):({daily:'日常推动',review:'结果复盘',expense:'费用核销',admin:'数据管理'}[currentMode]||'项目工作台'));
   document.title=(archiveMonth?(currentMode==='admin'?'历史文件管理':'历史复盘归档'):({daily:'日常推动',review:'周／月复盘',expense:'费用核销',admin:'数据管理'}[currentMode]))+' · '+view.name+'｜面见项目工作台';
