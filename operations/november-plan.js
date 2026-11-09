@@ -1128,6 +1128,55 @@
  "quantitativeGoal": "本周在售业主面见量至少70套。",
  "qualitativeGoal": "推动四项策略真正进入单店行动：目标共识到店组与伙伴，物料准备到店可用，数据推动形成固定节奏，正反馈做到日日挖掘和传播。",
  "executionStandard": "每次在售业主面见必须准备伴手礼；贺卡作为加分项，可使用线上版或线下版。",
+ "targetBreakdown": {
+  "asOf": "2026-11-08",
+  "basis": "按截至11月8日各大区和门店的月度剩余差距，先分解到大区，再在大区内用最大余数法分解到门店；大区和门店目标合计均为70套。",
+  "regions": [
+   {
+    "name": "花木大区", "monthlyTarget": 52, "met": 16, "gap": 36, "weekTarget": 10,
+    "stores": [
+     {"store":"仁恒河滨城店","monthlyTarget":15,"met":2,"gap":13,"weekTarget":4},
+     {"store":"碧云店","monthlyTarget":8,"met":1,"gap":7,"weekTarget":2},
+     {"store":"御翠园店","monthlyTarget":13,"met":8,"gap":5,"weekTarget":1},
+     {"store":"浦东别墅旗舰店","monthlyTarget":16,"met":5,"gap":11,"weekTarget":3}
+    ]
+   },
+   {
+    "name": "陆家嘴大区", "monthlyTarget": 125, "met": 16, "gap": 109, "weekTarget": 32,
+    "stores": [
+     {"store":"星河湾店","monthlyTarget":31,"met":3,"gap":28,"weekTarget":8},
+     {"store":"陆家嘴金融中心店","monthlyTarget":23,"met":1,"gap":22,"weekTarget":6},
+     {"store":"陆家嘴旗舰店","monthlyTarget":28,"met":1,"gap":27,"weekTarget":8},
+     {"store":"陆家嘴滨江店","monthlyTarget":21,"met":5,"gap":16,"weekTarget":5},
+     {"store":"顶级豪宅部","monthlyTarget":22,"met":6,"gap":16,"weekTarget":5}
+    ]
+   },
+   {
+    "name": "徐汇大区", "monthlyTarget": 39, "met": 9, "gap": 30, "weekTarget": 9,
+    "stores": [
+     {"store":"嘉御庭公馆店","monthlyTarget":9,"met":1,"gap":8,"weekTarget":2},
+     {"store":"尚海湾店","monthlyTarget":14,"met":5,"gap":9,"weekTarget":3},
+     {"store":"徐汇滨江店","monthlyTarget":16,"met":3,"gap":13,"weekTarget":4}
+    ]
+   },
+   {
+    "name": "滨江古北大区", "monthlyTarget": 21, "met": 6, "gap": 15, "weekTarget": 4,
+    "stores": [
+     {"store":"融创滨江壹号院店","monthlyTarget":16,"met":3,"gap":13,"weekTarget":3},
+     {"store":"长宁古北店","monthlyTarget":5,"met":3,"gap":2,"weekTarget":1}
+    ]
+   },
+   {
+    "name": "黄浦大区", "monthlyTarget": 63, "met": 11, "gap": 52, "weekTarget": 15,
+    "stores": [
+     {"store":"黄浦滨江店","monthlyTarget":18,"met":4,"gap":14,"weekTarget":4},
+     {"store":"新天地一店","monthlyTarget":13,"met":1,"gap":12,"weekTarget":3},
+     {"store":"新天地二店","monthlyTarget":14,"met":1,"gap":13,"weekTarget":4},
+     {"store":"复兴香园店","monthlyTarget":18,"met":5,"gap":13,"weekTarget":4}
+    ]
+   }
+  ]
+ },
  "strategies": [
   {
    "id": "1",
