@@ -148,10 +148,29 @@
  function reviewStoreRows(ctx){return ctx.progress.rows.filter(x=>x._level==='store');}
  function reviewTopAverage(row){const rates=[];if(row.store_top_stock>0)rates.push(reviewRate(row.store_top_rate));if(row.unit_top_stock>0)rates.push(reviewRate(row.unit_top_rate));return rates.length?rates.reduce((sum,x)=>sum+x,0)/rates.length:null;}
  function reviewRankScore(row){const top=reviewTopAverage(row);return reviewRate(row.met_rate)*.55+(top==null?reviewRate(row.met_rate):top)*.45;}
+
+ function reviewWarningCompletion(row){
+  const target=Number(row?._target);
+  return target>0?Number(row.met||0)/target:Number.POSITIVE_INFINITY;
+ }
+ function reviewWarningCompare(a,b){
+  return Number(a.met||0)-Number(b.met||0)
+   ||reviewWarningCompletion(a)-reviewWarningCompletion(b)
+   ||reviewRate(a.met_rate)-reviewRate(b.met_rate)
+   ||Number(b.stock||0)-Number(a.stock||0)
+   ||String(a.store||'').localeCompare(String(b.store||''),'zh-CN');
+ }
+ function reviewNovemberWarningRows(ctx,rows=reviewStoreRows(ctx)){
+  return [...rows].filter(row=>Number(row.stock)>0).sort(reviewWarningCompare).slice(0,3);
+ }
+ function reviewCompanyStoreRows(ctx){
+  if(!ctx.warningCompanyRows)ctx.warningCompanyRows=M.table(ctx.d.housing,{},goals(),currentMonth,ctx.d.meetings||[],customerOptions(ctx.d)).rows.filter(row=>row._level==='store');
+  return ctx.warningCompanyRows;
+ }
  function reviewRankSets(ctx){
   const facts=ctx.facts,rows=reviewStoreRows(ctx),byName=name=>rows.find(x=>x.store===name),fixedBench=(facts?.benchmark||[]).map(byName).filter(Boolean),fixedReminder=(facts?.reminders||[]).map(byName).filter(Boolean);
   if(currentMonth==='2026-11'){
-   const remind=rows.filter(row=>row.stock>0&&row.met===0).sort((a,b)=>b.stock-a.stock);
+   const remind=reviewNovemberWarningRows(ctx,rows);
    if(ctx.view.scope==='store')return {bench:[],remind:[],single:ctx.root};
    return {bench:fixedBench,remind,single:null};
   }
@@ -169,7 +188,7 @@
  function reviewStoreInsight(ctx,row,tone){const detail=reviewStoreDetail(ctx,row),groups=detail.filter(x=>x._level==='group'&&x.stock>0);if(!groups.length)return '当前门店暂无可下钻的店组数据。';if(tone!=='reminder'){const lead=[...groups].sort((a,b)=>b.met-a.met||reviewRankScore(b)-reviewRankScore(a)||b.stock-a.stock)[0],topLead=[...groups].sort((a,b)=>(b.store_top_met+b.unit_top_met)-(a.store_top_met+a.unit_top_met)||reviewTopAverage(b)-reviewTopAverage(a))[0],topics=reviewTopTopics(ctx,lead),share=M.pct(lead.met,row.met);let text=`下钻到店组，${reviewGroupLabel(row,lead,detail)}贡献${lead.met}套，占全店面见量${share}；该组全盘面见${lead.met}套/在售${lead.stock}套，面见率${lead.met_rate}。`;if(topLead&&(topLead.store_top_met+topLead.unit_top_met)>0){if(topLead.group===lead.group)text+=`该组门店TOP面见${topLead.store_top_met}套/${topLead.store_top_stock}套，户型TOP面见${topLead.unit_top_met}套/${topLead.unit_top_stock}套。`;else text+=`TOP房推进以${reviewGroupLabel(row,topLead,detail)}更突出：门店TOP面见${topLead.store_top_met}套/${topLead.store_top_stock}套，户型TOP面见${topLead.unit_top_met}套/${topLead.unit_top_stock}套。`;}if(topics.length)text+=`反馈主要涉及${topics.join('、')}。`;return text;}const zero=[...groups].filter(x=>x.met===0).sort((a,b)=>b.stock-a.stock),weak=(zero.length?zero:[...groups].sort((a,b)=>reviewRankScore(a)-reviewRankScore(b)||b.stock-a.stock)).slice(0,2);if(zero.length){const stock=weak.reduce((sum,x)=>sum+x.stock,0),storeTopStock=weak.reduce((sum,x)=>sum+x.store_top_stock,0),unitTopStock=weak.reduce((sum,x)=>sum+x.unit_top_stock,0),topNote=storeTopStock||unitTopStock?`这些组包含门店TOP ${storeTopStock}套、户型TOP ${unitTopStock}套，当前同样尚未形成面见。`:'这些组当前无TOP房源，主要影响全盘覆盖，不直接用于判断TOP短板。';return `从数据下钻看，当前低覆盖主要集中在${weak.map(x=>reviewGroupLabel(row,x,detail)).join('、')}：合计在售${stock}套，目前0套面见。${topNote}`;}const first=weak[0],topics=reviewTopTopics(ctx,first);return `从数据下钻看，${reviewGroupLabel(row,first,detail)}当前全盘面见${first.met}套/在售${first.stock}套，面见率${first.met_rate}；门店TOP面见${first.store_top_met}套/${first.store_top_stock}套，户型TOP面见${first.unit_top_met}套/${first.unit_top_stock}套。${topics.length?`已有反馈主要涉及${topics.join('、')}，但整体覆盖仍不足。`:''}`;}
  function reviewMetricSentence(label,met,stock,rate){return stock>0?`${label}：面见${met}套 / 在售${stock}套，面见率${rate}`:`${label}：当前无在售房源`;}
  function reviewRankReason(row,tone){
-  if(currentMonth==='2026-11'&&tone==='reminder'&&row.met===0)return `本月在售${row.stock}套，目前面见0套，说明项目尚未从认知共识进入实际邀约和面见行为。11月9日—15日需尽快与店总完成目标及行动共识，明确首批房源、责任人和启动时间，推动首套面见落地。`;
+  if(currentMonth==='2026-11'&&tone==='reminder')return `本月面见${row.met}套 / 目标${row._target??'待确认'}套，目标完成率${reviewCompletion(row)}，当前处于本周重点预警的月度进展倒数3家。11月9日—15日需与店总、经理再次确认目标和本周具体房源，明确责任人、邀约安排及完成时间，加快追回进度。`;
   const top=[['门店TOP',row.store_top_stock,reviewRate(row.store_top_rate),row.store_top_rate],['户型TOP',row.unit_top_stock,reviewRate(row.unit_top_rate),row.unit_top_rate]].filter(x=>x[1]>0).sort((a,b)=>tone==='benchmark'?b[2]-a[2]:a[2]-b[2])[0];
   if(tone==='neutral')return `全盘面见率${row.met_rate}，门店TOP面见率${row.store_top_rate}，户型TOP面见率${row.unit_top_rate}。`;
   return tone==='benchmark'?`全盘面见率${row.met_rate}${top?`，${top[0]}面见率${top[3]}`:''}，在当前范围内表现较突出。`:`全盘面见率${row.met_rate}${top?`，${top[0]}面见率${top[3]}`:''}，当前覆盖相对偏低。`;
@@ -182,7 +201,7 @@
  function reviewSingleTone(ctx,row){
   if(!row)return 'neutral';
   if((ctx.facts?.benchmark||[]).includes(row.store))return 'benchmark';
-  if(currentMonth==='2026-11'&&row.stock>0&&row.met===0)return 'reminder';
+  if(currentMonth==='2026-11'&&reviewNovemberWarningRows(ctx,reviewCompanyStoreRows(ctx)).some(item=>item.store===row.store))return 'reminder';
   if((ctx.facts?.reminders||[]).includes(row.store))return 'reminder';
   return 'neutral';
  }
@@ -193,10 +212,10 @@
    return `<div class="review-report"><div class="review-rank-grid">${reviewRankCard(ctx,row,tone,status+'：'+reason)}</div>${reviewOpportunityHtml(ctx)}</div>`;
   }
   const benchTitle=november?'标杆门店｜按面见进展与目标管理表现识别':'标杆门店｜按全盘与TOP房面见表现识别';
-  const remindTitle=november?'重点提醒门店｜本月零面见门店':'重点提醒门店｜按全盘与TOP房面见表现识别';
+  const remindTitle=november?'重点提醒门店｜每周重点预警本月进展倒数3家':'重点提醒门店｜按全盘与TOP房面见表现识别';
   const benchEmpty=november?'当前范围暂无本月标杆门店。':'当前范围暂无可识别的标杆门店。';
-  const remindEmpty=november?'当前纳入管理的门店均已产生面见，暂无零面见门店。':'当前范围暂无可识别的重点提醒门店。';
-  const reminderRule=november?'<p class="review-footnote">识别规则：本月面见量为0且仍有在售房源的门店，说明尚未真正启动；出现后须在11月9日—15日与店总完成目标及行动共识，明确首批房源、责任人和启动时间。</p>':'';
+  const remindEmpty=november?'当前范围暂无可纳入预警的在售门店。':'当前范围暂无可识别的重点提醒门店。';
+  const reminderRule=november?'<p class="review-footnote">识别规则：仍有在售房源的门店，先按本月面见量从低到高排序；并列时依次按目标完成率、全盘面见率从低到高排序，取当前范围倒数3家，作为本周重点预警对象。</p>':'';
   return `<div class="review-report"><div class="review-rank-section"><h3>${E(benchTitle)}</h3><div class="review-rank-grid">${sets.bench.map(row=>reviewRankCard(ctx,row,'benchmark',facts?.benchmarkReasons?.[row.store]||reviewRankReason(row,'benchmark'))).join('')||`<p class="ops-muted">${E(benchEmpty)}</p>`}</div></div><div class="review-rank-section"><h3>${E(remindTitle)}</h3>${reminderRule}<div class="review-rank-grid">${sets.remind.map(row=>reviewRankCard(ctx,row,'reminder',facts?.reminderReasons?.[row.store]||reviewRankReason(row,'reminder'))).join('')||`<p class="ops-muted">${E(remindEmpty)}</p>`}</div></div>${reviewOpportunityHtml(ctx)}</div>`;
  }
  function reviewOpportunityScope(ctx){const op=ctx.facts?.opportunity;if(!op)return null;const storeRegion=new Map(reviewStoreRows(ctx).map(x=>[x.store,x.region]));if(ctx.view.scope==='company')return {summary:op,regions:op.regions,stores:op.stores.map(x=>[storeRegion.get(x[0])||'',...x])};if(ctx.view.scope==='region'){const region=op.regions.find(x=>x[0]===ctx.view.region),stores=op.stores.filter(x=>storeRegion.get(x[0])===ctx.view.region).map(x=>[ctx.view.region,...x]);return {summary:region?{unmet:region[1],anyTop:region[2],storeTop:region[3],unitTop:region[4]}:null,regions:[],stores};}const store=op.stores.find(x=>x[0]===(ctx.view.store||ctx.view.name));return {summary:store?{unmet:store[1],anyTop:store[2],storeTop:store[3],unitTop:store[4]}:null,regions:[],stores:store?[[ctx.view.region,...store]]:[]};}
@@ -254,8 +273,8 @@ ${r.gift.conclusion}`;
  function reviewRankCopySection(ctx,sets,singleTone,bench,remind){
   const november=currentMonth==='2026-11';
   const benchmarkLabel=november?'按面见进展与目标管理表现识别':'按全盘与TOP房面见表现识别';
-  const reminderLabel=november?'本月零面见门店':'按全盘与TOP房面见表现识别';
-  const rule=november?'识别规则：本月面见量为0且仍有在售房源，说明尚未真正启动；需在11月9日—15日与店总完成共识并推动首套面见落地。\n':'';
+  const reminderLabel=november?'每周重点预警本月进展倒数3家':'按全盘与TOP房面见表现识别';
+  const rule=november?'识别规则：仍有在售房源的门店先按本月面见量从低到高排序；并列时依次按目标完成率、全盘面见率从低到高排序，取当前范围倒数3家。\n':'';
   if(sets.single){
     const body=reviewRankText(ctx,sets.single,singleTone);
     if(singleTone==='benchmark')return `标杆门店（${benchmarkLabel}）：\n${body}`;
@@ -264,7 +283,7 @@ ${r.gift.conclusion}`;
   }
   return `标杆门店（${benchmarkLabel}）：\n${bench}\n\n重点提醒门店（${reminderLabel}）：\n${rule}${remind}`;
 }
- function reviewText(view=currentView){const ctx=reviewContext(view);if(!ctx)return '';const r=ctx.root,q=ctx.quality?.summary||Q.summary([]),topics=Object.entries(F.labels).map(([key,label])=>({key,label,count:Number(q.topics?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count),sets=reviewRankSets(ctx),opp=reviewOpportunityScope(ctx),singleTone=reviewSingleTone(ctx,sets.single),bench=sets.single?reviewRankText(ctx,sets.single,singleTone):sets.bench.map(x=>reviewRankText(ctx,x,'benchmark')).join('\n\n')||(currentMonth==='2026-11'?'当前范围暂无本月标杆门店':'当前范围暂无可识别的标杆门店'),remind=sets.single?'':sets.remind.map(x=>reviewRankText(ctx,x,'reminder')).join('\n\n')||(currentMonth==='2026-11'?'当前纳入管理的门店均已产生面见，暂无零面见门店':'当前范围暂无可识别的重点提醒门店');
+ function reviewText(view=currentView){const ctx=reviewContext(view);if(!ctx)return '';const r=ctx.root,q=ctx.quality?.summary||Q.summary([]),topics=Object.entries(F.labels).map(([key,label])=>({key,label,count:Number(q.topics?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count),sets=reviewRankSets(ctx),opp=reviewOpportunityScope(ctx),singleTone=reviewSingleTone(ctx,sets.single),bench=sets.single?reviewRankText(ctx,sets.single,singleTone):sets.bench.map(x=>reviewRankText(ctx,x,'benchmark')).join('\n\n')||(currentMonth==='2026-11'?'当前范围暂无本月标杆门店':'当前范围暂无可识别的标杆门店'),remind=sets.single?'':sets.remind.map(x=>reviewRankText(ctx,x,'reminder')).join('\n\n')||(currentMonth==='2026-11'?'当前范围暂无可纳入预警的在售门店':'当前范围暂无可识别的重点提醒门店');
   const rankSection=reviewRankCopySection(ctx,sets,singleTone,bench,remind);
   const oppText=!opp?.summary?'当前月份暂无锁定的跨月机会数据':ctx.view.scope==='company'?`9月面见${ctx.facts.opportunity.septemberMet}套，10月末仍在售${ctx.facts.opportunity.stillListed}套；10月继续面见${ctx.facts.opportunity.continued}套（${ctx.facts.opportunity.continuedRate}），跨月未持续面见${ctx.facts.opportunity.unmet}套（${ctx.facts.opportunity.unmetRate}），其中任一TOP ${ctx.facts.opportunity.anyTop}套（${ctx.facts.opportunity.topRate}）。`:`当前范围跨月未持续面见${opp.summary.unmet}套，其中任一TOP ${opp.summary.anyTop}套，门店TOP ${opp.summary.storeTop}套，户型TOP ${opp.summary.unitTop}套。`;
   const regionAnalysis=ctx.view.scope==='company'?`\n\n区域表现分析：\n${reviewRegionAnalysisText(reviewChildren(ctx.progress,ctx.view).primary)}`:'';
@@ -310,18 +329,56 @@ ${strategyText}
  function reviewWeekTwoActions(items){
   return `<ul class="review-action-list">${(items||[]).map(item=>`<li>${E(item)}</li>`).join('')}</ul>`;
  }
- function reviewWeekTwoHtml(plan){
-  const cards=[['执行周期',plan.period],['本周面见目标','至少70套'],['核心策略',String((plan.strategies||[]).length)+'项'],['统一标准','面见必带礼物']];
+ function reviewWeekTwoTargetScope(plan,ctx){
+  const breakdown=plan?.targetBreakdown,regions=breakdown?.regions||[];
+  if(!breakdown)return null;
+  if(ctx?.view?.scope==='store'){
+   const storeName=ctx.view.store||ctx.view.name;
+   for(const region of regions){
+    const store=(region.stores||[]).find(item=>item.store===storeName);
+    if(store)return {kind:'store',target:store.weekTarget,region,store,regions:[region]};
+   }
+   return {kind:'store',target:0,region:null,store:null,regions:[]};
+  }
+  if(ctx?.view?.scope==='region'){
+   const region=regions.find(item=>item.name===ctx.view.region);
+   return {kind:'region',target:region?.weekTarget||0,region,store:null,regions:region?[region]:[]};
+  }
+  return {kind:'company',target:regions.reduce((sum,item)=>sum+Number(item.weekTarget||0),0),region:null,store:null,regions};
+ }
+ function reviewWeekTwoTargetHtml(plan,ctx){
+  const breakdown=plan?.targetBreakdown,scope=reviewWeekTwoTargetScope(plan,ctx);
+  if(!breakdown||!scope)return '';
+  const asOf=breakdown.asOf?Number(String(breakdown.asOf).slice(5,7))+'月'+Number(String(breakdown.asOf).slice(8,10))+'日':'当前';
+  if(scope.kind==='store'){
+   const store=scope.store;
+   if(!store)return '<div class="review-callout"><strong>第二周目标分解</strong><p>本店无在售业主面见套数目标。</p></div>';
+   return '<div class="review-table-card"><h3>第二周目标分解｜本店</h3><p class="review-footnote">'+E(breakdown.basis)+'</p><div class="review-table-scroll"><table class="review-tier-table" aria-label="第二周本店面见目标"><thead><tr><th>大区</th><th>门店</th><th>月目标</th><th>'+E(asOf)+'已见</th><th>月剩余差距</th><th>本周目标</th></tr></thead><tbody><tr><td class="review-org-name">'+E(scope.region.name)+'</td><td class="review-org-name">'+E(store.store)+'</td><td>'+store.monthlyTarget+'套</td><td>'+store.met+'套</td><td>'+store.gap+'套</td><td><strong>'+store.weekTarget+'套</strong></td></tr></tbody></table></div></div>';
+  }
+  const rows=scope.regions.map(region=>'<tr><td class="review-org-name">'+E(region.name)+'</td><td>'+region.monthlyTarget+'套</td><td>'+region.met+'套</td><td>'+region.gap+'套</td><td><strong>'+region.weekTarget+'套</strong></td><td>'+reviewWeekTwoActions((region.stores||[]).map(store=>store.store+' '+store.weekTarget+'套'))+'</td></tr>').join('');
+  return '<div class="review-table-card"><h3>第二周70套目标分解</h3><p class="review-footnote">'+E(breakdown.basis)+'</p><div class="review-table-scroll"><table class="review-tier-table" aria-label="第二周大区与门店面见目标"><thead><tr><th>大区</th><th>月目标</th><th>'+E(asOf)+'已见</th><th>月剩余差距</th><th>本周目标</th><th>单店拆解</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+ }
+ function reviewWeekTwoTargetText(plan,ctx){
+  const breakdown=plan?.targetBreakdown,scope=reviewWeekTwoTargetScope(plan,ctx);
+  if(!breakdown||!scope)return '';
+  if(scope.kind==='store')return scope.store?scope.region.name+'｜'+scope.store.store+'：月目标'+scope.store.monthlyTarget+'套｜截至11月8日已见'+scope.store.met+'套｜剩余'+scope.store.gap+'套｜本周目标'+scope.store.weekTarget+'套':'本店无在售业主面见套数目标';
+  return [breakdown.basis,...scope.regions.map(region=>region.name+'：月目标'+region.monthlyTarget+'套｜已见'+region.met+'套｜剩余'+region.gap+'套｜本周'+region.weekTarget+'套\n  '+(region.stores||[]).map(store=>store.store+' '+store.weekTarget+'套').join('；'))].join('\n');
+ }
+ function reviewWeekTwoHtml(plan,ctx){
+  const targetScope=reviewWeekTwoTargetScope(plan,ctx),targetValue=targetScope?(targetScope.kind==='company'?'至少'+targetScope.target+'套':targetScope.target+'套'):'至少70套';
+  const cards=[['执行周期',plan.period],['本周面见目标',targetValue],['核心策略',String((plan.strategies||[]).length)+'项'],['统一标准','面见必带礼物']];
   const cardGrid=`<div class="review-summary-grid compact">${cards.map(([label,value])=>`<article class="review-summary-card"><span>${E(label)}</span><strong>${E(value)}</strong></article>`).join('')}</div>`;
   const rows=(plan.strategies||[]).map(item=>`<tr><td><strong>${E('策略'+item.id+'｜'+item.title)}</strong></td><td>${E(item.timing)}</td><td>${reviewWeekTwoActions(item.actions)}</td><td>${E(item.owners)}</td><td>${E(item.acceptance)}</td></tr>`).join('');
   return `<div class="review-report">
    <div class="review-subhead"><span>WEEK 2 · 11月感恩月</span><h3>${E(plan.title)}｜${E(plan.period)}</h3><p>从月度规划进入第二周执行，按四项策略集中呈现本周动作、角色分工与验收标准。</p></div>
    ${cardGrid}
+   ${reviewWeekTwoTargetHtml(plan,ctx)}
    <div class="review-callout"><strong>本周定性目标</strong><p>${E(plan.qualitativeGoal)}</p><strong>统一执行标准</strong><p>${E(plan.executionStandard)}</p></div>
    <div class="review-table-card"><h3>本周四项策略与动作</h3><div class="review-table-scroll"><table class="review-tier-table" aria-label="11月第二周四项策略与动作"><thead><tr><th>策略</th><th>时间与频次</th><th>本周核心动作</th><th>负责人及承接角色</th><th>验收标准</th></tr></thead><tbody>${rows}</tbody></table></div></div>
   </div>`;
  }
- function reviewWeekTwoText(plan){
+ function reviewWeekTwoText(plan,ctx){
+  const targetScope=reviewWeekTwoTargetScope(plan,ctx),targetText=targetScope?(targetScope.kind==='company'?plan.quantitativeGoal:targetScope.target+'套（由全司70套拆解）'):plan.quantitativeGoal;
   const strategies=(plan.strategies||[]).map(item=>`策略${item.id}｜${item.title}
 时间与频次：${item.timing}
 本周核心动作：
@@ -329,7 +386,11 @@ ${(item.actions||[]).map(action=>'• '+action).join('\n')}
 负责人及承接角色：${item.owners}
 验收标准：${item.acceptance}`).join('\n\n');
   return `${plan.title}｜${plan.period}
-本周定量目标：${plan.quantitativeGoal}
+本周定量目标：${targetText}
+
+第二周70套目标分解：
+${reviewWeekTwoTargetText(plan,ctx)}
+
 本周定性目标：${plan.qualitativeGoal}
 统一执行标准：${plan.executionStandard}
 
@@ -337,7 +398,7 @@ ${strategies}`;
  }
  function reviewNextHtmlV2(ctx){
   const week=reviewWeekTwoPlan();
-  if(currentMonth==='2026-11'&&week)return reviewWeekTwoHtml(week);
+  if(currentMonth==='2026-11'&&week)return reviewWeekTwoHtml(week,ctx);
   const scoped=reviewNovemberScope(ctx);
   if(!scoped)return '<div class="review-report"><p class="ops-muted">11月承接目标待确认。</p></div>';
   const {plan,summary,regions,stores}=scoped;
@@ -365,7 +426,7 @@ ${strategies}`;
    const week=reviewWeekTwoPlan();
    if(!week||!text.includes(marker))return text;
    const start=text.indexOf(marker);
-   return text.slice(0,start)+'六、'+reviewWeekTwoText(week);
+   return text.slice(0,start)+'六、'+reviewWeekTwoText(week,ctx);
   }
   if(!ctx||!ctx.facts?.november||!text.includes(marker))return text;
   const start=text.indexOf(marker);
