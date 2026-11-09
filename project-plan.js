@@ -761,7 +761,7 @@ function setViewMode(mode) {
 function syncPlanScope(view) {
   document.getElementById('region-filter').innerHTML = '<option value="">全司 · 全部大区</option>'+DATA.regions.map(r=>`<option value="${esc(r.name)}">${esc(r.name)}</option>`).join('');
   document.getElementById('region-filter').value = view.region || '';
-  const stores = DATA.regions.flatMap(r=>(!view.region || r.name===view.region)?r.stores:[]);
+  const stores = DATA.regions.flatMap(r=>(!view.region || r.name===view.region)?r.stores:[]).filter(store=>!['徐汇一店','Hmall中心店','Hmall旗舰店'].includes(store));
   document.getElementById('store-filter').innerHTML = '<option value="">全部门店</option>'+stores.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
   document.getElementById('store-filter').value = view.scope==='store' ? view.store||view.name : '';
   document.getElementById('scope-badge').textContent = (view.scope==='company'?'全司':view.scope==='region'?'大区':'门店')+'视角';
