@@ -1122,6 +1122,64 @@
       '按21店及重点店组汇总目标进展，回看上周动作及问题闭环；核实报告、hmall图、贺卡和礼品是否收到、制作、可取用和已使用；回看报告培训与通关、BP跟店卡点、首批门店启动、每日正反馈及案例采用，调整下周重点、整月排期和接手人说明。',
       '产出下周目标、重点店组、动作、责任人和复查日；未准备物料明确补齐时间；无案例门店区分未行动、已行动未反馈、已有事实未挖掘。已解决问题需有复查结论。')
   ]);
+  const week2Plan={
+ "title": "11月第二周目标及核心策略",
+ "period": "11月9日—15日",
+ "quantitativeGoal": "本周在售业主面见量至少70套。",
+ "qualitativeGoal": "推动四项策略真正进入单店行动：目标共识到店组与伙伴，物料准备到店可用，数据推动形成固定节奏，正反馈做到日日挖掘和传播。",
+ "executionStandard": "每次在售业主面见必须准备伴手礼；贺卡作为加分项，可使用线上版或线下版。",
+ "strategies": [
+  {
+   "id": "1",
+   "title": "目标共识与确认",
+   "timing": "11月10日（周二）及本周内补齐",
+   "actions": [
+    "在大区店总会上再次共识感恩月背景、目标和行动要求，并逐店确认文化研讨时间。",
+    "大区BP结合本月达成情况，与店总再次共识月度定量目标和定性目标。",
+    "确认店总已经形成单店规划，并继续向经理、店组和一线伙伴完成共识。"
+   ],
+   "owners": "项目负责人提供统一口径并跟进未完成门店；大区BP组织共识和确认；店总形成单店规划并逐层传达。",
+   "acceptance": "各店文化研讨时间明确；定量、定性目标再次确认；店总有本月行动规划；目标已向经理、店组和伙伴继续共识。"
+  },
+  {
+   "id": "2",
+   "title": "基础物料与专业能力支持",
+   "timing": "11月12日（周四）上午培训；周四前确认物料安排",
+   "actions": [
+    "面向全体伙伴及管理者开展上海城市报告培训，讲清报告内容、顾客价值、使用方法、通关标准和时间安排。",
+    "电子版报告本周上线；纸质报告预计下周分发到单店。",
+    "周四前由BP与店总、经理确认各店hmall图、贺卡和礼物的具体安排、使用方式及所需支持。",
+    "再次讲清项目组已提供哪些物料、入口在哪里、伙伴如何取用和使用。"
+   ],
+   "owners": "项目负责人负责培训、电子报告和统一物料说明；BP逐店确认支持需求；店总、经理负责采购、领取、使用及伙伴承接。",
+   "acceptance": "电子报告可正常取用；培训与通关标准完成同步；各店明确礼物、贺卡、hmall图的数量、负责人和安排；伙伴清楚物料入口与使用方式。"
+  },
+  {
+   "id": "3",
+   "title": "目标进展推动",
+   "timing": "11月10—13日（周二至周五），每天12:00前",
+   "actions": [
+    "每天更新并公示面见量、目标进度和礼物执行情况。",
+    "项目负责人在店总群公示全司合计、各大区及各门店进展。",
+    "大区BP公示到大区、门店和店组层级；店面BP公示到门店、店组和个人层级。"
+   ],
+   "owners": "项目负责人负责全司层；大区BP负责大区、门店和店组层；店面BP负责门店、店组和个人层。",
+   "acceptance": "周二至周五每天12:00前完成公示；数据逐层打开至门店、店组和个人；能够清楚看到当前进展与差距。"
+  },
+  {
+   "id": "4",
+   "title": "正反馈运营",
+   "timing": "本周每日持续",
+   "actions": [
+    "项目负责人每日向BP提供门店、店组和个人三个层级的TOP5标杆候选。",
+    "主动挖掘真实正反馈，并提供标杆萃取模板、分享模板和对接话术。",
+    "BP联系并核实标杆事实，完成萃取和传播，让优秀动作每日被看见、被学习。"
+   ],
+   "owners": "项目负责人负责名单、模板、方法和全司传播；BP负责联系、核实、萃取及大区或单店传播。",
+   "acceptance": "每日形成TOP5候选名单；持续产出经核实的真实标杆，讲清具体场景、伙伴动作和实际变化；做到日日有标杆被提炼和传播。"
+  }
+ ]
+};
   const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const lines=s=>E(s).replace(/\n/g,'<br>');
   function targetPlan(){return root.WBOperations?.novemberTargets?.()||null;}
@@ -1172,5 +1230,5 @@
     ,root.WBNovemberSchedule?.exportText?.()||''
   ].filter(x=>x!==undefined).join('\n');}
   if(typeof document!=='undefined')document.addEventListener('click',e=>{const link=e.target.closest('[data-np-open]');if(link){const target=document.getElementById('nov-strategy-'+link.dataset.npOpen);if(target)target.open=true;}});
-  root.WBNovemberPlan={version,title:'11月感恩月｜项目规划与执行',status:'11月5日共创更新 · 按实际结果逐项检核',theme:'感恩相连，服务有光',period:'2026年11月1日—11月30日',goalNarrative,goal,goals,metrics,strategies,actions,executionActions,render,exportText,text:exportText,navigation:[['plan-goals','Part 1 · 项目目标'],['plan-actions','Part 2 · 核心策略与动作'],['plan-targets','执行节奏与角色承接'],['plan-delivery','日检核与周复盘承接']],nav:[{id:'plan-goals',title:'Part 1 · 项目目标'},{id:'plan-actions',title:'Part 2 · 核心策略与动作'},{id:'plan-targets',title:'执行节奏与角色承接'},{id:'plan-delivery',title:'日检核与周复盘承接'}]};
+  root.WBNovemberPlan={version,week2Plan,title:'11月感恩月｜项目规划与执行',status:'11月5日共创更新 · 按实际结果逐项检核',theme:'感恩相连，服务有光',period:'2026年11月1日—11月30日',goalNarrative,goal,goals,metrics,strategies,actions,executionActions,render,exportText,text:exportText,navigation:[['plan-goals','Part 1 · 项目目标'],['plan-actions','Part 2 · 核心策略与动作'],['plan-targets','执行节奏与角色承接'],['plan-delivery','日检核与周复盘承接']],nav:[{id:'plan-goals',title:'Part 1 · 项目目标'},{id:'plan-actions',title:'Part 2 · 核心策略与动作'},{id:'plan-targets',title:'执行节奏与角色承接'},{id:'plan-delivery',title:'日检核与周复盘承接'}]};
 })(window);
