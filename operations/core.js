@@ -26,13 +26,13 @@
     const top=a.filter(r=>flag(r['门店top户数'])),unit=a.filter(r=>flag(r['户型top户数']));
     const houseKey=value=>text(value).replace(/[\s\u00a0]/g,'');
     const eventCounts=new Map();for(const r of meetings||[]){const id=houseKey(r['房源编号']);if(id)eventCounts.set(id,(eventCounts.get(id)||0)+1);}
-    // Reconcile each property before aggregation. A met flag without event detail is
-    // a known minimum of one, not a confirmed event; this keeps every level additive.
+    // Reconcile each property before aggregation. When the base table marks a property as met
+    // but has no separate event detail, the base-table count is exactly one.
     function counts(houses,key){let confirmed=0,pending=0;for(const r of houses){const n=eventCounts.get(houseKey(r['房源编号']))||0;confirmed+=n;if(!n&&flag(r['本月是否面见']))pending++;}return {[key]:confirmed+pending,[key+'_confirmed']:confirmed,[key+'_pending']:pending};}
     return {stock:a.length,met:met.length,...counts(a,'met_count'),gift:gift.length,met_rate:pct(met.length,a.length),gift_rate:pct(gift.length,met.length),store_top_stock:top.length,store_top_met:top.filter(r=>flag(r['本月是否面见'])).length,...counts(top,'store_top_met_count'),store_top_rate:pct(top.filter(r=>flag(r['本月是否面见'])).length,top.length),unit_top_stock:unit.length,unit_top_met:unit.filter(r=>flag(r['本月是否面见'])).length,...counts(unit,'unit_top_met_count'),unit_top_rate:pct(unit.filter(r=>flag(r['本月是否面见'])).length,unit.length),metIds:met.map(r=>text(r['房源编号'])),giftIds:gift.map(r=>text(r['房源编号']))};
   }
-  function meetingCountValue(row,key){const value=row?.[key];return number(row?.[key+'_pending'])>0?'≥'+value:value;}
-  function meetingCountLabel(row,key){const pending=number(row?.[key+'_pending']);return pending?`至少${row[key]}次；已匹配${number(row[key+'_confirmed'])}条面见明细，${pending}套已面见房源待补明细`:'';}
+  function meetingCountValue(row,key){return row?.[key];}
+  function meetingCountLabel(row,key){return row?.[key]==='/'?'':'按底表面见次数合计';}
   function target(rows,level,name,goals){
     if(level==='store')return goals[name]!=null&&Number.isFinite(Number(goals[name]))?Number(goals[name]):null;
     if(level==='group'||level==='advisor')return null;
@@ -41,12 +41,12 @@
   }
   function table(rows,scope,goals,month,meetings=[],options={}){
     scope={...scope,store:scope.store?canonicalStore(scope.store):''};
-    const customerEnabled=month==='2026-11'||options.customerImported===true||(options.customerRows||[]).length>0;
+    const customerEnabled=options.showCustomer===true&&(month==='2026-11'||options.customerImported===true||(options.customerRows||[]).length>0);
     const catalog=(options.storeCatalog||(customerEnabled?storeCatalog:[])).map(s=>({...s,store:canonicalStore(s.store),ownerApplicable:s.ownerApplicable??catalogByStore.get(canonicalStore(s.store))?.ownerApplicable??true}));
-    const storeScope={...scope,group:''},selectedCatalog=customerInScope(catalog,storeScope),allCustomerRows=(options.customerRows||[]).map(customerRow),customerRows=customerInScope(allCustomerRows,scope),customerImported=options.customerImported===true;
+    const storeScope={...scope,group:''},selectedCatalog=customerInScope(catalog,storeScope),allCustomerRows=customerEnabled?(options.customerRows||[]).map(customerRow):[],customerRows=customerInScope(allCustomerRows,scope),customerImported=customerEnabled&&options.customerImported===true;
     const aggregateRows=customerInScope(allCustomerRows,storeScope).filter(r=>r.aggregateOnly);
     const normalized=rows.map(r=>({...r,'门店':canonicalStore(r['门店']),'店组':canonicalGroup(r['店组'])}));
-    const scoped=inScope(normalized,scope).filter(r=>!customerEnabled||catalogByStore.get(r['门店'])?.ownerApplicable!==false), output=[];
+    const scoped=inScope(normalized,scope).filter(r=>catalogByStore.get(r['门店'])?.ownerApplicable!==false), output=[];
     function add(g,c,level,name,identity){
       const m=metrics(g,meetings),t=target(g,level,name,goals),applicable=!(customerEnabled&&identity.store!=='/'&&catalogByStore.get(identity.store)?.ownerApplicable===false);
       const row={...identity,...m,target:t??'—',target_rate:t==null?'—':pct(t,m.stock),_level:level,_target:t,_ownerApplicable:applicable,_tone:level==='company'||level==='region'?'purple':''};
