@@ -11,7 +11,7 @@
  const payload=(kind,id,store)=>item(kind,id,store)?.payload||{};
  const canonicalStore=value=>M.canonicalStore?M.canonicalStore(value):String(value||'');
  const noOwnerStore=store=>['徐汇一店','Hmall中心店','Hmall旗舰店'].includes(canonicalStore(store));
-  const hiddenCustomerStores=new Set((M.storeCatalog||[]).filter(x=>x.ownerApplicable===false).map(x=>canonicalStore(x.store)));
+  const hiddenCustomerStores=new Set(['徐汇一店','Hmall中心店','Hmall旗舰店'].map(canonicalStore));
   const customerOptions=()=>({showCustomer:false});
  const customerValue=row=>row?.customer_count==='—'?'—':typeof row?.customer_count==='number'?row.customer_count+'次':'待导入';
  const meetingValue=row=>M.meetingCountValue?M.meetingCountValue(row,'met_count'):row.met_count;
@@ -246,12 +246,13 @@ ${strategyText}
  }
  function syncScope(view){
   if(view.scope==='store'&&canonicalStore(view.store||view.name)!==(view.store||view.name))view=resolveView(view.region,canonicalStore(view.store||view.name));
+  if(view.scope==='store'&&hiddenCustomerStores.has(canonicalStore(view.store||view.name))){view=resolveView(view.region,'');updateUrl(view);}
   const member=C.member,assigned=memberScopes();
   if(member&&member.role==='region'&&view.region!==member.region){view=resolveView(member.region,'');updateUrl(view);}
   if(member?.role==='store'&&!assigned.some(x=>x.region===view.region&&x.store===view.name)){const fallback=assigned.find(x=>x.region===view.region)||assigned[0];view=resolveView(fallback.region,fallback.store);updateUrl(view);}
-  const regions=DATA.regions.filter(r=>!member||member.role==='project'||member.role==='region'&&r.name===member.region||assigned.some(x=>x.region===r.name));
+  const regions=DATA.regions.map(r=>({...r,stores:(r.stores||[]).filter(s=>!hiddenCustomerStores.has(canonicalStore(s)))})).filter(r=>r.stores.length).filter(r=>!member||member.role==='project'||member.role==='region'&&r.name===member.region||assigned.some(x=>x.region===r.name));
   document.getElementById('region-filter').innerHTML=(!member||member.role==='project'?'<option value="">全司 · 全部大区</option>':'')+regions.map(r=>`<option value="${E(r.name)}">${E(r.name)}</option>`).join('');document.getElementById('region-filter').value=view.region||'';
-  const stores=regions.flatMap(r=>(!view.region||r.name===view.region)?r.stores:[]).filter(s=>!member||member.role!=='store'||assigned.some(x=>x.store===s));
+  const stores=regions.flatMap(r=>(!view.region||r.name===view.region)?r.stores:[]).filter(s=>!hiddenCustomerStores.has(canonicalStore(s))).filter(s=>!member||member.role!=='store'||assigned.some(x=>x.store===s));
   document.getElementById('store-filter').innerHTML=(!member||member.role!=='store'?'<option value="">全部门店</option>':'')+stores.map(s=>`<option value="${E(s)}">${E(s)}</option>`).join('');document.getElementById('store-filter').value=view.scope==='store'?view.store||view.name:'';
   document.getElementById('region-filter').disabled=!!member&&(member.role==='region'||member.role==='store'&&regions.length<2);document.getElementById('store-filter').disabled=member?.role==='store'&&stores.length<2;document.getElementById('reset-filter').hidden=!!member&&member.role!=='project';
   document.getElementById('scope-badge').textContent=({company:'全司',region:'大区',store:'门店'}[view.scope]||'')+'视角';document.getElementById('scope-live').textContent='当前查看：'+view.name;
