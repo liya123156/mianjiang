@@ -65,7 +65,7 @@
  const button=(label,act,attrs='',primary=false)=>`<button type="button" class="btn ${primary?'primary':''}" data-pe="${act}" ${attrs}>${label}</button>`;
  const badge=t=>`<span class="pe-badge pe-${E(t.status)}">${E(statuses[t.status]||'待开展')}</span>`;
  function banner(){return `${state.error?`<p class="pe-notice pe-warning" role="alert">${E(state.error)} ${button('重新同步','refresh')}</p>`:''}${state.notice?`<p class="pe-notice" role="status">${E(state.notice)}</p>`:''}`;}
- function login(){return `<div class="pe-empty"><h3>进入我的执行清单</h3><p>规划可共享查看。使用已授权工号进入后，按负责大区／门店查看日任务、提交结果和验收记录。</p><button type="button" class="btn primary" data-ops="login">BP／管理入口</button></div>`;}
+ function login(){return `<div class="pe-empty"><h3>进入我的执行清单</h3><p>规划可共享查看。使用已授权工号进入后，按负责大区／门店查看本周动作、提交结果和验收记录。</p><button type="button" class="btn primary" data-ops="login">BP／管理入口</button></div>`;}
  function ensure(){resetIfChanged();if(member()&&!state.loaded&&!state.loading&&!state.error)Promise.resolve().then(()=>load()).catch(()=>{});}
  function repaint(){for(const name of ['daily','weekly','admin']){const host=document.getElementById('pe-'+name);if(host)host.innerHTML=body(name,state.view);}}
  async function load(force=false){
@@ -79,20 +79,26 @@
  async function refresh(){return load(true);}
  function render(kind,view){state.view=view;state.tab=kind;ensure();return `<section id="pe-${kind}" class="pe-section">${body(kind,view)}</section>`;}
  function body(kind,view){
-  if(!member())return `<div class="pe-heading"><div><span class="pe-eyebrow">PLAN TO ACTION</span><h2>${kind==='weekly'?'本周执行复盘':kind==='admin'?'规划分派与责任范围':'今日执行与检核'}</h2></div></div>${login()}`;
+  if(kind==='daily')return daily(view);
+  if(!member())return `<div class="pe-heading"><div><span class="pe-eyebrow">PLAN TO ACTION</span><h2>${kind==='weekly'?'本周执行复盘':'规划分派与责任范围'}</h2></div></div>${login()}`;
   if(state.loading&&!state.loaded)return '<div class="pe-empty" role="status">正在读取共享任务与验收记录…</div>';
-  return (kind==='daily'?daily(view):kind==='weekly'?weekly(view):admin(view));
+  return kind==='weekly'?weekly(view):admin(view);
  }
  function statCards(items){return `<div class="pe-stats">${items.map(([label,value,note])=>`<div class="pe-stat"><span>${E(label)}</span><strong>${E(value)}</strong><small>${E(note||'')}</small></div>`).join('')}</div>`;}
  function filters(){return `<div class="pe-filters"><label>检核日期<input type="date" data-pe-filter="date" min="2026-11-01" max="2026-12-07" value="${E(state.date)}"></label><label>策略<select data-pe-filter="strategy"><option value="all">全部策略</option>${Object.entries(strategies).map(([id,name])=>`<option value="${id}" ${state.strategy===id?'selected':''}>${E(name)}</option>`).join('')}</select></label><label>状态<select data-pe-filter="status"><option value="all">全部状态</option>${Object.entries(statuses).map(([id,name])=>`<option value="${id}" ${state.status===id?'selected':''}>${E(name)}</option>`).join('')}<option value="unassigned" ${state.status==='unassigned'?'selected':''}>待分派</option></select></label><label class="pe-check"><input type="checkbox" data-pe-filter="overdue" ${state.overdue?'checked':''}>同时查看此前未验收</label>${button('同步最新结果','refresh')}</div>`;}
+ function weekPlan(){return root.WBNovemberPlan?.week2Plan||null;}
+ function weeklyActionCard(item){
+ const bullets=items=>`<ul>${items.map(x=>`<li>${E(x)}</li>`).join('')}</ul>`;
+ return `<article class="pe-task"><div class="pe-task-top"><span class="pe-kicker">策略 ${E(item.id)} · 本周核心动作</span><span class="pe-badge pe-in_progress">本周执行</span></div><h3>${E(item.title)}</h3><p class="pe-task-meta">${E(item.timing)}</p><div class="pe-latest"><b>怎么做</b>${bullets(item.actions)}</div><details class="pe-task-how" open><summary>角色分工与验收标准</summary><dl><dt>谁来承接</dt><dd>${E(item.owners)}</dd><dt>本周验收</dt><dd>${E(item.acceptance)}</dd></dl></details></article>`;
+}
  function daily(view){
-  const tasks=allTasks(view),date=state.date;
-  const due=tasks.filter(t=>day(t)<=date),onDate=tasks.filter(t=>day(t)===date),pending=due.filter(t=>t.status!=='accepted');
-  const dailyStart=configuredActions().filter(a=>a.frequency==='daily'&&a.enabled!==false).map(a=>a.startDate).filter(Boolean).sort()[0];
-  const upcoming=dailyStart&&date<dailyStart?`<div class="pe-notice">新增日常排期从 ${E(dateLabel(dailyStart))} 开始，今天仍可检核此前事项。${button('查看 '+dateLabel(dailyStart)+' 任务','choose-date',`data-date="${E(dailyStart)}"`)}</div>`:'';
-  const shown=tasks.filter(t=>(day(t)===date||(state.overdue&&day(t)<date&&t.status!=='accepted'))&&(state.strategy==='all'||strategyIds(t).includes(state.strategy))&&(state.status==='all'||(state.status==='unassigned'?!isAssigned(t):t.status===state.status))).sort((a,b)=>day(a).localeCompare(day(b))||scopeName(a).localeCompare(scopeName(b),'zh-CN')||a.title.localeCompare(b.title,'zh-CN'));
-  return `<div class="pe-heading"><div><span class="pe-eyebrow">PLAN TO ACTION · 11月感恩月</span><h2>今日执行与检核</h2><p>规划按门店和日期生成任务，BP更新实际结果，管理者逐项验收。</p></div><a class="btn" href="?month=2026-11&amp;tab=plan">查看项目规划</a></div>${banner()}${pendingScheduleNotice()}${upcoming}${filters()}${statCards([['当日计划',onDate.length+'项','按所选检核日期'],['待验收',due.filter(t=>t.status==='submitted').length+'项','BP已提交，待管理者确认'],['需推动',pending.filter(t=>['open','blocked','rejected'].includes(t.status)).length+'项','待开展／受阻／退回'],['累计已验收',due.filter(t=>t.status==='accepted').length+'/'+due.length,'截至所选日期应完成任务']])}<p class="pe-caption">“已提交”不计入完成。此前未验收事项会继续保留；新增业务底表不会覆盖执行记录。</p>${!tasks.length?emptyPlan():`<div class="pe-task-list">${shown.map(taskCard).join('')||'<div class="pe-empty">当前筛选下没有任务，可切换日期或状态查看。</div>'}</div>${storeOverview(view,date)}`}`;
- }
+ const plan=weekPlan();
+ if(!plan)return `<div class="pe-empty"><h3>本周动作正在更新</h3><p>请稍后刷新查看11月第二周目标与四项策略。</p></div>`;
+ return `<div class="pe-heading"><div><span class="pe-eyebrow">PLAN TO ACTION · 11月感恩月</span><h2>本周动作与检核</h2><p>按四项策略集中呈现本周动作、角色分工与验收标准，不再按日拆成重复任务。</p></div><a class="btn" href="?month=2026-11&amp;tab=plan">查看项目规划</a></div>
+ ${statCards([['本周周期',plan.period,'11月第二周'],['面见目标','至少70套','在售业主面见量'],['核心策略',plan.strategies.length+'项','目标、物料、进度、标杆'],['执行标准','面见必带礼物','贺卡线上或线下均为加分项']])}
+ <div class="pe-notice"><strong>本周定性目标</strong><p>${E(plan.qualitativeGoal)}</p><p><strong>统一执行标准：</strong>${E(plan.executionStandard)}</p></div>
+ <div class="pe-task-list">${plan.strategies.map(weeklyActionCard).join('')}</div>`;
+}
  function emptyPlan(){return `<div class="pe-empty"><h3>本月任务尚未生成</h3><p>项目负责人在数据管理中确认门店范围并发布排期后，BP可在这里承接对应日期的任务。</p>${member()?.role==='project'?'<button type="button" class="btn primary" data-ops="admin">进入规划分派</button>':''}</div>`;}
  function canReview(t){if(typeof t.canReview==='boolean')return t.canReview;return t.status==='submitted'&&(member()?.role==='project'||member()?.role==='region'&&member().region===t.region);}
  function canSubmit(t){if(t.frequency!=='once'&&action(t).frequency!=='once'&&String(t.taskDate||day(t))>today())return false;if(typeof t.canSubmit==='boolean')return t.canSubmit;return t.status!=='accepted'&&t.status!=='submitted'&&(member()?.role==='project'||member()?.role==='region'&&member().region===t.region&&t.ownerRole!=='project'||member()?.role==='store'&&t.ownerRole==='store');}
