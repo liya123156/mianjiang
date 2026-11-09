@@ -251,10 +251,24 @@ ${r.gift.conclusion}`;
  function reviewNovemberMetricRow(ctx,level,name){if(level==='company')return ctx.root;return ctx.progress.rows.find(row=>row._level===level&&(level==='region'?row.region===name:row.store===name));}
  function reviewNovemberCoverage(row){if(!row)return {whole:'—',storeTop:'—',unitTop:'—'};return {whole:Math.ceil(Number(row.stock||0)*.2),storeTop:Math.ceil(Number(row.store_top_stock||0)*.4),unitTop:Math.ceil(Number(row.unit_top_stock||0)*.4)};}
  function reviewRankText(ctx,row,tone){const facts=ctx.facts,reason=tone==='benchmark'?(facts?.benchmarkReasons?.[row.store]||reviewRankReason(row,'benchmark')):tone==='reminder'?(facts?.reminderReasons?.[row.store]||reviewRankReason(row,'reminder')):reviewRankReason(row,'neutral');return `${row.store}\n${reviewMetricSentence('全盘',row.met,row.stock,row.met_rate)}\n${reviewMetricSentence('门店TOP',row.store_top_met,row.store_top_stock,row.store_top_rate)}\n${reviewMetricSentence('户型TOP',row.unit_top_met,row.unit_top_stock,row.unit_top_rate)}\n分析：${reason}\n店组下钻：${reviewStoreInsight(ctx,row,tone)}`;}
+ function reviewRankCopySection(ctx,sets,singleTone,bench,remind){
+  const november=currentMonth==='2026-11';
+  const benchmarkLabel=november?'按面见进展与目标管理表现识别':'按全盘与TOP房面见表现识别';
+  const reminderLabel=november?'本月零面见门店':'按全盘与TOP房面见表现识别';
+  const rule=november?'识别规则：本月面见量为0且仍有在售房源，说明尚未真正启动；需在11月9日—15日与店总完成共识并推动首套面见落地。\n':'';
+  if(sets.single){
+    const body=reviewRankText(ctx,sets.single,singleTone);
+    if(singleTone==='benchmark')return `标杆门店（${benchmarkLabel}）：\n${body}`;
+    if(singleTone==='reminder')return `重点提醒门店（${reminderLabel}）：\n${rule}${body}`;
+    return `本店月度表现：\n${body}`;
+  }
+  return `标杆门店（${benchmarkLabel}）：\n${bench}\n\n重点提醒门店（${reminderLabel}）：\n${rule}${remind}`;
+}
  function reviewText(view=currentView){const ctx=reviewContext(view);if(!ctx)return '';const r=ctx.root,q=ctx.quality?.summary||Q.summary([]),topics=Object.entries(F.labels).map(([key,label])=>({key,label,count:Number(q.topics?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count),sets=reviewRankSets(ctx),opp=reviewOpportunityScope(ctx),singleTone=reviewSingleTone(ctx,sets.single),bench=sets.single?reviewRankText(ctx,sets.single,singleTone):sets.bench.map(x=>reviewRankText(ctx,x,'benchmark')).join('\n\n')||(currentMonth==='2026-11'?'当前范围暂无本月标杆门店':'当前范围暂无可识别的标杆门店'),remind=sets.single?'':sets.remind.map(x=>reviewRankText(ctx,x,'reminder')).join('\n\n')||(currentMonth==='2026-11'?'当前纳入管理的门店均已产生面见，暂无零面见门店':'当前范围暂无可识别的重点提醒门店');
+  const rankSection=reviewRankCopySection(ctx,sets,singleTone,bench,remind);
   const oppText=!opp?.summary?'当前月份暂无锁定的跨月机会数据':ctx.view.scope==='company'?`9月面见${ctx.facts.opportunity.septemberMet}套，10月末仍在售${ctx.facts.opportunity.stillListed}套；10月继续面见${ctx.facts.opportunity.continued}套（${ctx.facts.opportunity.continuedRate}），跨月未持续面见${ctx.facts.opportunity.unmet}套（${ctx.facts.opportunity.unmetRate}），其中任一TOP ${ctx.facts.opportunity.anyTop}套（${ctx.facts.opportunity.topRate}）。`:`当前范围跨月未持续面见${opp.summary.unmet}套，其中任一TOP ${opp.summary.anyTop}套，门店TOP ${opp.summary.storeTop}套，户型TOP ${opp.summary.unitTop}套。`;
   const regionAnalysis=ctx.view.scope==='company'?`\n\n区域表现分析：\n${reviewRegionAnalysisText(reviewChildren(ctx.progress,ctx.view).primary)}`:'';
-  return `${view.name}｜${Number(currentMonth.slice(5))}月月度复盘\n数据截至${ctx.d.imports[0]?.as_of||'待导入'}\n\n一、本月目标达成结果\n月度目标：${r._target??'待确认'}套\n面见量：${r.met}套｜目标完成率：${reviewCompletion(r)}｜目标差距：${reviewGap(r)??'—'}套\n全盘：${r.met}/${r.stock}套｜面见率${r.met_rate}｜面见次数${meetingValue(r)}次\n门店TOP：${r.store_top_met}/${r.store_top_stock}套｜面见率${r.store_top_rate}\n户型TOP：${r.unit_top_met}/${r.unit_top_stock}套｜面见率${r.unit_top_rate}${regionAnalysis}\n\n二、面见伴手礼\n送礼登记${r.gift}套｜已见覆盖率${r.gift_rate}\n${reviewGiftAnalysis(ctx)}\n\n三、面见质量与业务转化\n已面见${q.total}套｜有反馈原文${q.feedback}套｜覆盖率${M.pct(q.feedback,q.total)}\n业务经营主题：\n${topics.slice(0,8).map(x=>`${x.label}：${x.count}套（${M.pct(x.count,q.total)}）`).join('\n')||'暂无主题数据'}\n\n数据解读：${reviewThemeAnalysis(topics,q)}\n\n四、标杆门店与重点提醒\n标杆门店（${currentMonth==='2026-11'?'按面见进展与目标管理表现识别':'按全盘与TOP房面见表现识别'}）：\n${bench}${remind?`\n\n重点提醒门店（${currentMonth==='2026-11'?'本月零面见门店':'按全盘与TOP房面见表现识别'}）：\n${currentMonth==='2026-11'?'识别规则：本月面见量为0且仍有在售房源，说明尚未真正启动；需在11月9日—15日与店总完成共识并推动首套面见落地。\n':''}${remind}`:''}\n\n跨月未持续经营机会池：\n${oppText}\n\n五、${reviewActionsText(ctx)}\n\n六、11月份目标及核心策略\n11月升级为“组织进展＋逐套机会池”双层管理，以感恩连接持续创造面见、深化反馈并沉淀可复用的优质服务案例。`;}
+  return `${view.name}｜${Number(currentMonth.slice(5))}月月度复盘\n数据截至${ctx.d.imports[0]?.as_of||'待导入'}\n\n一、本月目标达成结果\n月度目标：${r._target??'待确认'}套\n面见量：${r.met}套｜目标完成率：${reviewCompletion(r)}｜目标差距：${reviewGap(r)??'—'}套\n全盘：${r.met}/${r.stock}套｜面见率${r.met_rate}｜面见次数${meetingValue(r)}次\n门店TOP：${r.store_top_met}/${r.store_top_stock}套｜面见率${r.store_top_rate}\n户型TOP：${r.unit_top_met}/${r.unit_top_stock}套｜面见率${r.unit_top_rate}${regionAnalysis}\n\n二、面见伴手礼\n送礼登记${r.gift}套｜已见覆盖率${r.gift_rate}\n${reviewGiftAnalysis(ctx)}\n\n三、面见质量与业务转化\n已面见${q.total}套｜有反馈原文${q.feedback}套｜覆盖率${M.pct(q.feedback,q.total)}\n业务经营主题：\n${topics.slice(0,8).map(x=>`${x.label}：${x.count}套（${M.pct(x.count,q.total)}）`).join('\n')||'暂无主题数据'}\n\n数据解读：${reviewThemeAnalysis(topics,q)}\n\n四、标杆门店与重点提醒\n${rankSection}\n\n跨月未持续经营机会池：\n${oppText}\n\n五、${reviewActionsText(ctx)}\n\n六、11月份目标及核心策略\n11月升级为“组织进展＋逐套机会池”双层管理，以感恩连接持续创造面见、深化反馈并沉淀可复用的优质服务案例。`;}
  function reviewNovemberActionTableV2(rows){
   return `<div class="review-strategy-table"><h3>11月策略与动作</h3><table aria-label="11月策略与动作"><thead><tr><th>策略</th><th>动作</th></tr></thead><tbody>${(rows||[]).map(row=>{const actions=Array.isArray(row[1])?row[1]:[row[1]];return `<tr><td>${E(row[0])}</td><td><ul class="review-action-list">${actions.map(item=>`<li>${E(item)}</li>`).join('')}</ul></td></tr>`;}).join('')}</tbody></table></div>`;
  }
@@ -397,6 +411,102 @@ ${strategies}`;
   }else companyRows=archivedProgress({scope:'company'})?.rows||[];
   return M.withRateRanks(progress,companyRows);
  }
+ function unmetTopRows(view){
+  const d=data();
+  if(!C.member||!Array.isArray(d?.housing))return [];
+  const filter={region:view?.region||'',store:view?.scope==='store'?(view.store||view.name):''},seen=new Set(),rows=[];
+  for(const source of M.active(M.inScope(d.housing,filter))){
+    if(hiddenCustomerStores.has(canonicalStore(source['门店']))||M.flag(source['本月是否面见']))continue;
+    const storeTop=M.flag(source['门店top户数']),unitTop=M.flag(source['户型top户数']);
+    if(!storeTop&&!unitTop)continue;
+    const houseId=M.text(source['房源编号']).replace(/[\s\u00a0]/g,'');
+    const key=houseId||[source['门店'],source['店组'],source['分盘']||source['总盘'],source['房间号']].map(M.text).join('|');
+    if(seen.has(key))continue;
+    seen.add(key);
+    rows.push({
+      store:canonicalStore(source['门店'])||'—',
+      group:M.text(source['店组'])||'—',
+      advisor:M.text(source['维护人姓名'])||'—',
+      project:M.text(source['分盘']||source['总盘'])||'—',
+      room:M.text(source['房间号'])||'—',
+      tag:[storeTop?'门店TOP':'',unitTop?'户型TOP':''].filter(Boolean).join('、')
+    });
+  }
+  return rows.sort((a,b)=>a.store.localeCompare(b.store,'zh-CN')||a.group.localeCompare(b.group,'zh-CN')||a.project.localeCompare(b.project,'zh-CN')||a.room.localeCompare(b.room,'zh-CN')||a.advisor.localeCompare(b.advisor,'zh-CN'));
+}
+function unmetTopSummary(rows){
+  return {
+    total:rows.length,
+    storeTop:rows.filter(row=>row.tag.includes('门店TOP')).length,
+    unitTop:rows.filter(row=>row.tag.includes('户型TOP')).length,
+    both:rows.filter(row=>row.tag.includes('门店TOP')&&row.tag.includes('户型TOP')).length
+  };
+}
+function unmetTopTable(view){
+  if(!C.member)return `<div class="ops-notice"><b>登录后查看逐套明细</b><p>分盘、房间号和维护人仅对已授权BP及项目负责人展示。</p><button class="btn primary" data-ops="login">BP／管理入口</button></div>`;
+  const rows=unmetTopRows(view),summary=unmetTopSummary(rows);
+  if(!rows.length)return `<div class="ops-notice"><b>当前范围暂无未面见TOP房</b><p>本月仍在售的门店TOP和户型TOP均已完成面见，或当前底表暂无TOP标签。</p></div>`;
+  const headers=['门店','店组','维护人姓名','分盘','房间号','房源标签（门店TOP/户型TOP）'];
+  return `<div class="table-box unmet-top-box"><div class="table-top"><div><h3 class="table-title">当前范围共 ${summary.total} 套未面见TOP房</h3><p class="table-note">门店TOP ${summary.storeTop}套 · 户型TOP ${summary.unitTop}套${summary.both?` · 双标签 ${summary.both}套（已去重）`:''}</p></div><button class="btn primary" type="button" data-ops="unmet-top-image">复制当前范围图片</button></div><div class="table-scroll" style="max-height:640px;overflow:auto"><table aria-label="本月未面见TOP房明细"><thead><tr>${headers.map(label=>`<th>${E(label)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr><td>${E(row.store)}</td><td>${E(row.group)}</td><td>${E(row.advisor)}</td><td>${E(row.project)}</td><td>${E(row.room)}</td><td>${E(row.tag)}</td></tr>`).join('')}</tbody></table></div><div class="table-bottom"><span>已按门店、店组、分盘和房间号排序</span><span>同一房源双标签只展示一行</span></div></div>`;
+}
+function unmetTopCanvasLines(ctx,value,maxWidth){
+  const chars=Array.from(String(value??'—')),lines=[];let line='';
+  for(const char of chars){
+    const next=line+char;
+    if(line&&ctx.measureText(next).width>maxWidth){lines.push(line);line=char;}else line=next;
+  }
+  if(line||!lines.length)lines.push(line||'—');
+  return lines;
+}
+async function unmetTopImageBlobs(rows,view){
+  const pages=[];for(let i=0;i<rows.length;i+=24)pages.push(rows.slice(i,i+24));
+  const headers=['门店','店组','维护人姓名','分盘','房间号','房源标签'],keys=['store','group','advisor','project','room','tag'],widths=[210,190,210,350,390,230],left=40,top=176,headerHeight=58;
+  const blobs=[];
+  for(let pageIndex=0;pageIndex<pages.length;pageIndex++){
+    const page=pages[pageIndex],measure=document.createElement('canvas').getContext('2d');measure.font='20px "Microsoft YaHei","PingFang SC",sans-serif';
+    const layouts=page.map(row=>{
+      const cells=keys.map((key,index)=>unmetTopCanvasLines(measure,row[key],widths[index]-24));
+      return {cells,height:Math.max(54,Math.max(...cells.map(lines=>lines.length))*28+18)};
+    });
+    const canvas=document.createElement('canvas');canvas.width=1660;canvas.height=top+headerHeight+layouts.reduce((sum,row)=>sum+row.height,0)+66;
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#fffdfa';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#5d3973';ctx.fillRect(0,0,canvas.width,105);
+    ctx.fillStyle='#fff';ctx.font='bold 34px "Microsoft YaHei","PingFang SC",sans-serif';ctx.textBaseline='middle';ctx.fillText(`${currentMonth.replace('-','年')}月未面见TOP房明细`,left,42);
+    ctx.font='20px "Microsoft YaHei","PingFang SC",sans-serif';ctx.fillText(`${view.name} · 共${rows.length}套 · 第${pageIndex+1}/${pages.length}页`,left,78);
+    const cutoff=data()?.imports?.[0]?.as_of||'待同步';ctx.fillStyle='#675c6c';ctx.font='18px "Microsoft YaHei","PingFang SC",sans-serif';ctx.fillText(`口径：仍在售、属于门店TOP或户型TOP且本月尚未面见｜数据截至 ${cutoff}`,left,140);
+    let x=left;ctx.fillStyle='#eee6f3';ctx.fillRect(left,top,widths.reduce((a,b)=>a+b,0),headerHeight);
+    ctx.strokeStyle='#d7cde0';ctx.lineWidth=1;ctx.font='bold 19px "Microsoft YaHei","PingFang SC",sans-serif';ctx.fillStyle='#533865';
+    headers.forEach((label,index)=>{ctx.strokeRect(x,top,widths[index],headerHeight);ctx.fillText(label,x+12,top+headerHeight/2);x+=widths[index];});
+    let y=top+headerHeight;ctx.font='20px "Microsoft YaHei","PingFang SC",sans-serif';
+    layouts.forEach((layout,rowIndex)=>{
+      x=left;ctx.fillStyle=rowIndex%2?'#fbf8fc':'#fffdfa';ctx.fillRect(left,y,widths.reduce((a,b)=>a+b,0),layout.height);
+      layout.cells.forEach((lines,index)=>{
+        ctx.strokeStyle='#e3dce7';ctx.strokeRect(x,y,widths[index],layout.height);ctx.fillStyle='#342c38';
+        const start=y+(layout.height-(lines.length-1)*28)/2;
+        lines.forEach((line,lineIndex)=>ctx.fillText(line,x+12,start+lineIndex*28));
+        x+=widths[index];
+      });
+      y+=layout.height;
+    });
+    ctx.fillStyle='#85798b';ctx.font='16px "Microsoft YaHei","PingFang SC",sans-serif';ctx.fillText('双标签房源已去重；请结合实际邀约情况持续更新。',left,canvas.height-30);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    if(!blob)throw Error('未面见TOP房明细图片生成失败');
+    blobs.push(blob);
+  }
+  return blobs;
+}
+async function unmetTopImage(){
+  if(!C.member)throw Error('请先通过BP／管理入口登录');
+  const rows=unmetTopRows(currentView);
+  if(!rows.length)throw Error('当前范围暂无未面见TOP房');
+  const blobs=await unmetTopImageBlobs(rows,currentView);
+  if(blobs.length===1&&navigator.clipboard?.write&&window.ClipboardItem&&isSecureContext){
+    try{await navigator.clipboard.write([new ClipboardItem({'image/png':blobs[0]})]);notify('未面见TOP房明细图片已复制，可粘贴到微信');return;}catch{}
+  }
+  const urls=blobs.map(blob=>URL.createObjectURL(blob));
+  dialog(`<h2>本月未面见TOP房明细图片</h2><p>${blobs.length>1?`当前范围明细较多，已自动分成${blobs.length}张，保留全部房源。`:'图片已生成，可下载后分享。'}</p>${urls.map((url,index)=>`<div class="ops-actions"><a class="btn primary" href="${url}" download="${E(currentMonth+'_'+currentView.name)}_未面见TOP房_${index+1}.png">下载第${index+1}张</a></div><img alt="未面见TOP房明细图片${index+1}" src="${url}" style="width:100%;margin:12px 0 22px">`).join('')}`);
+  setTimeout(()=>urls.forEach(url=>URL.revokeObjectURL(url)),300000);
+}
  function daily(view){
   const d=data(),s={region:view.region||'',store:view.scope==='store'?view.name:''};let progress,asOf,metric,goal,delta={known:false};
   if(d&&(d.housing?.length||currentMonth==='2026-11')){progress=M.table(d.housing||[],s,goals(),currentMonth,d.meetings||[],customerOptions(d));const rootRow=progress.rows.find(r=>r._level===view.scope);metric={...M.metrics(M.inScope(d.housing||[],s),d.meetings||[]),...rootRow};asOf=d.imports?.[0]?.as_of||'';goal=metric._target;
@@ -417,6 +527,7 @@ ${strategies}`;
   return hero('日常面见推动 · '+view.name,cutoff)+(live?'':`<div class="ops-notice">当前显示已发布的归档快照。共享服务连接并导入新底表后，这里才会更新为日常数据。</div>`)+kpis(cards)+`<div class="ops-date-line">${ownerApplicable?(delta.known?`较${E(delta.asOf)}快照新增面见 <b>${delta.newMet}</b> 套、礼物登记 <b>${delta.newGift}</b> 套${delta.removedMet?'；另有'+delta.removedMet+'套因范围或记录调整不在当前覆盖中，需核对':''}`:'日增量待建立连续快照；不把累计量视作昨日新增'):'本店无在售房源，不涉及业主管理指标。'}${d?.imports?.[0]?`<span>业主更新时间：${E(new Date(d.imports[0].created_at).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'}))}</span>`:''}</div>`+
 
   block('daily-progress','面见及礼物进展',renderTable(progress))+
+  block('daily-unmet-top','本月未面见TOP房明细',unmetTopTable(view),'仅纳入本月仍在售、属于门店TOP或户型TOP且尚未面见的房源。')+
   block('daily-quality','面见质量',ownerApplicable?qualityPanel(view):'<div class="ops-notice">本店无在售房源，业主面见质量指标不适用。</div>')+
   block('daily-message','今日重点与推动话术',`<div class="block ops-panel"><div class="ops-columns"><div><h3>优先推动</h3><ul>${risks.filter(t=>!String(t).includes('结合实际')).slice(0,3).map(t=>`<li>${E(t)}</li>`).join('')||(ownerApplicable?'<li>请优先推进目标未完成门店及TOP重点房源。</li>':'<li>本店当前无在售业主面见任务。</li>')}</ul></div><div><h3>进展与鼓励</h3>${praises.map(t=>`<p>${E(t)}</p>`).join('')||'<p>让每次面见带回具体信息，帮助下一步服务。</p>'}</div></div><p class="ops-muted">提示依据目标、登记与已保存动作形成；原因与优先级由BP和销售管理者核实。</p><label class="ops-field">补充单店现场信息<textarea id="ops-scene" placeholder="可输入经理已做动作、业主原话、邀约卡点及需要的支持">${E(sceneRaw(view))}</textarea></label><div class="ops-actions"><button class="btn" data-ops="voice">语音转文字</button><button class="btn primary" data-ops="voice-stop" hidden>结束语音</button><button class="btn" data-ops="generate-message">整理并预览</button><button class="btn primary" data-ops="save-scene" ${!C.member||!s.store?'disabled':''}>确认并同步</button><button class="btn" data-ops="copy-message">复制话术</button></div>${WBVoice.field()}${analysisPanel(view)}<div id="ops-plan-preview">${planPanel(view)}</div><textarea id="ops-message" class="ops-message" aria-label="当前范围推动话术">${E(message)}</textarea></div>`)+
   block('daily-actions','动作追踪与结果',actions(view),C.member?'记录保存到共享服务，下一次导入底表时继续保留。':'登录后可在负责范围内记录动作。');
@@ -586,13 +697,13 @@ TOP重点房源
   const reviewButton=document.querySelector('[data-view-mode="review"]');if(reviewButton)reviewButton.textContent=archiveMonth?'历史复盘':'周/月复盘';
   document.getElementById('report').hidden=false;document.getElementById('status').hidden=true;document.getElementById('scope-panel').hidden=archiveMonth||currentMode==='admin';document.getElementById('toolbar').hidden=false;document.getElementById('word-download').hidden=true;
   document.getElementById('copy-progress-image').hidden=archiveMonth||!['daily','review'].includes(currentMode);document.getElementById('copy-progress-image').disabled=archiveMonth;document.getElementById('copy-report').hidden=archiveMonth;document.getElementById('copy-report').disabled=archiveMonth||!['daily','review'].includes(currentMode);document.getElementById('print-report').disabled=false;
-  let nav=archiveMonth?(currentMode==='admin'?[['admin-archive','上传复盘文件'],['admin-archive-list','已归档文件']]:[['history-files','复盘文件']]):currentMode==='daily'?[['daily-progress','面见及礼物进展'],['daily-quality','面见质量'],['daily-message','今日重点与话术'],['daily-actions','动作追踪与结果']]:currentMode==='review'?[['review-progress','本月目标达成结果'],['review-gifts','面见伴手礼'],['review-quality','面见质量与业务转化'],['review-highlights','标杆门店与重点提醒'],['review-actions',currentMonth==='2026-11'?'上周策略复盘与本周承接':Number(currentMonth.slice(5))+'月关键动作复盘'],['review-next',currentMonth==='2026-11'?'11月第二周目标及核心策略':'11月份目标及核心策略']]:currentMode==='expense'?[['expense-todo','BP核账待办'],['expense-head','账本与当月规则'],['expense-records','送礼明细与凭证'],['expense-settlement','分摊与收付款'],['expense-cash','实际收付款登记']]:[['admin-import','导入基础数据'],['admin-goals','本月门店目标'],['admin-history','更新与备份']];
-  if(currentMonth==='2026-11'&&root.WBPlanExecution){const n={daily:['pe-daily','本周动作与检核'],admin:['pe-admin','计划分包与门店配置']}[currentMode];if(n)nav.unshift(n);}
+  let nav=archiveMonth?(currentMode==='admin'?[['admin-archive','上传复盘文件'],['admin-archive-list','已归档文件']]:[['history-files','复盘文件']]):currentMode==='daily'?[['daily-progress','面见及礼物进展'],['daily-unmet-top','本月未面见TOP房'],['daily-quality','面见质量'],['daily-message','今日重点与话术'],['daily-actions','动作追踪与结果']]:currentMode==='review'?[['review-progress','本月目标达成结果'],['review-gifts','面见伴手礼'],['review-quality','面见质量与业务转化'],['review-highlights','标杆门店与重点提醒'],['review-actions',currentMonth==='2026-11'?'上周策略复盘与本周承接':Number(currentMonth.slice(5))+'月关键动作复盘'],['review-next',currentMonth==='2026-11'?'11月第二周目标及核心策略':'11月份目标及核心策略']]:currentMode==='expense'?[['expense-todo','BP核账待办'],['expense-head','账本与当月规则'],['expense-records','送礼明细与凭证'],['expense-settlement','分摊与收付款'],['expense-cash','实际收付款登记']]:[['admin-import','导入基础数据'],['admin-goals','本月门店目标'],['admin-history','更新与备份']];
+  if(currentMonth==='2026-11'&&root.WBPlanExecution&&currentMode==='admin')nav.unshift(['pe-admin','计划分包与门店配置']);
   document.getElementById('nav').innerHTML=nav.map(([id,label],i)=>`<a href="#${id}"><span class="nav-no">0${i+1}</span><span>${E(label)}</span></a>`).join('');
   document.querySelector('.nav-label').textContent='CONTENTS / '+(archiveMonth?(currentMode==='admin'?'文件管理':'历史复盘'):({daily:'日常推动',review:'结果复盘',expense:'费用核销',admin:'数据管理'}[currentMode]||'项目工作台'));
   document.title=(archiveMonth?(currentMode==='admin'?'历史文件管理':'历史复盘归档'):({daily:'日常推动',review:'周／月复盘',expense:'费用核销',admin:'数据管理'}[currentMode]))+' · '+view.name+'｜面见项目工作台';
   document.getElementById('report').innerHTML=connection()+(archiveMonth&&currentMode==='review'?historyArchive(view):currentMode==='daily'?daily(view):currentMode==='expense'?finance(view):currentMode==='review'?review(view):admin(view));
-  if(currentMonth==='2026-11'&&root.WBPlanExecution){const f={daily:'renderDaily',admin:'renderAdmin'}[currentMode];if(f){document.getElementById('report').insertAdjacentHTML('afterbegin',root.WBPlanExecution[f](view));root.WBPlanExecution.boot();}}
+  if(currentMonth==='2026-11'&&root.WBPlanExecution&&currentMode==='admin'){document.getElementById('report').insertAdjacentHTML('afterbegin',root.WBPlanExecution.renderAdmin(view));root.WBPlanExecution.boot();}
   if(C.configured&&!data()&&!state.loading&&!state.error)refresh();
  }
  async function refresh(){if(!C.configured)return;const month=currentMonth,memberAtStart=C.member,viewAtStart=currentView;state.loading=true;state.error='';try{const loaded=await C.load(month);if(C.member!==memberAtStart)return;state.cache[month]=loaded;await publishQuality(loaded,month);}catch(e){state.error=e.message;}finally{state.loading=false;
@@ -614,7 +725,7 @@ TOP重点房源
   if(action==='copy-quality'){await copyText(feedbackCopyText(),'当前页质量文字已复制');return;}
   if(action==='quality-topic'){const sel=qualitySelection();sel.filter.topic=b.dataset.topic;sel.filter.page=0;updateQualityPanel();return;}
   if(action==='quality-page'){const sel=qualitySelection();sel.filter.page+=Number(b.dataset.direction);updateQualityPanel();document.getElementById(currentMode==='review'?'review-quality':'daily-quality')?.scrollIntoView({behavior:'smooth'});return;}
-  if(action==='quality-image'){await qualityImage();return;}
+  if(action==='quality-image'){await qualityImage();return;}if(action==='unmet-top-image'){await unmetTopImage();return;}
   if(action==='copy-review'){const text=reviewTextWithNovember();if(!text)throw Error('复盘数据尚未加载，请点击“刷新进展”后重试');await copyText(text,'当前复盘已复制');return;}
   if(action==='archive-review'){const url=new URL(location.href);url.searchParams.set('review','archive');history.replaceState(null,'',url);root.render(currentView);return;}
   if(action==='live-review'){const url=new URL(location.href);url.searchParams.delete('review');history.replaceState(null,'',url);root.render(currentView);return;}
