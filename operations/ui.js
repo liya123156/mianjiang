@@ -271,7 +271,7 @@ ${r.gift.conclusion}`;
 }
  function legacyReviewActionsHtml(ctx){const month=Number(currentMonth.slice(5));return `<div class="review-report"><div class="review-action-grid"><article><span>核心策略01</span><h3>目标共识与动态校准</h3><ul class="review-action-points"><li>月初完成全司、大区和单店首版目标共识，明确各组织需要承接的面见任务。</li><li>每周在店总会确认目标进度、剩余差距及目标是否需要调整，持续完成目标再共识。</li><li>推动店总将目标进一步拆解到店组、伙伴和具体房源。</li></ul></article><article><span>核心策略02</span><h3>全盘与双TOP双线推进</h3><ul class="review-action-points"><li>同步推动全盘在售业主、门店TOP和户型TOP房源面见。</li><li>每日晒面见量、全盘面见率和双TOP面见率，持续呈现组织进展。</li><li>围绕目标差距进行提醒和反馈，及时识别推进偏慢的组织与重点房源。</li></ul></article><article><span>核心策略03</span><h3>正反馈分享与传播</h3><ul class="review-action-points"><li>每日收集和分享真实面见反馈，呈现价格、心态、看房条件和关系进展等业务价值。</li><li>通过正向案例传播，让面见从数据任务转化为顾客服务和房源经营动作。</li><li>持续沉淀优秀做法，带动伙伴主动面见并认真记录反馈。</li></ul></article><article class="foundation"><span>基础动作</span><h3>每周与BP复盘</h3><ul class="review-action-points"><li>复盘各店当月进展、目标差距及双TOP覆盖情况。</li><li>结合门店进展高低，明确下一周重点推动的门店、店组和房源。</li><li>对连续进展偏慢的组织，推动BP联动店总、经理进一步下钻。</li></ul></article></div><div class="review-callout warm"><strong>${month}月动作复盘结论</strong><p>${month}月已经初步形成“目标共识—数据日晒—进度提醒—正反馈传播—周度复盘”的推动闭环，既关注全盘面见规模，也同步关注双TOP房源经营和真实反馈沉淀。</p></div><div class="review-callout critical"><strong>${month}月未完全达成目标的真实原因</strong><p>管理跟进主要停留在全司、大区、门店等组织维度，能够判断哪家店进展较慢，但没有持续打开到一套套房源，因此未能充分识别每套房源的真实场景卡点、责任人，以及销售中心需要提供的具体支持。11月需要进一步升级为“组织进展＋逐套机会池”的双层管理。</p></div></div>`;}
  function reviewNovemberScope(ctx){const plan=ctx.facts?.november;if(!plan)return null;if(ctx.view.scope==='company')return {plan,summary:plan.company,regions:plan.regions,stores:plan.stores};if(ctx.view.scope==='region'){const region=plan.regions.find(row=>row[0]===ctx.view.region),summary=region?{marketBaseline:plan.company.marketBaseline,storeStretch:region[1],september:region[2],target:region[3]}:{marketBaseline:plan.company.marketBaseline,storeStretch:0,september:0,target:0};return {plan,summary,regions:region?[region]:[],stores:plan.stores.filter(row=>row[0]===ctx.view.region)};}const store=plan.stores.find(row=>row[1]===(ctx.view.store||ctx.view.name)),summary=store?{marketBaseline:plan.company.marketBaseline,storeStretch:store[2],september:store[3],target:store[4]}:{marketBaseline:plan.company.marketBaseline,storeStretch:0,september:0,target:0};return {plan,summary,regions:[],stores:store?[store]:[]};}
- function reviewNovemberTable(title,headers,rows){if(!rows.length)return '';return `<div class="review-table-card"><h3>${E(title)}</h3><div class="review-table-scroll"><table class="review-tier-table"><thead><tr>${headers.map(x=>`<th>${E(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((value,i)=>`<td class="${i<2?'review-org-name':''}">${E(value)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;}
+ function reviewDetailTable(title,headers,rows){if(!rows.length)return '';return `<div class="review-table-card"><h3>${E(title)}</h3><div class="review-table-scroll"><table class="review-tier-table" aria-label="${E(title)}"><thead><tr>${headers.map(x=>`<th scope="col">${E(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((value,i)=>`<td class="${i<2?'review-org-name':''}">${E(value)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;}
  function reviewNovemberMetricRow(ctx,level,name){if(level==='company')return ctx.root;return ctx.progress.rows.find(row=>row._level===level&&(level==='region'?row.region===name:row.store===name));}
  function reviewNovemberCoverage(row){if(!row)return {whole:'—',storeTop:'—',unitTop:'—'};return {whole:Math.ceil(Number(row.stock||0)*.2),storeTop:Math.ceil(Number(row.store_top_stock||0)*.4),unitTop:Math.ceil(Number(row.unit_top_stock||0)*.4)};}
  function reviewRankText(ctx,row,tone){const facts=ctx.facts,reason=tone==='benchmark'?(facts?.benchmarkReasons?.[row.store]||reviewRankReason(row,'benchmark')):tone==='reminder'?(facts?.reminderReasons?.[row.store]||reviewRankReason(row,'reminder')):reviewRankReason(row,'neutral'),progress=currentMonth==='2026-11'?`目标进度：面见${row.met}套 / 目标${row._target??'待确认'}套，完成率${reviewCompletion(row)}；面见次数${meetingValue(row)}次\n`:'';return `${row.store}\n${progress}${reviewMetricSentence('全盘',row.met,row.stock,row.met_rate)}\n${reviewMetricSentence('门店TOP',row.store_top_met,row.store_top_stock,row.store_top_rate)}\n${reviewMetricSentence('户型TOP',row.unit_top_met,row.unit_top_stock,row.unit_top_rate)}\n分析：${reason}\n店组下钻：${reviewStoreInsight(ctx,row,tone)}`;}
@@ -419,8 +419,8 @@ ${strategies}`;
    <div class="review-callout"><strong>11月定性目标</strong><p>${E(plan.qualitative.goal)}</p></div>
    <section class="review-goal-section"><h3 class="review-goal-title">11月定量目标</h3>${cardGrid(quantitative)}</section>
    <div class="review-measure-note"><strong>目标测算口径</strong><p>以全盘面见率20%、门店TOP和户型TOP面见率40%为覆盖线，结合9月峰值、各组织承接能力和感恩月战役强度逐店校准，汇总形成300套。当前范围覆盖线参考：全盘${coverage.whole}套、门店TOP ${coverage.storeTop}套、户型TOP ${coverage.unitTop}套；9月面见${summary.september}套。全司市占15套、单店分解合计26套只作业务结果参考，不参与面见量测算。</p></div>
-   ${reviewNovemberTable('11月大区目标汇总',['大区','市占分解参考','覆盖线测算','9月面见达成','11月面见目标'],regionRows)}
-   ${reviewNovemberTable(ctx.view.scope==='company'?'11月18家门店目标明细':ctx.view.scope==='region'?'区域内门店目标明细':'本店目标依据',['大区','门店','市占分解参考','覆盖线测算','9月面见达成','11月面见目标','校准依据'],storeRows)}
+   ${reviewDetailTable('11月大区目标汇总',['大区','市占分解参考','覆盖线测算','9月面见达成','11月面见目标'],regionRows)}
+   ${reviewDetailTable(ctx.view.scope==='company'?'11月18家门店目标明细':ctx.view.scope==='region'?'区域内门店目标明细':'本店目标依据',['大区','门店','市占分解参考','覆盖线测算','9月面见达成','11月面见目标','校准依据'],storeRows)}
    ${reviewNovemberActionTableV2(plan.strategyActions)}
    <div class="review-material-pack"><div><span>11月行动工具</span><h3>“感恩相连”服务物料包</h3><p>集中查看感谢信、电子贺卡、邀约话术、专业资料、礼品库与采购入口，伙伴可按顾客关系和服务阶段直接取用。</p><code>${E(plan.materialPack)}</code></div><a href="${E(plan.materialPack)}" target="_blank" rel="noopener">打开物料包</a></div>
    <div class="review-callout"><strong>11月检核方式</strong><p>同时检核线上覆盖、全盘与双TOP面见、逐套反馈和业务变化。未完成事项必须明确具体对象、责任人和完成时间，并在下一次周度复盘中继续跟进；月末单独完成礼物费用与凭证收口。</p></div>
@@ -665,6 +665,44 @@ async function metHouseImage(){
   setTimeout(()=>urls.forEach(url=>URL.revokeObjectURL(url)),300000);
 }
 
+ function interviewShortlist(view){
+  const d=data(),asOf=d?.imports?.[0]?.as_of||'';
+  const filter={region:view.region||'',store:view.scope==='store'?(view.store||view.name):''};
+  const progress=M.table(d?.housing||[],filter,{},currentMonth,d?.meetings||[],{includeAllLevels:true});
+  const quality=qualityData({scope:'company'});
+  const currentQuality=quality?.asOf===asOf?quality:null;
+  const feedbackByHouse=new Map((currentQuality?.records||[]).map(record=>[record.houseId,record]));
+  const identityLabels={store:'店面',group:'店组',name:'姓名'};
+  const tiers=[
+   {level:'store',title:'店面TOP3',limit:3,fields:['store']},
+   {level:'group',title:'店组TOP5',limit:5,fields:['store','group']},
+   {level:'advisor',title:'个人TOP5',limit:5,fields:['store','group','name']}
+  ];
+  const compare=(a,b)=>b.met-a.met||b.met_count-a.met_count||a.store.localeCompare(b.store,'zh-CN')
+   ||a.group.localeCompare(b.group,'zh-CN')||M.text(a.name).localeCompare(M.text(b.name),'zh-CN');
+  function feedback(row){
+   const summary=currentQuality?.records
+    ?Q.summary(row.metIds.map(id=>feedbackByHouse.get(id)).filter(Boolean))
+    :currentQuality?.groups?.find(item=>item.scope===row._level&&item.region===row.region
+      &&canonicalStore(item.store)===row.store&&(row._level==='store'||item.group===row.group));
+   if(!summary||summary.total!==row.met)return '反馈数据待同步';
+   const themes=Object.entries(F.labels)
+    .filter(([key])=>key!=='N'&&Number(summary.topics?.[key])>0)
+    .sort(([a],[b])=>summary.topics[b]-summary.topics[a])
+    .slice(0,3).map(([key,label])=>`${label}${summary.topics[key]}套`);
+   return [`有反馈${summary.feedback}套（${M.pct(summary.feedback,row.met)}）`,...themes].join(' · ');
+  }
+  const tables=tiers.map(({level,title,limit,fields})=>{
+   if(level==='advisor'&&!C.member)return `<div class="review-table-card"><h3>${title}</h3><div class="ops-notice">已授权成员可登录查看个人名单和反馈。 <button class="btn" type="button" data-ops="login">BP／管理入口</button></div></div>`;
+   const ranked=progress.rows.filter(row=>row._level===level&&row.met>0
+    &&(level!=='advisor'||!['','—','-','/','未填写'].includes(M.text(row.name))))
+    .sort(compare).slice(0,limit);
+   if(!ranked.length)return `<div class="review-table-card"><h3>${title}</h3><p class="ops-notice">当前范围暂无符合条件的候选。</p></div>`;
+   const rows=ranked.map((row,index)=>[index+1,...fields.map(field=>row[field]),row.met+'套',row.met_count+'次',feedback(row)]);
+   return reviewDetailTable(title,['排名',...fields.map(field=>identityLabels[field]),'月度面见量','面见次数','面见反馈'],rows);
+  }).join('');
+  return `<div class="review-report interview-shortlist"><div class="review-subhead"><h3>本周标杆采访名单</h3><p>${E(view.name)} · ${Number(currentMonth.slice(5))}月累计 · ${asOf?'数据截至 '+E(asOf):'底表待同步'}</p><p>按月度面见套数排序，同套数再按面见次数排序。个人按房源维护人统计，反馈主题按房源去重。</p></div>${tables}</div>`;
+ }
  function daily(view){
   const d=data(),s={region:view.region||'',store:view.scope==='store'?view.name:''};let progress,asOf,metric,goal,delta={known:false};
   if(d&&(d.housing?.length||currentMonth==='2026-11')){progress=M.table(d.housing||[],s,goals(),currentMonth,d.meetings||[],customerOptions(d));const rootRow=progress.rows.find(r=>r._level===view.scope);metric={...M.metrics(M.inScope(d.housing||[],s),d.meetings||[]),...rootRow};asOf=d.imports?.[0]?.as_of||'';goal=metric._target;
@@ -689,7 +727,7 @@ async function metHouseImage(){
   block('daily-met-houses','当月面见房源明细',metHouseTable(view),'展示本月仍在售且已完成面见登记的房源；同一房源按套去重。')+
   block('daily-quality','面见质量',ownerApplicable?qualityPanel(view):'<div class="ops-notice">本店无在售房源，业主面见质量指标不适用。</div>')+
   block('daily-message','今日重点与推动话术',`<div class="block ops-panel"><div class="ops-columns"><div><h3>优先推动</h3><ul>${risks.filter(t=>!String(t).includes('结合实际')).slice(0,3).map(t=>`<li>${E(t)}</li>`).join('')||(ownerApplicable?'<li>请优先推进目标未完成门店及TOP重点房源。</li>':'<li>本店当前无在售业主面见任务。</li>')}</ul></div><div><h3>进展与鼓励</h3>${praises.map(t=>`<p>${E(t)}</p>`).join('')||'<p>让每次面见带回具体信息，帮助下一步服务。</p>'}</div></div><p class="ops-muted">提示依据目标、登记与已保存动作形成；原因与优先级由BP和销售管理者核实。</p><label class="ops-field">补充单店现场信息<textarea id="ops-scene" placeholder="可输入经理已做动作、业主原话、邀约卡点及需要的支持">${E(sceneRaw(view))}</textarea></label><div class="ops-actions"><button class="btn" data-ops="voice">语音转文字</button><button class="btn primary" data-ops="voice-stop" hidden>结束语音</button><button class="btn" data-ops="generate-message">整理并预览</button><button class="btn primary" data-ops="save-scene" ${!C.member||!s.store?'disabled':''}>确认并同步</button><button class="btn" data-ops="copy-message">复制话术</button></div>${WBVoice.field()}${analysisPanel(view)}<div id="ops-plan-preview">${planPanel(view)}</div><textarea id="ops-message" class="ops-message" aria-label="当前范围推动话术">${E(message)}</textarea></div>`)+
-  block('daily-actions','动作追踪与结果',actions(view),C.member?'记录保存到共享服务，下一次导入底表时继续保留。':'登录后可在负责范围内记录动作。');
+  block('daily-actions','动作追踪与结果',interviewShortlist(view)+actions(view),C.member?'记录保存到共享服务，下一次导入底表时继续保留。':'登录后可在负责范围内记录动作。');
  }
  function novemberPraises(view,progress){
   const level=view.scope==='store'?'group':'store',rows=(progress.rows||[]).filter(r=>r._level===level&&Number(r.stock)>0&&Number(r.met)>0),best=rows.sort((a,b)=>Number.parseFloat(b.met_rate)-Number.parseFloat(a.met_rate)).slice(0,3);

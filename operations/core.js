@@ -41,6 +41,7 @@
   }
   function table(rows,scope,goals,month,meetings=[],options={}){
     scope={...scope,store:scope.store?canonicalStore(scope.store):''};
+    const includeAllLevels=options.includeAllLevels===true;
     const customerEnabled=options.showCustomer===true&&(month==='2026-11'||options.customerImported===true||(options.customerRows||[]).length>0);
     const catalog=(options.storeCatalog||(customerEnabled?storeCatalog:[])).map(s=>({...s,store:canonicalStore(s.store),ownerApplicable:s.ownerApplicable??catalogByStore.get(canonicalStore(s.store))?.ownerApplicable??true}));
     const storeScope={...scope,group:''},selectedCatalog=customerInScope(catalog,storeScope),allCustomerRows=customerEnabled?(options.customerRows||[]).map(customerRow):[],customerRows=customerInScope(allCustomerRows,scope),customerImported=customerEnabled&&options.customerImported===true;
@@ -65,10 +66,10 @@
     for(const region of regions){const r=scoped.filter(x=>x['大区']===region),cr=customerRows.filter(x=>x.region===region),rc=selectedCatalog.filter(x=>x.region===region);if(!scope.store)add(r,cr,'region',region,{region,store:'/',group:'/',name:'—'});
       for(const store of unique([...active(r).map(x=>x['门店']),...rc.map(x=>x.store),...cr.map(x=>x.store)])){
         const s=r.filter(x=>x['门店']===store),cs=cr.filter(x=>x.store===store);add(s,cs,'store',store,{region,store,group:'/',name:'—'});
-        if(scope.region||scope.store)for(const group of unique([...active(s).map(x=>x['店组']),...cs.filter(x=>!x.aggregateOnly).map(x=>x.group)])){
+        if(scope.region||scope.store||includeAllLevels)for(const group of unique([...active(s).map(x=>x['店组']),...cs.filter(x=>!x.aggregateOnly).map(x=>x.group)])){
           if(scope.group&&group!==canonicalGroup(scope.group))continue;
           const g=s.filter(x=>x['店组']===group),cg=cs.filter(x=>!x.aggregateOnly&&x.group===group);add(g,cg,'group',group,{region,store,group,name:'—'});
-          if(scope.store)for(const name of unique([...active(g).map(x=>x['维护人姓名']),...cg.map(x=>x.name)])){add(g.filter(x=>x['维护人姓名']===name),cg.filter(x=>x.name===name),'advisor',name,{region,store,group,name});}
+          if(scope.store||includeAllLevels)for(const name of unique([...active(g).map(x=>x['维护人姓名']),...cg.map(x=>x.name)])){add(g.filter(x=>x['维护人姓名']===name),cg.filter(x=>x.name===name),'advisor',name,{region,store,group,name});}
         }
       }
     }
