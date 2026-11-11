@@ -126,6 +126,7 @@ const shared=install(project);shared.sendConfigItem={key:'2000-01|rules|@@compan
 api.render(company);const projectPanel=elements.get('report').innerHTML;
 assert.match(projectPanel,/项目负责人统一操作 · 18家门店/);assert.match(projectPanel,/已配置 <b>2\/18<\/b> 店，待配置 16 店/);assert.doesNotMatch(projectPanel,/data-ops="pilot-import"/);
 const sharedPilot=await api.buildSendPackage(company,{pilot:true});assert.equal(sharedPilot.manifest.stores.length,2);assert.equal(sharedPilot.manifest.recipientsComplete,true);assert.equal(sharedPilot.manifest.operatorRole,'project');assert.ok(sharedPilot.manifest.stores.every(s=>s.groupName.startsWith('项目共享')));
+if(process.env.PILOT_ZIP_PATH){assert.ok(realCanvas,'runner interoperability fixture must contain real PNGs');fs.writeFileSync(process.env.PILOT_ZIP_PATH,Buffer.from(await sharedPilot.blob.arrayBuffer()));}
 const sharedAll=await api.buildSendPackage(company);assert.equal(sharedAll.manifest.stores.length,18);assert.equal(sharedAll.manifest.stores.filter(s=>s.groupName).length,2);assert.equal(sharedAll.manifest.recipientsComplete,false);
 assert.throws(()=>P.validateProjectConfig({...projectConfig,stores:projectConfig.stores.slice(1)}),/全部/);
 assert.throws(()=>P.validateProjectConfig({...projectConfig,pilotStores:[catalog[0].store]}),/试行名单/);
