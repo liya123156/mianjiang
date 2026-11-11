@@ -68,8 +68,30 @@
     return new Blob([...parts, ...directory, end], { type: 'application/zip' });
   }
 
+  const pilotKey = 'wb.wechat-pilot.v1';
+  function validatePilotConfig(value) {
+    const config = typeof value === 'string' ? JSON.parse(value.replace(/^\ufeff/, '')) : value;
+    if (config?.version !== 1 || !Array.isArray(config.stores) || config.stores.length !== 2) throw Error('试行配置须包含两家门店');
+    const stores = new Set(), groups = new Set();
+    return { version: 1, stores: config.stores.map(row => {
+      const known = root.WBModel.storeCatalog.find(store => store.store === row.store && store.ownerApplicable !== false);
+      if (!known || stores.has(row.store)) throw Error('试行门店无效或重复');
+      if (typeof row.groupName !== 'string' || !row.groupName.trim() || row.groupName !== row.groupName.trim() || row.groupName.length > 200 || /[\u0000-\u001f\u007f]/.test(row.groupName) || groups.has(row.groupName)) throw Error('请使用两个不同的微信群完整名称，保留表情和标点');
+      stores.add(row.store);groups.add(row.groupName);
+      return { region: known.region, store: known.store, groupName: row.groupName };
+    }) };
+  }
+  function loadPilotConfig() {
+    try { const text = root.localStorage.getItem(pilotKey); return text ? validatePilotConfig(text) : null; }
+    catch { return null; }
+  }
+  function savePilotConfig(value) {
+    const config = validatePilotConfig(value);
+    root.localStorage.setItem(pilotKey, JSON.stringify(config));
+    return config;
+  }
   function groupTemplate(stores) {
-    const rows = [['大区', '门店', '微信群完整名称'], ...stores.map(store => [store.region, store.store, ''])];
+    const rows = [['大区', '门店', '微信群完整名称'], ...stores.map(store => [store.region, store.store, store.groupName || ''])];
     return '\ufeff' + rows.map(row => row.map(value => '"' + String(value).replace(/"/g, '""') + '"').join(',')).join('\r\n');
   }
 
@@ -131,5 +153,5 @@
     return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(Error('面见明细图片生成失败')), 'image/png'));
   }
 
-  root.WBSendPackage = { zip, groupTemplate, summaryImage, emptyMeetingImage };
+  root.WBSendPackage = { zip, groupTemplate, summaryImage, emptyMeetingImage, validatePilotConfig, loadPilotConfig, savePilotConfig };
 })(typeof window === 'object' ? window : globalThis);

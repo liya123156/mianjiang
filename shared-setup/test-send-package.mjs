@@ -21,6 +21,7 @@ const document = {
   }
 };
 const x={document,currentMonth:month,currentMode:'daily',currentView:company,DATA:{meta:{},regions:[],views:{}},ARCHIVE:{months:{}},Intl,URL,Date,console,TextEncoder,Blob,Uint8Array,Uint32Array,DataView,queueMicrotask,setTimeout,crypto:globalThis.crypto,WBVoice:{reset(){},field:()=>''},isHistoryArchiveMonth:()=>false,renderTable:()=>'',viewKey:v=>v.scope+':'+v.name,viewFromUrl:()=>company,updateUrl(){},resolveView:(region,store)=>store?{scope:'store',name:store,region,store}:region?{scope:'region',name:region,region}:company,WBCloud:{configured:false,member:null,project:false}};
+const storage=new Map();x.localStorage={getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)};
 x.window=x;vm.createContext(x);
 for(const file of ['core','quality-feed','quality-rules','quality','workflow','scene','send-package','ui'])vm.runInContext(fs.readFileSync(new URL('../operations/'+file+'.js',import.meta.url),'utf8'),x,{filename:file+'.js'});
 vm.runInContext('const esc=v=>String(v??""); const arr=x=>Array.isArray(x)?x:[]; const monthLabel=()=>"11月";',x);
@@ -94,4 +95,29 @@ install(project);once=false;onImage=()=>{if(!once){once=true;api.state.cache[mon
 await assert.rejects(api.buildSendPackage(storeView(catalog[0])),/已变化/);onImage=null;
 await assert.rejects(P.zip([{name:'../outside',data:'x'}]),/无效/);
 await assert.rejects(P.zip([{name:'same',data:'x'},{name:'same',data:'y'}]),/重复/);
+install(project);
+await assert.rejects(api.buildSendPackage(company,{pilot:true}),/先导入/);
+const pilotStores=[{store:'复兴香园店',groupName:'测试💜经理群,一'},{store:'新天地二店',groupName:'🏆测试经理群（两店试行）'}];
+P.savePilotConfig({version:1,stores:pilotStores});
+const pilot=await api.buildSendPackage(company,{pilot:true}),pilotEntries=unzip(await pilot.blob.arrayBuffer());
+assert.equal(pilot.manifest.stores.length,2);assert.equal(pilot.manifest.pilot,true);
+assert.match(pilot.filename,/2店试行资料包/);
+for(const row of pilot.manifest.stores){assert.equal(row.groupName,pilotStores.find(s=>s.store===row.store).groupName);assert.ok(row.images.every(name=>pilotEntries.has(name)));}
+assert.equal(read(pilotEntries,'门店群配置.csv').split('\r\n').length,3);
+assert.ok(read(pilotEntries,'门店群配置.csv').includes('"测试💜经理群,一"'));
+for(const name of pilotEntries.keys())assert.ok(!catalog.filter(s=>!pilotStores.some(p=>p.store===s.store)).some(s=>name.includes(s.store)));
+await assert.rejects(api.buildSendPackage(storeView(pilot.manifest.stores[0]),{pilot:true}),/两家试行店均须/);
+install({role:'store',...pilot.manifest.stores[0]});await assert.rejects(api.buildSendPackage(company,{pilot:true}),/授权/);
+install(project);once=false;onImage=()=>{if(!once){once=true;P.savePilotConfig({version:1,stores:pilotStores.map(s=>({...s,groupName:s.groupName+'更新'}))});}};
+await assert.rejects(api.buildSendPackage(company,{pilot:true}),/配置已变化/);onImage=null;
+assert.throws(()=>P.validatePilotConfig({version:1,stores:[pilotStores[0]]}),/两家/);
+assert.throws(()=>P.validatePilotConfig({version:1,stores:[pilotStores[0],pilotStores[0]]}),/重复/);
+assert.throws(()=>P.validatePilotConfig({version:1,stores:[pilotStores[0],{...pilotStores[1],groupName:pilotStores[0].groupName}]}),/完整名称/);
+assert.throws(()=>P.validatePilotConfig({version:1,stores:[pilotStores[0],{store:excluded.store,groupName:'不适用门店'}]}),/无效/);
+assert.throws(()=>P.validatePilotConfig({version:1,stores:[pilotStores[0],{...pilotStores[1],groupName:'群名\n其他群'}]}),/完整名称/);
+P.savePilotConfig({version:1,stores:pilotStores});install(project);api.render(company);
+assert.match(elements.get('report').innerHTML,/两店微信试行.*生成两店试行资料包/s);
+assert.ok(elements.get('report').innerHTML.includes('测试💜经理群,一'));
+assert.ok(elements.get('report').innerHTML.includes('🏆测试经理群（两店试行）'));
+console.log('PASS two-store pilot: only configured stores, exact emoji names and CSV, both stores required, scope checks, local persistence and changed-group abort.');
 console.log('PASS '+(realCanvas?'real PNG + ':'')+'18-store ZIP: CRC, Chinese filenames, all three modules, pagination, counts, isolated recipients, role scopes, and interrupted export.');

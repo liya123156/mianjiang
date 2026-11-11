@@ -754,19 +754,23 @@ TOP重点房源
   const detailHeading=detailLevel==='store'?'各店进展':detailLevel==='group'?'各组进展':'各大区进展';
   const storeRows=progress.rows.filter(r=>r._level==='store'&&Number(r.met||0)>0);const benchmarkRows=view.scope==='company'?[...storeRows].sort((a,b)=>Number(b.met||0)-Number(a.met||0)).slice(0,3):[];const reminderRows=view.scope==='company'?[...storeRows].sort((a,b)=>Number(a.met_rate?.replace('%','')||0)-Number(b.met_rate?.replace('%','')||0)).slice(0,5):[];const benchmarks=benchmarkRows.map(r=>`${r.store}：面见${r.met}套｜面见率${r.met_rate}`).join('\n')||'暂无标杆门店';const reminders=reminderRows.map(r=>`${r.store}：面见${r.met}套｜面见率${r.met_rate}`).join('\n')||'暂无重点提醒门店';const companySections=view.scope==='company'?`\n🏅 二、标杆门店进展\n${benchmarks}\n\n⚠️ 三、重点提醒门店\n${reminders}\n`:'';return `${view.scope==='store'?'各位伙伴':view.scope==='region'?'各位店总':'各位梦想合伙人'}，大家上午好☀️\n\n${name}${month}月在售业主面见进展｜${cutoff}\n\n🎯 一、本月目标&进展\n月度目标：${goal==null?'待确认':goal+'套'}｜全盘面见${m.met}套｜面见率${m.met_rate}\n${topText}${view.scope!=='company'&&groupText?'\n\n'+detailHeading+'👇\n'+groupText+'\n':''}${companySections}\n🔎 ${view.scope==='company'?'四':'二'}、面见质量\n${qt&&!qt.pending?qualityText(qt):'质量概览待同步'}\n\n${view.scope==='company'?'📌 五、简短提醒\n':''}${praises.join('\n')||'持续面见、认真听需求，让每次服务更有价值💪'}`;
  }
- async function buildSendPackage(view=currentView){
+ async function buildSendPackage(view=currentView,options={}){
   const reader=C.member,d=data(),month=currentMonth,source=d?.imports?.[0],P=root.WBSendPackage;
   if(!reader||!['project','region','store'].includes(reader.role))throw Error('请先通过BP／管理入口登录');
   if(state.loading||!d?.housing?.length||d.reader!==reader)throw Error('请先刷新当前账号的共享数据，再生成资料包');
   if(!source?.as_of||!source?.created_at)throw Error('当前数据缺少截止日期或版本，请重新导入后再试');
   if(state.exporting)throw Error('资料包正在生成，请稍候');
+  const pilot=options.pilot===true,config=pilot?P.loadPilotConfig():null;
+  if(pilot&&!config)throw Error('请先导入两店试行配置');
+  const configured=new Map((config?.stores||[]).map(s=>[s.store,s.groupName])),configVersion=JSON.stringify(config);
   const requested={region:view.region||'',store:view.scope==='store'?canonicalStore(view.store||view.name):''},allowedStores=new Set(memberScopes().map(x=>x.store)),present=new Set(d.housing.map(h=>canonicalStore(h['门店'])));
-  const stores=M.storeCatalog.filter(s=>s.ownerApplicable!==false&&present.has(s.store)&&(!requested.region||s.region===requested.region)&&(!requested.store||s.store===requested.store)&&(reader.role==='project'||reader.role==='region'&&s.region===reader.region||reader.role==='store'&&allowedStores.has(s.store)));
+  const stores=M.storeCatalog.filter(s=>s.ownerApplicable!==false&&present.has(s.store)&&(!requested.region||s.region===requested.region)&&(!requested.store||s.store===requested.store)&&(!pilot||configured.has(s.store))&&(reader.role==='project'||reader.role==='region'&&s.region===reader.region||reader.role==='store'&&allowedStores.has(s.store)));
+  if(pilot&&stores.length!==config.stores.length)throw Error('两家试行店均须在当前授权和数据范围内，请切回包含两店的大区或全司后重试');
   if(!stores.length)throw Error('当前范围没有可导出的在售业主门店');
-  const assertCurrent=()=>{if(C.member!==reader||data()!==d||currentMonth!==month||d.imports[0]!==source||state.loading)throw Error('账号、月份或共享数据已变化，请刷新后重新生成');};
+  const assertCurrent=()=>{if(C.member!==reader||data()!==d||currentMonth!==month||d.imports[0]!==source||state.loading||pilot&&JSON.stringify(P.loadPilotConfig())!==configVersion)throw Error('账号、月份、共享数据或试行群配置已变化，请刷新后重新生成');};
   state.exporting=true;
   try{
-   const preparedAt=new Date().toISOString(),asOf=source.as_of,allQuality=Q.records(d.housing,d.meetings,d.items,month,asOf),byId=new Map(allQuality.map(r=>[r.houseId,r])),files=[],manifest={schemaVersion:1,month,asOf,sourceVersion:source.created_at,preparedAt,status:'prepared',stores:[]},monthlyGoals=goals();
+   const preparedAt=new Date().toISOString(),asOf=source.as_of,allQuality=Q.records(d.housing,d.meetings,d.items,month,asOf),byId=new Map(allQuality.map(r=>[r.houseId,r])),files=[],manifest={schemaVersion:1,month,asOf,sourceVersion:source.created_at,preparedAt,status:'prepared',pilot,stores:[]},monthlyGoals=goals();
    for(const [index,store] of stores.entries()){
     assertCurrent();
     const storeView={scope:'store',name:store.store,region:store.region,store:store.store},progress=rankProgress(M.table(d.housing,storeView,monthlyGoals,month,d.meetings||[],customerOptions(d)),d),metric=progress.rows.find(r=>r._level==='store'),metRows=metHouseRows(storeView);
@@ -779,19 +783,29 @@ TOP重点房源
     assertCurrent();
     const folder=String(index+1).padStart(2,'0')+'_'+store.store,messageFile=folder+'/话术.txt',progressFile=folder+'/01_面见及礼物进展.png',qualityFile=folder+'/03_面见质量.png',detailFiles=detailImages.map((_,page)=>folder+'/02_本月面见明细_'+String(page+1).padStart(2,'0')+'.png');
     files.push({name:messageFile,data:message},{name:progressFile,data:progressImage},...detailImages.map((blob,page)=>({name:detailFiles[page],data:blob})),{name:qualityFile,data:qualityImage});
-    manifest.stores.push({...store,groupName:'',deliveryKey:[month,asOf,source.created_at,store.store].join('|'),message:messageFile,images:[progressFile,...detailFiles,qualityFile],modules:{progress:[progressFile],details:detailFiles,quality:[qualityFile]},metrics:{met:metric.met,meetingCount:meetingValue(metric),gift:metric.gift,feedback:quality.feedback}});
+    manifest.stores.push({...store,groupName:configured.get(store.store)||'',deliveryKey:[month,asOf,source.created_at,store.store].join('|'),message:messageFile,images:[progressFile,...detailFiles,qualityFile],modules:{progress:[progressFile],details:detailFiles,quality:[qualityFile]},metrics:{met:metric.met,meetingCount:meetingValue(metric),gift:metric.gift,feedback:quality.feedback}});
    }
-   files.push({name:'manifest.json',data:JSON.stringify(manifest,null,2)},{name:'门店群配置.csv',data:P.groupTemplate(stores)},{name:'使用说明.txt',data:'本包已生成，尚未发送到微信。\n每店包含一段话术及面见礼物进展、本月面见明细、面见质量三个图片模块。明细较多时自动分页，保留全部房源。\n面见质量为主要结果分类汇总，规则建议仍需核对，不等同于高质量率。\n请在门店群配置.csv中填写对应经理群的完整名称，再由本机发送程序核对群名和发送状态。\n数据截至：'+asOf+'\n源数据版本：'+source.created_at+'\n生成时间：'+preparedAt});
+   files.push({name:'manifest.json',data:JSON.stringify(manifest,null,2)},{name:'门店群配置.csv',data:P.groupTemplate(manifest.stores)},{name:'使用说明.txt',data:'本包已生成，尚未发送到微信。\n每店包含一段话术及面见礼物进展、本月面见明细、面见质量三个图片模块。明细较多时自动分页，保留全部房源。\n面见质量为主要结果分类汇总，规则建议仍需核对，不等同于高质量率。\n'+(pilot?'本包仅含已配置的两家试行门店，完整群名已写入门店群配置.csv。\n':'请在门店群配置.csv中填写对应经理群的完整名称。\n')+'本机发送程序仍需核对群名和发送状态；下载资料包不会发送消息。\n数据截至：'+asOf+'\n源数据版本：'+source.created_at+'\n生成时间：'+preparedAt});
    const blob=await P.zip(files);assertCurrent();
-   return {blob,manifest,filename:month+'_'+asOf+'_'+stores.length+'店微信资料包.zip'};
+   return {blob,manifest,filename:month+'_'+asOf+'_'+stores.length+'店'+(pilot?'试行':'微信')+'资料包.zip'};
   }finally{state.exporting=false;}
  }
- async function downloadSendPackage(button){
+ function importPilotConfig(){
+  if(!C.member)throw Error('请先通过BP／管理入口登录');
+  const input=document.createElement('input');input.type='file';input.accept='.json,application/json';
+  input.addEventListener('change',async()=>{try{const file=input.files?.[0];if(!file)return;if(file.size>16384)throw Error('试行配置文件过大，请选择两店配置文件');const config=root.WBSendPackage.savePilotConfig(await file.text());render(currentView);notify('已保存'+config.stores.length+'家试行店群名，仅保存在本浏览器；尚未发送微信');}catch(error){notify(error.message||'试行配置导入失败');}});
+  input.click();
+ }
+ function pilotPanel(){
+  const config=root.WBSendPackage?.loadPilotConfig();
+  return '<div class="ops-notice"><h3>两店微信试行</h3>'+(config?'<p>'+config.stores.map(s=>'<b>'+E(s.store)+'</b> → '+E(s.groupName)).join('<br>')+'</p>':'<p>先导入两店试行配置，完整群名只保存在当前浏览器。</p>')+'<div class="ops-actions"><button class="btn" data-ops="pilot-import">导入两店试行配置</button><button class="btn primary" data-ops="pilot-package" '+(config?'':'disabled')+'>生成两店试行资料包</button></div><p class="ops-muted">仅导出配置中的两家门店，保留完整群名；本机发送程序尚需适配试跑，下载不会发送微信。</p></div>';
+ }
+ async function downloadSendPackage(button,pilot=false){
   const label=button.textContent;button.disabled=true;button.textContent='资料生成中…';notify('正在按门店生成话术与图片，请保留当前页面');
-  try{const result=await buildSendPackage(),url=URL.createObjectURL(result.blob),link=document.createElement('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);notify('已生成'+result.manifest.stores.length+'家门店资料，尚未发送到微信');}
+  try{const result=await buildSendPackage(currentView,{pilot}),url=URL.createObjectURL(result.blob),link=document.createElement('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);notify('已生成'+result.manifest.stores.length+'家门店资料，尚未发送到微信');}
   finally{if(button.isConnected){button.disabled=false;button.textContent=label;}}
  }
- function actions(view){const s=scope();return `<div class="block ops-panel">${C.member?'<div class="ops-actions"><button class="btn primary" data-ops="send-package">生成当前范围微信资料包</button></div><p class="ops-muted">按门店生成话术和三个图片模块；长明细自动分页。仅下载，不会发送到微信。</p>'+taskCards(view):'<p>日常进展与质量概览可直接查看；已授权成员进入后，可保存现场反馈和跟进结果。</p>'}${s.store&&C.member?`<details><summary>补充未包含在现场反馈中的事项</summary><form id="ops-task-form" class="ops-form"><label>推进事项<input name="title" required></label><label>项目／房间号<input name="house"></label><label>负责人<input name="owner" required></label><label>计划时间<input name="due" type="date" required></label><label class="wide">动作与卡点<textarea name="action" required></textarea></label><button class="btn primary" type="submit">保存补充事项</button></form></details>`:''}</div>`;}
+ function actions(view){const s=scope();return `<div class="block ops-panel">${C.member?pilotPanel()+'<div class="ops-actions"><button class="btn primary" data-ops="send-package">生成当前范围微信资料包</button></div><p class="ops-muted">按门店生成话术和三个图片模块；长明细自动分页。仅下载，不会发送到微信。</p>'+taskCards(view):'<p>日常进展与质量概览可直接查看；已授权成员进入后，可保存现场反馈和跟进结果。</p>'}${s.store&&C.member?`<details><summary>补充未包含在现场反馈中的事项</summary><form id="ops-task-form" class="ops-form"><label>推进事项<input name="title" required></label><label>项目／房间号<input name="house"></label><label>负责人<input name="owner" required></label><label>计划时间<input name="due" type="date" required></label><label class="wide">动作与卡点<textarea name="action" required></textarea></label><button class="btn primary" type="submit">保存补充事项</button></form></details>`:''}</div>`;}
  function loginPanel(){const disabled=C.configured?'':'disabled';return `<div class="block ops-panel"><h3>成员登录</h3><p class="ops-muted">日常进展无需登录。BP补充、核账及管理使用已授权工号后4位进入，无需密码；开头的0需要保留。</p><form id="ops-login-form" class="ops-login"><label>工号后4位<input name="loginId" type="text" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="username" placeholder="请输入4位工号" ${disabled} required></label><button class="btn primary" type="submit" ${disabled}>登录工作台</button></form>${C.configured?'':'<p class="ops-muted">共享服务尚未连接，账号开通后即可使用工号登录。</p>'}</div>`;}
  const archiveType=file=>/\.pdf$/i.test(file.original_name||'')?'PDF':'Word';
  const archiveSize=bytes=>{const n=Number(bytes||0);return n>=1024*1024?(n/1024/1024).toFixed(n>=10*1024*1024?0:1)+' MB':Math.max(1,Math.round(n/1024))+' KB';};
@@ -956,6 +970,8 @@ TOP重点房源
   if(action==='generate-message'){await organizeAndUpdate(b);return;}
   if(action==='copy-message'){await copyText(document.getElementById('ops-message').value,'推动话术已复制');return;}
   if(action==='send-package'){await downloadSendPackage(b);return;}
+  if(action==='pilot-import'){importPilotConfig();return;}
+  if(action==='pilot-package'){await downloadSendPackage(b,true);return;}
   if(action==='save-scene'){await organizeAndUpdate(b,true);return;}
   if(action==='voice'){await WBVoice.start();return;}if(action==='voice-stop'){WBVoice.stop();return;}
   if(action==='copy-quality'){await copyText(feedbackCopyText(),'当前页质量文字已复制');return;}
