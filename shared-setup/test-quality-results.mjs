@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url),Q=require('../operations/quality.js'),F=require('../operations/quality-feed.js'),M=require('../operations/core.js');
+const cases=JSON.parse(fs.readFileSync(new URL('./quality-result-cases.json',import.meta.url),'utf8'));
+const extra=[['业主不同意授权挂牌','U'],['业主拒绝签署独家委托','U'],['业主不愿签署独家','U'],['业主希望年底前卖掉','M'],['业主计划明年出售','M'],['沟通降价，业主没有明确回复','U'],['报价还要3天才能给','U'],['业主不想给孩子买房','U'],['业主说现在不需要买房','U'],['已确认尚未拿到钥匙','U'],['明确业主尚未同意授权挂牌','U']];
+for(const test of [...cases,...extra.map(([text,category])=>({text,category}))]){
+ const result=Q.suggest(test.text);
+ assert.ok(test.category?result.category===test.category:test.allowedCategories.includes(result.category),`${test.text}: ${result.category}`);
+ if(result.category!=='U')assert.ok(result.basis,`Missing basis: ${test.text}`);
+}
+const h=[{房源编号:'A',细分在售户数:1,本月是否面见:1,大区:'甲区',门店:'甲店',店组:'甲组'},{房源编号:'B',细分在售户数:1,本月是否面见:1,大区:'乙区',门店:'乙店',店组:'乙组'}];
+const meetings=[{房源编号:'A',面见id:'m1',面见时间:'2026-11-01',面见反馈:'日常粘合'},{房源编号:'A',面见id:'m2',面见时间:'2026-11-02',面见反馈:'降50万'},{房源编号:'A',面见id:'m3',面见时间:'2026-11-20',面见反馈:'已拿到钥匙'},{房源编号:'A',面见id:'m4',面见时间:'2026-10-20',面见反馈:'已签独家委托'}];
+const rows=Q.records(h,meetings,[],'2026-11','2026-11-10'),summary=Q.summary(rows);
+assert.equal(rows[0].category,'P');assert.deepEqual(rows[0].tags,['P','R']);assert.equal(rows[0].events.length,2);assert.equal(summary.total,2);assert.equal(summary.counts.P,1);assert.equal(summary.missing,1);
+const pub=Q.publicSummary(rows,'2026-11-10','test');
+for(const g of pub.groups)assert.equal(Object.values(g.counts).reduce((s,n)=>s+n,0),g.total);
+assert.ok(!JSON.stringify(pub).includes('降50万'));
+assert.ok(F.card(rows[0]).includes('主要结果：'+Q.labels.P));assert.ok(F.card(rows[0]).includes('识别依据：'));
+assert.ok(F.text(rows).includes('主要结果：'+Q.labels.P));assert.ok(F.text(rows).includes('降50万'));
+const escaped=F.card({...rows[0],basis:'<img src=x onerror=alert(1)>'});assert.ok(escaped.includes('&lt;img'));assert.ok(!escaped.includes('<img src=x'));
+const ui=fs.readFileSync(new URL('../operations/ui.js',import.meta.url),'utf8');
+const textCode=ui.slice(ui.indexOf(' function qualityText('),ui.indexOf(' function qualityStandards('));
+const qualityText=new Function('Q','M',textCode+';return qualityText;')(Q,M);
+const copied=qualityText({summary,asOf:'2026-11-10'});assert.ok(copied.includes(Q.labels.P));assert.ok(copied.includes('原文待补1套'));assert.ok(copied.includes('结果待明确0套'));
+const standardsCode=ui.slice(ui.indexOf(' function qualityStandards('),ui.indexOf(' function qualitySelection('));
+const standardsHtml=new Function('Q','E',standardsCode+';return qualityStandards();')(Q,String);
+assert.ok(standardsHtml.includes('降50万'));assert.ok(standardsHtml.includes('密码随时看'));assert.ok(!/<details[^>]*\bopen\b/.test(standardsHtml));
+const drawn=[];
+globalThis.document={createElement:()=>({width:0,height:0,getContext(){return {font:'',measureText:t=>({width:t.length*22}),createLinearGradient:()=>({addColorStop(){}}),fillRect(){},beginPath(){},roundRect(){},fill(){},stroke(){},fillText(t){drawn.push(t);}};},toBlob(cb){cb(new Blob(['test'],{type:'image/png'}));}})};
+await F.images({rows,summary,month:'2026-11',scope:'测试范围',range:'1—2 / 2',topicCounts:F.counts(rows)});
+assert.ok(drawn.join('').includes(Q.labels.P));assert.ok(drawn.join('').includes('识别依据：'));assert.ok(drawn.join('').includes('降50万'));
+drawn.length=0;
+await F.images({rows:[],summary,month:'2026-11',scope:'测试范围',range:'概览',topicCounts:{}});
+assert.ok(drawn.join('').includes('原文待补1套'));assert.ok(drawn.join('').includes('结果待明确0套'));assert.ok(drawn.join('').includes(Q.labels.P));
+console.log(`PASS: ${cases.length+extra.length} outcome cases; monthly cohort/deduplication, all scopes, source privacy, standards, text, cards and image export`);
