@@ -22,6 +22,7 @@ const document = {
 };
 const x={document,currentMonth:month,currentMode:'daily',currentView:company,DATA:{meta:{},regions:[],views:{}},ARCHIVE:{months:{}},Intl,URL,Date,console,TextEncoder,Blob,Uint8Array,Uint32Array,DataView,queueMicrotask,setTimeout,crypto:globalThis.crypto,WBVoice:{reset(){},field:()=>''},isHistoryArchiveMonth:()=>false,renderTable:()=>'',viewKey:v=>v.scope+':'+v.name,viewFromUrl:()=>company,updateUrl(){},resolveView:(region,store)=>store?{scope:'store',name:store,region,store}:region?{scope:'region',name:region,region}:company,WBCloud:{configured:false,member:null,project:false}};
 const storage=new Map();x.localStorage={getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)};
+Object.defineProperty(x.WBCloud,'project',{get:()=>x.WBCloud.member?.role==='project'});
 x.window=x;vm.createContext(x);
 for(const file of ['core','quality-feed','quality-rules','quality','workflow','scene','send-package','ui'])vm.runInContext(fs.readFileSync(new URL('../operations/'+file+'.js',import.meta.url),'utf8'),x,{filename:file+'.js'});
 vm.runInContext('const esc=v=>String(v??""); const arr=x=>Array.isArray(x)?x:[]; const monthLabel=()=>"11月";',x);
@@ -119,5 +120,18 @@ P.savePilotConfig({version:1,stores:pilotStores});install(project);api.render(co
 assert.match(elements.get('report').innerHTML,/两店微信试行.*生成两店试行资料包/s);
 assert.ok(elements.get('report').innerHTML.includes('测试💜经理群,一'));
 assert.ok(elements.get('report').innerHTML.includes('🏆测试经理群（两店试行）'));
+storage.clear();
+const projectConfig={recordType:'wechat-send-config',version:2,mode:'pilot',pilotStores:pilotStores.map(s=>s.store),stores:catalog.map(s=>({...s,groupName:pilotStores.find(p=>p.store===s.store)?'项目共享'+pilotStores.find(p=>p.store===s.store).groupName:''}))};
+const shared=install(project);shared.sendConfigItem={key:'2000-01|rules|@@company|wechat-send-config-v1',kind:'rules',payload:projectConfig};
+api.render(company);const projectPanel=elements.get('report').innerHTML;
+assert.match(projectPanel,/项目负责人统一操作 · 18家门店/);assert.match(projectPanel,/已配置 <b>2\/18<\/b> 店，待配置 16 店/);assert.doesNotMatch(projectPanel,/data-ops="pilot-import"/);
+const sharedPilot=await api.buildSendPackage(company,{pilot:true});assert.equal(sharedPilot.manifest.stores.length,2);assert.equal(sharedPilot.manifest.recipientsComplete,true);assert.equal(sharedPilot.manifest.operatorRole,'project');assert.ok(sharedPilot.manifest.stores.every(s=>s.groupName.startsWith('项目共享')));
+const sharedAll=await api.buildSendPackage(company);assert.equal(sharedAll.manifest.stores.length,18);assert.equal(sharedAll.manifest.stores.filter(s=>s.groupName).length,2);assert.equal(sharedAll.manifest.recipientsComplete,false);
+assert.throws(()=>P.validateProjectConfig({...projectConfig,stores:projectConfig.stores.slice(1)}),/全部/);
+assert.throws(()=>P.validateProjectConfig({...projectConfig,pilotStores:[catalog[0].store]}),/试行名单/);
+once=false;onImage=()=>{if(!once){once=true;shared.sendConfigItem={...shared.sendConfigItem,payload:{...projectConfig,stores:projectConfig.stores.map(s=>({...s,groupName:s.groupName?s.groupName+'改名':''}))}};}};
+await assert.rejects(api.buildSendPackage(company,{pilot:true}),/配置已变化/);onImage=null;
+install({role:'region',region:'黄浦大区'}).sendConfigItem={payload:projectConfig};api.render({scope:'region',region:'黄浦大区',name:'黄浦大区'});assert.ok(!elements.get('report').innerHTML.includes('项目共享'));
+console.log('PASS shared project configuration: one operator, 18-store directory, 2 ready/16 pending, automatic loading, private scope and changed-recipient abort.');
 console.log('PASS two-store pilot: only configured stores, exact emoji names and CSV, both stores required, scope checks, local persistence and changed-group abort.');
 console.log('PASS '+(realCanvas?'real PNG + ':'')+'18-store ZIP: CRC, Chinese filenames, all three modules, pagination, counts, isolated recipients, role scopes, and interrupted export.');

@@ -90,6 +90,21 @@
     root.localStorage.setItem(pilotKey, JSON.stringify(config));
     return config;
   }
+  function validateProjectConfig(value) {
+    const catalog = root.WBModel.storeCatalog.filter(store => store.ownerApplicable !== false);
+    if (value?.version !== 2 || value.recordType !== 'wechat-send-config' || !Array.isArray(value.stores) || value.stores.length !== catalog.length) throw Error('项目群配置须包含全部在售业主门店');
+    const seenStores = new Set(), seenGroups = new Set();
+    const stores = value.stores.map(row => {
+      const known = catalog.find(store => store.store === row?.store), name = row?.groupName;
+      if (!known || seenStores.has(known.store)) throw Error('项目群配置的门店无效或重复');
+      if (typeof name !== 'string' || name !== name.trim() || name.length > 200 || /[\u0000-\u001f\u007f]/.test(name) || name && seenGroups.has(name)) throw Error('经理群完整名称无效或重复');
+      seenStores.add(known.store);if (name) seenGroups.add(name);
+      return { region: known.region, store: known.store, groupName: name };
+    });
+    const pilotStores = value.pilotStores;
+    if (!Array.isArray(pilotStores) || !pilotStores.length || new Set(pilotStores).size !== pilotStores.length || pilotStores.some(store => !stores.some(row => row.store === store && row.groupName))) throw Error('试行名单须对应已配置完整群名的门店');
+    return { version: 2, recordType: 'wechat-send-config', mode: value.mode === 'all' ? 'all' : 'pilot', pilotStores: [...pilotStores], stores };
+  }
   function groupTemplate(stores) {
     const rows = [['大区', '门店', '微信群完整名称'], ...stores.map(store => [store.region, store.store, store.groupName || ''])];
     return '\ufeff' + rows.map(row => row.map(value => '"' + String(value).replace(/"/g, '""') + '"').join(',')).join('\r\n');
@@ -153,5 +168,5 @@
     return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(Error('面见明细图片生成失败')), 'image/png'));
   }
 
-  root.WBSendPackage = { zip, groupTemplate, summaryImage, emptyMeetingImage, validatePilotConfig, loadPilotConfig, savePilotConfig };
+  root.WBSendPackage = { zip, groupTemplate, summaryImage, emptyMeetingImage, validatePilotConfig, loadPilotConfig, savePilotConfig, validateProjectConfig };
 })(typeof window === 'object' ? window : globalThis);

@@ -22,13 +22,14 @@
  function archiveUrl(path,downloadName=''){const base=url+'/storage/v1/object/public/'+archiveBucket+'/'+encodedPath(path);return downloadName?base+'?download='+encodeURIComponent(downloadName):base;}
  async function loadArchives(month){const rows=await request('wb_public_archives',{p_month:month});return (Array.isArray(rows)?rows:[]).map(x=>({...x,url:archiveUrl(x.object_path),downloadUrl:archiveUrl(x.object_path,x.original_name)}));}
  async function load(month){
-  const scoped=Boolean(member);
+  const scoped=Boolean(member),isProject=member?.role==='project';
   // Private operations keep their authorized scope. Public progress supplies only the
   // already-public company comparison, including when a BP is viewing one region/store.
   const [data,archives,directory,publicProgress,customer]=await Promise.all([scoped?api('load',{p_month:month}):request('wb_public_daily',{p_month:month}),loadArchives(month),scoped?api('load',{p_month:'2000-01'}):Promise.resolve(null),scoped?request('wb_public_daily',{p_month:month}).catch(()=>null):Promise.resolve(null),month==='2026-11'?request('wb_customer_api',{p_token:scoped?session?.token:null,p_action:'load',p_args:{month}}):Promise.resolve({})]);
   const shownImport=data.imports?.[0],publicImport=publicProgress?.imports?.[0];
   const sameImport=shownImport&&publicImport&&shownImport.as_of===publicImport.as_of&&shownImport.created_at===publicImport.created_at;
-  return {...data,...customer,companyProgress:scoped?(sameImport?publicProgress:null):data,archives,directory:(directory?.items||[]).filter(x=>x.kind==='review'&&x.payload.recordType==='leadership'),loadedAt:new Date().toISOString()};
+  const sendConfigItem=isProject?(directory?.items||[]).find(x=>x.key==='2000-01|rules|@@company|wechat-send-config-v1'&&x.kind==='rules'&&x.payload?.recordType==='wechat-send-config')||null:null;
+  return {...data,...customer,companyProgress:scoped?(sameImport?publicProgress:null):data,archives,directory:(directory?.items||[]).filter(x=>x.kind==='review'&&x.payload.recordType==='leadership'),sendConfigItem,loadedAt:new Date().toISOString()};
  }
  async function importCustomerSnapshot({month,asOf,rows,filenames=[]}){
   if(!session?.token||member?.role!=='project')throw Error('仅项目负责人可导入全司客户面见明细');
