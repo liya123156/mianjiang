@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>两店微信首次试跑 · 安装与检查</title>
+<style>
+:root{font-family:"Microsoft YaHei","PingFang SC",sans-serif;color:#503665;background:#fbf7ff;line-height:1.7}body{margin:0;padding:36px 20px}main{max-width:920px;margin:auto}h1{font-size:32px;line-height:1.4;margin:6px 0 12px}h2{font-size:21px;margin:0 0 8px}p{margin:8px 0}.tag{color:#9673ac;font-size:14px;letter-spacing:.08em}.hero,.card{background:#fff;border:1px solid #e8d8f1;border-radius:20px;padding:26px;margin:16px 0;box-shadow:0 8px 30px #87679a08}.hero{background:linear-gradient(135deg,#f5eafa,#fff)}.note{background:#f6edfb;border-left:4px solid #c3a3d6;padding:12px 16px;border-radius:8px;margin:18px 0}button,.button{border:1px solid #c7a6dc;background:#ae83c7;color:white;border-radius:12px;padding:12px 22px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}button:disabled{opacity:.6;cursor:wait}a{color:#805699}code{background:#f4edf8;padding:2px 6px;border-radius:5px;font-size:15px}.step{color:#ae83c7;font-weight:700;font-size:14px}.muted{color:#8f7d99;font-size:14px}ol{padding-left:24px}li{margin:10px 0}#status{min-height:24px;font-size:14px}@media(max-width:600px){body{padding:16px 12px}.hero,.card{padding:20px}h1{font-size:25px}}
+</style>
+</head>
+<body><main>
+<div class="tag">OWNER MEETING · WINDOWS PILOT 0.1</div>
+<section class="hero"><h1>两店微信首次试跑</h1><p>由项目负责人在一台办公电脑上操作，先验证复兴香园店、新天地二店。</p>
+<div class="note"><b>这是首次试跑版本，尚未在你的微信4.1.15.56上验证。</b><br>先检查群名、文字与图片粘贴并取消；通过后，“开始两店试发”才会启用。选择资料包和仅检查都不会点击发送。</div>
+<button id="download" type="button">下载 Windows 两店试跑工具</button><p id="status" role="status" aria-live="polite"></p>
+<p class="muted">当前验证“工作台已生成的资料包 → 微信选群 → 提交对应内容”。定时自动取数、18店无人值守尚未启用。</p></section>
+<section class="card"><div class="step">01 · 一次安装</div><h2>先安装 Python 3.13，再安装试跑工具</h2>
+<ol><li>打开 <a href="https://www.python.org/downloads/windows/" target="_blank" rel="noopener">Python 官方 Windows 下载页</a>，选择 <b>Python 3.13 系列的 Windows installer (64-bit)</b> 安装，保留 Tcl/Tk 和启动器选项。</li><li>下载本页工具，右键 ZIP 选择“全部解压缩”，放到固定文件夹。<b>不要在压缩包内部运行。</b></li><li>双击 <code>01_install.cmd</code>，保持联网，看到“安装完成”后关闭窗口。</li></ol></section>
+<section class="card"><div class="step">02 · 准备资料</div><h2>生成两店试行资料包</h2><p>打开 <a href="../">原工作台</a>，用你的项目负责人账号登录：</p><p><b>日常推动 → 动作追踪与结果 → 生成2店试行资料包</b></p><p>下载资料 ZIP 即可，不要解压；不要选择18店资料包。</p></section>
+<section class="card"><div class="step">03 · 首次检查与试发</div><h2>先“仅检查”，通过后再“开始两店试发”</h2>
+<ol><li>保持电脑微信已登录，只打开一个用于试跑的主窗口，把窗口放大或最大化。</li><li>双击 <code>02_start.cmd</code>，选择刚下载的“两店试行资料包”。核对数据截止日期、完整群名和每店内容。</li><li>点击<b>“仅检查（不点发送）”</b>。程序会临时粘贴文字和图片并取消，不会点发送。期间暂时不要操作键鼠、切换窗口或锁屏；按 Esc 可停止。</li><li>检查通过后，由你点击<b>“开始两店试发”</b>，逐店提交对应话术和图片。明细分页会全部保留。</li><li>到两个微信群核对文字、图片和顺序。“已提交”表示界面提交完成，不等于网络已送达；状态不明会停止，不自动重发。</li></ol></section>
+<section class="card"><div class="step">检查没通过时</div><h2>保留检查报告，继续适配</h2><p>如果读不到微信界面，可先退出微信，用 <code>Win + Ctrl + Enter</code> 打开讲述人，再重新打开微信；能读取后可关闭讲述人。仍失败时不要改选相似群。</p><p>点击程序里的<b>“打开检查报告和发送记录文件夹”</b>，将 <code>latest-check.json</code> 发回继续处理。报告不包含聊天记录、话术正文和图片内容。</p><p class="muted">本工具使用公开的Windows UI Automation与剪贴板接口；尚未进行真实Windows和微信端验证。已完成资料包路由、顺序、中断及防重复提交的自动检查。</p></section>
+</main>
+<script src="../operations/send-package.js?v=20261111-project-send-04"></script>
+<script>
+'use strict';
+const files=['runner_core.py','windows_adapter.py','pilot_gui.py','requirements.txt','01_install.cmd','02_start.cmd','使用说明.txt'];
+document.getElementById('download').addEventListener('click',async()=>{
+ const button=document.getElementById('download'),status=document.getElementById('status');button.disabled=true;status.textContent='正在准备工具文件…';
+ try{
+  const results=await Promise.allSettled(files.map(async name=>{const response=await fetch(name+'?v=20261111-pilot01',{cache:'no-store'});if(!response.ok)throw Error(name+' 未能下载');let data=await response.text();if(name.endsWith('.cmd'))data=data.replace(/\r?\n/g,'\r\n');return{name,data};}));
+  const failed=results.find(result=>result.status==='rejected');if(failed)throw failed.reason;
+  const zip=await WBSendPackage.zip(results.map(result=>result.value)),url=URL.createObjectURL(zip),link=document.createElement('a');link.href=url;link.download='微信两店首次试跑工具_0.1.zip';link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);status.textContent='工具已准备下载。先全部解压，再双击01_install.cmd。';
+ }catch(error){status.textContent='下载未完成：'+error.message+'。请稍后刷新重试。';}finally{button.disabled=false;}
+});
+</script></body></html>
