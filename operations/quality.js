@@ -3,15 +3,40 @@
  'use strict';
  const F=root.WBFeedback||(typeof require==='function'?require('./quality-feed.js'):null);
  const M=root.WBModel||(typeof require==='function'?require('./core.js'):null);
- const labels={P:'价格／底价／交易条件',M:'业主心态／真实出售动机',R:'关系粘合／客户反馈',E:'钥匙／委托／独家／挂牌',V:'看房方式／配合',C:'核实房源情况',O:'其他需求',U:'暂未形成明确结果'};
+ const labels={P:'价格／底价／交易条件',M:'业主心态／真实出售动机',R:'关系维护／客户反馈沟通',E:'钥匙／委托／独家／挂牌',V:'看房方式／配合',C:'核实房源情况',O:'其他需求',U:'暂未形成明确结果'};
  const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.entries(v).sort(([a],[b])=>a.localeCompare(b))):v);
  const clean=v=>String(v??'').trim();
  function signature(rows){return JSON.stringify(rows.map(r=>[clean(r['面见id']),clean(r['面见时间']),clean(r['面见反馈'])]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))));}
+ // R records maintenance/feedback communication, not proof that trust improved.
+ // Evaluate separate clauses so an unperformed gift does not hide completed feedback.
+ function relationshipCommunication(text){
+  for(const sentence of clean(text).split(/[。；;！!？?\n]/)){
+   let planned=false;
+   const futurePattern=/计划|准备|打算|预计|拟|待|需要|想要|将|明天|后天|下周|下月|下次|后续|改天|稍后/g;
+   for(const clause of sentence.split(/[，,]|但是|但|同时|并且|以及/)){
+   const matches=clause.matchAll(/信任|认可|感谢|关系维护|关系|粘合|送礼|(?:客户|顾客)反馈|反馈(?:了|过)?[^，,。；;！!？?\n]{0,10}?(?:客户|顾客)/g);
+   for(const match of matches){
+    const before=clause.slice(0,match.index),after=clause.slice(match.index+match[0].length);
+    const future=[...before.matchAll(futurePattern)].at(-1);
+    const negated=/维护|粘合|送礼|反馈/.test(match[0])?[...before.matchAll(/尚未|还未|还没|没有|未|没|不再|不愿|不想|不曾|不/g)].at(-1):null;
+    const blocked=Math.max(future?.index??-1,negated?.index??-1),done=[...before.matchAll(/已经|已|完成|进行了|做了/g)].at(-1)?.index??-1;
+    if(blocked>=0&&done<=blocked)continue;
+    if(planned&&done<0&&!/今天|今日|本次|刚刚|刚才|昨天/.test(before))continue;
+    if(/^(?:也|仍|还)?(?:尚未|还未|未|没有|还没|没|待)(?:完成|进行|落实|沟通|开展|实施|执行)|^(?:的)?(?:安排|计划|动作)(?:尚未|未|待|还没)|^(?:的)?(?:计划|准备|打算|预计)/.test(after))continue;
+    return true;
+   }
+   if([...clause.matchAll(futurePattern)].length)planned=true;
+   }
+  }
+  return false;
+ }
  function suggest(text){
   const hits=[];
   // Suggestions are never presented as a confirmed quality rating.
-  const rules={P:/(降价|底价|报价|价格调整|价格可谈|价格不变|不降价|付款条件|交易条件|交意向金)/,M:/(不急卖|急售|急卖|置换|出售意愿|出售动机|不想卖|不愿卖|卖房原因)/,R:/(信任|认可|感谢|关系|粘合|客户反馈|顾客反馈)/,E:/(钥匙|委托|独家|挂牌)/,V:/(同意.{0,8}看房|愿意.{0,8}看房|配合.{0,8}看房|提前.{0,8}预约|看房.{0,8}(方便|时间|条件|配合))/,C:/(漏水|渗水|房况|装修情况|产权|抵押|面积核实)/,O:/(其他房产|另.{0,5}房.{0,5}(出售|出租)|买房需求|购房需求|租房需求)/};
+  const rules={P:/(降价|底价|报价|价格调整|价格可谈|价格不变|不降价|付款条件|交易条件|交意向金)/,M:/(不急卖|急售|急卖|置换|出售意愿|出售动机|不想卖|不愿卖|卖房原因)/,E:/(钥匙|委托|独家|挂牌)/,V:/(同意.{0,8}看房|愿意.{0,8}看房|配合.{0,8}看房|提前.{0,8}预约|看房.{0,8}(方便|时间|条件|配合))/,C:/(漏水|渗水|房况|装修情况|产权|抵押|面积核实)/,O:/(其他房产|另.{0,5}房.{0,5}(出售|出租)|买房需求|购房需求|租房需求)/};
   for(const [code,re] of Object.entries(rules))if(re.test(text))hits.push(code);
+  // Explicit business results keep their category; maintenance remains a secondary tag.
+  if(relationshipCommunication(text))hits.push('R');
   return {category:hits[0]||'U',tags:hits};
  }
  function records(housing,meetings,items,month,asOf){
@@ -34,5 +59,6 @@
   for(const region of M.unique(rows.map(r=>r.region))){const rr=scoped(rows,{region});groups.push({scope:'region',region,store:'',group:'',...summary(rr)});for(const store of M.unique(rr.map(r=>r.store))){const ss=scoped(rr,{store});groups.push({scope:'store',region,store,group:'',...summary(ss)});for(const group of M.unique(ss.map(r=>r.group)))groups.push({scope:'group',region,store,group,...summary(scoped(ss,{group}))});}}
   return {recordType:'public-quality',version:2,asOf,sourceVersion,groups};
  }
- root.WBQuality={canonical,labels,signature,suggest,records,summary,scoped,publicSummary};if(typeof module==='object')module.exports=root.WBQuality;
+ root.WBQuality={canonical,labels,signature,relationshipCommunication,suggest,records,summary,scoped,publicSummary};if(typeof module==='object')module.exports=root.WBQuality;
 })(typeof window==='object'?window:globalThis);
+
