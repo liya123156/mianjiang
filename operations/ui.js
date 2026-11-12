@@ -44,6 +44,14 @@
   const summary=exact||byStore||pub.groups.find(x=>x.scope===view.scope&&x.region===(view.region||''))||Q.summary([]);return {summary,groups:pub.groups,asOf:pub.asOf,generatedAt:publicItem.updated_at,private:false};
  }
  function qualityText(q=qualityData()){if(!q||q.pending)return '面见质量概览待同步';const t=q.summary;const items=Object.entries(Q.labels).map(([k,v])=>({label:v,count:Number(t.counts?.[k]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count);return `面见质量｜截至${q.asOf}\n本月面见带来的业务反馈结构（按数量从高到低）：\n${items.map(x=>`${x.label}：${x.count}套（${M.pct(x.count,t.total)}）`).join('\n')||'暂无已归类反馈'}${Number(t.counts?.U||0)>0?`\n其中原文待补${Number(t.missing||0)}套，已有原文但结果待明确${Number(t.unclear||0)}套。`:''}`;}
+ function novemberQualityMessage(q){
+  if(!q||q.pending)return '面见质量概览待同步';
+  const t=q.summary,items=Object.entries(Q.labels).filter(([key])=>key!=='U').map(([key,label])=>({key,label,count:Number(t.counts?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count);
+  if(!items.length)return '具体面见收获待补充。期待伙伴记录业主的真实反馈，让每一次用心服务都能被看见。';
+  const actions={P:'明确价格与交易条件',M:'了解业主心态与出售动机',R:'开展关系维护与客户反馈沟通',E:'取得钥匙或委托授权',V:'确认看房方式与配合条件',C:'核实房源情况',O:'发现新的服务需求'};
+  const highlights=items.slice(0,2).map(x=>actions[x.key]).filter(Boolean).join('、');
+  return items.map(x=>`${x.label}：${x.count}套（${M.pct(x.count,t.total)}）`).join('\n')+`\n\n💡${highlights}，这些面见收获正在为下一步服务提供依据。\n👏一次有用的信息、一个有效的沟通方法，都值得被看见；欢迎分享具体动作和顾客原话，让好做法带动更多伙伴！`;
+ }
  function qualityStandards(){const standards=Q.standards||[];if(!standards.length)return '';return `<details class="quality-classification quality-standards"><summary>查看面见质量识别标准</summary><p class="ops-muted">依据原文中已获取的信息与已开展的维护沟通归类；价格不变、不急卖等真实现状同样计入。计划、待询问事项不视为已取得结果。每套房源只计一个主要结果，主题标签可重复。</p><div class="review-table-scroll"><table class="review-tier-table" aria-label="面见质量识别标准"><thead><tr><th scope="col">主要结果</th><th scope="col">计入标准</th><th scope="col">不直接计入</th><th scope="col">原文示例</th></tr></thead><tbody>${standards.map(x=>`<tr><th scope="row" style="white-space:normal;text-align:left">${E(Q.labels[x.code]||x.code)}</th><td style="white-space:normal;text-align:left">${E(x.accept)}</td><td style="white-space:normal;text-align:left">${E(x.exclude)}</td><td style="white-space:normal;text-align:left">${E(x.example)}</td></tr>`).join('')}</tbody></table></div><p class="ops-muted">反馈结果待明确表示原文缺失或记录尚不足以支持归类，不直接等同于面见没有收获。</p></details>`;}
  function qualitySelection(view=currentView,q=qualityData(view)){const key=currentMonth+'|'+viewKey(view),filter=state.qualityFilters[key]||={topic:'all',sort:'latest',page:0},rows=q?.private?F.select(q.records,filter.topic,filter.sort):[],pages=Math.max(1,Math.ceil(rows.length/6));filter.page=Math.min(filter.page,pages-1);return {filter,rows,pageRows:rows.slice(filter.page*6,filter.page*6+6),pages};}
  function qualityPanel(view){const q=qualityData(view);if(!q){const old=ARCHIVE.months[currentMonth]?.views[viewKey(view)]?.sections.find(x=>x.id==='quality');return old?`<div id="ops-quality-content"><p class="ops-muted">以下为已归档复盘质量，截止时间以原复盘为准。</p>${old.blocks.map(renderBlock).join('')}</div>`:'<div class="ops-notice" id="ops-quality-content">导入本月底表与面见明细后生成真实反馈。</div>';}
@@ -735,15 +743,14 @@ async function metHouseImage(){
   return best.map(r=>`👍 ${level==='group'?r.group:r.store}：面见${r.met}套，面见率${r.met_rate}。`);
  }
  function novemberMessage(view,progress,m,goal,cutoff){
-  const rows=progress.rows||[],level=view.scope==='store'?'group':'store',label=level==='group'?'店组':'门店',owner=m._ownerApplicable!==false,eligible=rows.filter(r=>r._level===level&&Number(r.stock)>0),positive=eligible.filter(r=>Number(r.met)>0).sort((a,b)=>Number.parseFloat(b.met_rate)-Number.parseFloat(a.met_rate)),name=r=>level==='group'?r.group:r.store;
-  const benchmark=positive.slice(0,3).map(r=>`${name(r)}：面见${r.met}套｜面见率${r.met_rate}`).join('\n')||`当前暂无已产生业主面见登记的${label}`;
-  const zero=eligible.filter(r=>Number(r.met)===0),low=zero.length?zero:[...eligible].filter(r=>r.met<r._target||r._target==null).sort((a,b)=>Number.parseFloat(a.met_rate)-Number.parseFloat(b.met_rate)).slice(0,3),reminders=low.map(r=>`${name(r)}：面见${r.met}套｜面见率${r.met_rate}`).join('\n')||'当前无需要单独提示的门店';
-  const completed=goal>0?M.pct(m.met,goal):null,gap=goal>0?Math.max(0,goal-m.met):null;
-  const ownerProgress=owner?`月度目标：${goal==null?'待确认':goal+'套'}｜全盘面见${m.met}套｜面见率${m.met_rate}\n面见次数：${meetingValue(m)}次${completed?'\n目标完成率：'+completed+'｜距离目标还差'+gap+'套':''}\n\nTOP重点房源\n门店TOP：${m.store_top_met}套｜面见率${m.store_top_rate}\n户型TOP：${m.unit_top_met}套｜面见率${m.unit_top_rate}`:'业主面见：/（本店无在售房源，不涉及业主指标）';
+  const rows=progress.rows||[],level=view.scope==='store'?'group':'store',label=level==='group'?'店组':'门店',owner=m._ownerApplicable!==false,eligible=rows.filter(r=>r._level===level&&Number(r.stock)>0),name=r=>level==='group'?r.group:r.store,positive=eligible.filter(r=>Number(r.met)>0).sort((a,b)=>Number.parseFloat(b.met_rate)-Number.parseFloat(a.met_rate)||Number(b.met)-Number(a.met)||String(name(a)).localeCompare(String(name(b)),'zh-CN'));
+  const benchmark=positive.slice(0,view.scope==='company'?1:3).map(r=>`${name(r)}：面见${r.met}套｜面见率${r.met_rate}`).join('\n')||`当前暂无已产生业主面见登记的${label}`;
+  const zero=eligible.filter(r=>Number(r.met)===0),candidates=[...eligible].filter(r=>r.met<r._target||r._target==null||Number(r.met)===0).sort((a,b)=>Number.parseFloat(a.met_rate)-Number.parseFloat(b.met_rate)||Number(a.met)-Number(b.met)||String(name(a)).localeCompare(String(name(b)),'zh-CN')),low=view.scope==='company'?candidates.slice(0,2):(zero.length?zero:candidates.slice(0,3)),reminders=low.map(r=>`${name(r)}：面见${r.met}套｜面见率${r.met_rate}`).join('\n')||`当前无需要单独提示的${label}`;
+  const ownerProgress=owner?`月度目标：${goal==null?'待确认':goal+'套'}｜全盘面见${m.met}套｜面见率${m.met_rate}\n门店TOP：${m.store_top_met}套｜面见率${m.store_top_rate}\n户型TOP：${m.unit_top_met}套｜面见率${m.unit_top_rate}`:'业主面见：/（本店无在售房源，不涉及业主指标）';
   const childLevel=view.scope==='region'?'store':'group',detailRows=view.scope==='company'?[]:rows.filter(r=>r._level===childLevel),detail=detailRows.map(r=>`${childLevel==='store'?r.store:r.group}：全盘${r.met}套（${r.met_rate}）｜门店TOP ${r.store_top_met}套（${r.store_top_rate}）｜户型TOP ${r.unit_top_met}套（${r.unit_top_rate}）`).join('\n');
   const q=qualityData(view);
-  const closing=owner?(goal>0&&m.met<goal?`当前完成月度目标的${completed}，仍有${gap}套差距；请结合各店进展，继续明确重点业主的面见安排。`:'请继续关注重点房源覆盖及面见后的真实需求，让已有进展转化为持续服务。'):'客户面见记录反映我们主动走近顾客的行动，请持续了解需求、记录真实反馈。';
-  return [`${view.scope==='store'?'各位经理和伙伴':view.scope==='region'?'各位店总和BP伙伴':'各位梦想合伙人'}，大家好☀️`,`🍁 11月感恩月｜${view.name}面见进展\n${cutoff}`,`🎯 一、本月目标与进展\n${ownerProgress}${detail?'\n\n'+(childLevel==='store'?'各店进展':'各组进展')+'👇\n'+detail:''}`,...(owner?[`🏅 二、标杆${label}进展\n${benchmark}`,`⚠️ 三、重点提醒${label}\n${reminders}${zero.length?'\n以上'+zero.length+'个'+label+'暂无本月业主面见登记，请核实实际行动及登记情况。':''}`,`🔎 四、面见质量\n${q&&!q.pending?qualityText(q):'质量概览待同步'}`]:[]),`${closing}感谢伙伴们把感恩落在一次次主动面见与专业服务中，也让真实的进步和可借鉴的做法被及时看见。`].join('\n\n');
+  const closing=owner?`请结合${view.scope==='store'?'各组':'各店'}进展，继续明确重点业主的面见安排[太阳]`:'客户面见记录反映我们主动走近顾客的行动，请持续了解需求、记录真实反馈[太阳]';
+  return [`${view.scope==='store'?'各位经理和伙伴':view.scope==='region'?'各位店总和BP伙伴':'各位梦想合伙人'}，大家好☀️`,`🍁 11月感恩月｜${view.name}面见进展\n${cutoff}`,`🎯 一、本月目标与进展\n${ownerProgress}${detail?'\n\n'+(childLevel==='store'?'各店进展':'各组进展')+'👇\n'+detail:''}`,...(owner?[`🏅 二、标杆${label}进展\n${benchmark}`,`⚠️ 三、重点提醒${label}\n${reminders}`,`🔎 四、面见质量\n${novemberQualityMessage(q)}`]:[]),`${closing}\n感谢伙伴们把感恩落在一次次主动面见与专业服务中，也让真实的进步和可借鉴的做法被及时看见[爱心]`].join('\n\n');
  }
  function makeMessage(view,progress,m,goal,cutoff,risks,praises){if(currentMonth==='2026-11')return novemberMessage(view,progress,m,goal,cutoff,praises);const name=view.name,month=Number(currentMonth.slice(5)),gap=goal==null?'待确认':Math.max(0,goal-m.met),detailLevel=view.scope==='region'?'store':view.scope==='store'?'group':'region',detailRows=progress.rows.filter(r=>r._level===detailLevel);const groupText=detailRows.map(r=>{const label=detailLevel==='store'?r.store:detailLevel==='group'?r.group:r.region;return `${label}：全盘${r.met}套（${r.met_rate}）｜门店TOP ${r.store_top_met}套（${r.store_top_rate}）｜户型TOP ${r.unit_top_met}套（${r.unit_top_rate}）`;}).join('\n');const scene=sceneRaw(view),analysis=sceneAnalysis(view);
   const qt=qualityData(view);const publicRisks=risks.filter(t=>!String(t).includes('结合实际')).slice(0,5);const topText=`
@@ -1057,5 +1064,6 @@ TOP重点房源
  }
  root.WBOperations={isMode,emptyData,render,boot,refresh,ledgerText,reviewText:reviewTextWithNovember,qualityText,novemberTargets,buildSendPackage,state};
 })(window);
+
 
 
