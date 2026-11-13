@@ -455,7 +455,7 @@ ${strategies}`;
   const d=data();if(!d)return;
   const pairs=[...M.active(d.housing||[]).map(r=>({region:r['大区'],store:r['门店']})),...(d.items||[]),...(d.periods||[]),...(d.directory||[]),...memberScopes()].filter(x=>x.region&&x.store&&!hiddenCustomerStores.has(canonicalStore(x.store))).map(x=>({...x,store:canonicalStore(x.store)}));
   if(!pairs.length)return;
-  const regions=M.unique(pairs.map(x=>x.region)).map(name=>({name,stores:M.unique(pairs.filter(x=>x.region===name).map(x=>x.store))})),views={...DATA.views};
+  const regions=M.sortRegions(M.unique(pairs.map(x=>x.region)).map(name=>({name,stores:M.unique(pairs.filter(x=>x.region===name).map(x=>x.store))}))),views={...DATA.views};
   for(const r of regions){views['region:'+r.name]||={scope:'region',role:'大区总',name:r.name,region:r.name,store:null,sections:[],kpis:[],title:r.name};for(const store of r.stores)views['store:'+store]||={scope:'store',role:'店总',name:store,region:r.name,store,sections:[],kpis:[],title:store};}
   DATA={...DATA,regions,views};
  }
@@ -465,7 +465,7 @@ ${strategies}`;
   const member=C.member,assigned=memberScopes();
   if(member&&member.role==='region'&&view.region!==member.region){view=resolveView(member.region,'');updateUrl(view);}
   if(member?.role==='store'&&!assigned.some(x=>x.region===view.region&&x.store===view.name)){const fallback=assigned.find(x=>x.region===view.region)||assigned[0];view=resolveView(fallback.region,fallback.store);updateUrl(view);}
-  const regions=DATA.regions.map(r=>({...r,stores:(r.stores||[]).filter(s=>!hiddenCustomerStores.has(canonicalStore(s)))})).filter(r=>r.stores.length).filter(r=>!member||member.role==='project'||member.role==='region'&&r.name===member.region||assigned.some(x=>x.region===r.name));
+  const regions=M.sortRegions(DATA.regions).map(r=>({...r,stores:(r.stores||[]).filter(s=>!hiddenCustomerStores.has(canonicalStore(s)))})).filter(r=>r.stores.length).filter(r=>!member||member.role==='project'||member.role==='region'&&r.name===member.region||assigned.some(x=>x.region===r.name));
   document.getElementById('region-filter').innerHTML=(!member||member.role==='project'?'<option value="">全司 · 全部大区</option>':'')+regions.map(r=>`<option value="${E(r.name)}">${E(r.name)}</option>`).join('');document.getElementById('region-filter').value=view.region||'';
   const stores=regions.flatMap(r=>(!view.region||r.name===view.region)?r.stores:[]).filter(s=>!hiddenCustomerStores.has(canonicalStore(s))).filter(s=>!member||member.role!=='store'||assigned.some(x=>x.store===s));
   document.getElementById('store-filter').innerHTML=(!member||member.role!=='store'?'<option value="">全部门店</option>':'')+stores.map(s=>`<option value="${E(s)}">${E(s)}</option>`).join('');document.getElementById('store-filter').value=view.scope==='store'?view.store||view.name:'';
@@ -485,7 +485,7 @@ ${strategies}`;
    const company=d.companyProgress?.housing;
    if(Array.isArray(company))companyRows=M.table(company,{},goals(),currentMonth,d.companyProgress?.meetings||[],customerOptions(d.companyProgress)).rows;
   }else companyRows=archivedProgress({scope:'company'})?.rows||[];
-  return M.withRateRanks(progress,companyRows);
+  return M.withRateRanks(M.orderProgress(progress),companyRows);
  }
  function unmetTopRows(view){
   const d=data();
@@ -508,7 +508,7 @@ ${strategies}`;
       tag:[storeTop?'门店TOP':'',unitTop?'户型TOP':''].filter(Boolean).join('、')
     });
   }
-  return rows.sort((a,b)=>a.store.localeCompare(b.store,'zh-CN')||a.group.localeCompare(b.group,'zh-CN')||a.project.localeCompare(b.project,'zh-CN')||a.room.localeCompare(b.room,'zh-CN')||a.advisor.localeCompare(b.advisor,'zh-CN'));
+  return rows.sort((a,b)=>M.compareStore(a.store,b.store)||M.compareGroup(a.group,b.group)||a.project.localeCompare(b.project,'zh-CN')||a.room.localeCompare(b.room,'zh-CN')||a.advisor.localeCompare(b.advisor,'zh-CN'));
 }
 function unmetTopSummary(rows){
   return {
@@ -604,7 +604,7 @@ function metHouseRows(view){
       tag:[storeTop?'门店TOP':'',unitTop?'户型TOP':''].filter(Boolean).join('、')||'非TOP'
     });
   }
-  return rows.sort((a,b)=>a.store.localeCompare(b.store,'zh-CN')||a.group.localeCompare(b.group,'zh-CN')||a.project.localeCompare(b.project,'zh-CN')||a.room.localeCompare(b.room,'zh-CN')||a.advisor.localeCompare(b.advisor,'zh-CN'));
+  return rows.sort((a,b)=>M.compareStore(a.store,b.store)||M.compareGroup(a.group,b.group)||a.project.localeCompare(b.project,'zh-CN')||a.room.localeCompare(b.room,'zh-CN')||a.advisor.localeCompare(b.advisor,'zh-CN'));
 }
 function metHouseSummary(rows){
   return {

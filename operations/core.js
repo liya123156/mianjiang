@@ -15,6 +15,33 @@
   ].map(([region,store,ownerApplicable=true])=>Object.freeze({region,store,ownerApplicable}));
   const catalogByStore=new Map(storeCatalog.map(s=>[s.store,s]));
   const canonicalGroup=value=>text(value).replace(/^徐汇二店/,'徐汇一店');
+  // Organization order is independent of import order and performance rankings.
+  const organizationCollator=new Intl.Collator('zh-CN',{numeric:true,sensitivity:'base'});
+  const orderText=value=>text(value).normalize('NFKC').replace(/\s/g,'').toUpperCase();
+  const regionOrder=new Map(unique(storeCatalog.map(s=>s.region)).map((name,i)=>[name,i]));
+  const storeOrder=new Map(storeCatalog.map((s,i)=>[s.store,i]));
+  const compareText=(a,b)=>organizationCollator.compare(orderText(a),orderText(b))||text(a).localeCompare(text(b),'zh-CN');
+  const compareRegion=(a,b)=>(regionOrder.get(text(a))??Infinity)-(regionOrder.get(text(b))??Infinity)||compareText(a,b);
+  const compareStore=(a,b)=>(storeOrder.get(canonicalStore(a))??Infinity)-(storeOrder.get(canonicalStore(b))??Infinity)||compareText(a,b);
+  function compareGroup(a,b){
+    const code=value=>orderText(canonicalGroup(value)).match(/([A-Z]+|\d+)组?$/)?.[1]||'';
+    const ac=code(a),bc=code(b);
+    return ac&&bc?organizationCollator.compare(ac,bc)||compareText(a,b):ac?-1:bc?1:compareText(a,b);
+  }
+  function sortRegions(regions){return (regions||[]).map(r=>({...r,stores:[...(r.stores||[])].sort(compareStore)})).sort((a,b)=>compareRegion(a.name,b.name));}
+  function compareOrganizationRows(a,b){
+    for(const [level,key,compare] of [['company','region',compareRegion],['region','store',compareStore],['store','group',compareGroup],['group','name',compareText]]){
+      if(a._level===level||b._level===level)return a._level===b._level?0:a._level===level?-1:1;
+      const result=compare(a[key],b[key]);if(result)return result;
+    }
+    return 0;
+  }
+  function orderProgress(block){
+    if(!block||block.variant!=='progress')return block;
+    const ordered={...block,rows:[...(block.rows||[])].sort(compareOrganizationRows)};
+    if(block.tabs)ordered.tabs=block.tabs.map(tab=>({...tab,rows:[...(tab.rows||[])].sort(compareOrganizationRows)}));
+    return ordered;
+  }
   function customerRow(r){const store=canonicalStore(r.store??r['店面']??r['门店']),aggregateOnly=r.aggregateOnly===true;return {region:text(r.region??r['大区'])||catalogByStore.get(store)?.region||'',store,group:aggregateOnly?'':canonicalGroup(r.group??r['店组'])||'未分组',name:aggregateOnly?'':text(r.name??r['客源维护人'])||'未填写',count:number(r.count??r['[A] 客户面见']??r['[A]客户面见']??r['客户面见次数']),aggregateOnly};}
   function customerInScope(rows,scope={}){return rows.filter(r=>(!scope.region||r.region===scope.region)&&(!scope.store||r.store===canonicalStore(scope.store))&&(!scope.group||r.group===canonicalGroup(scope.group)));}
   const columns=[['region','大区'],['store','店面'],['group','店组'],['name','姓名'],['target','目标套数'],['target_rate','目标面见率'],['stock','在售套数'],['met','面见量'],['met_count','面见次数'],['met_rate','面见率'],['gift','面见送礼物数量'],['gift_rate','面见送礼物覆盖率'],['store_top_stock','在售套数'],['store_top_met','面见量'],['store_top_met_count','面见次数'],['store_top_rate','面见率'],['unit_top_stock','在售套数'],['unit_top_met','面见量'],['unit_top_met_count','面见次数'],['unit_top_rate','面见率']].map(([key,label])=>({key,label}));
@@ -62,14 +89,14 @@
       output.push(row);
     }
     if(!scope.region&&!scope.store)add(scoped,customerRows,'company','全司',{region:'全司',store:'/',group:'/',name:'—'});
-    const regions=unique([...active(scoped).map(r=>r['大区']),...selectedCatalog.map(r=>r.region),...customerRows.map(r=>r.region)]).filter(Boolean);
+    const regions=unique([...active(scoped).map(r=>r['大区']),...selectedCatalog.map(r=>r.region),...customerRows.map(r=>r.region)]).filter(Boolean).sort(compareRegion);
     for(const region of regions){const r=scoped.filter(x=>x['大区']===region),cr=customerRows.filter(x=>x.region===region),rc=selectedCatalog.filter(x=>x.region===region);if(!scope.store)add(r,cr,'region',region,{region,store:'/',group:'/',name:'—'});
-      for(const store of unique([...active(r).map(x=>x['门店']),...rc.map(x=>x.store),...cr.map(x=>x.store)])){
+      for(const store of unique([...active(r).map(x=>x['门店']),...rc.map(x=>x.store),...cr.map(x=>x.store)]).sort(compareStore)){
         const s=r.filter(x=>x['门店']===store),cs=cr.filter(x=>x.store===store);add(s,cs,'store',store,{region,store,group:'/',name:'—'});
-        if(scope.region||scope.store||includeAllLevels)for(const group of unique([...active(s).map(x=>x['店组']),...cs.filter(x=>!x.aggregateOnly).map(x=>x.group)])){
+        if(scope.region||scope.store||includeAllLevels)for(const group of unique([...active(s).map(x=>x['店组']),...cs.filter(x=>!x.aggregateOnly).map(x=>x.group)]).sort(compareGroup)){
           if(scope.group&&group!==canonicalGroup(scope.group))continue;
           const g=s.filter(x=>x['店组']===group),cg=cs.filter(x=>!x.aggregateOnly&&x.group===group);add(g,cg,'group',group,{region,store,group,name:'—'});
-          if(scope.store||includeAllLevels)for(const name of unique([...active(g).map(x=>x['维护人姓名']),...cg.map(x=>x.name)])){add(g.filter(x=>x['维护人姓名']===name),cg.filter(x=>x.name===name),'advisor',name,{region,store,group,name});}
+          if(scope.store||includeAllLevels)for(const name of unique([...active(g).map(x=>x['维护人姓名']),...cg.map(x=>x.name)]).sort(compareText)){add(g.filter(x=>x['维护人姓名']===name),cg.filter(x=>x.name===name),'advisor',name,{region,store,group,name});}
         }
       }
     }
@@ -107,7 +134,7 @@
   }
   function rateRankSymbol(row,key){const rank=row?._level==='store'?row._rateRanks?.[key]:null;return rank==='highest'?'👍':rank==='lowest'?'❗':'';}
   function rateRankLabel(row,key){const rank=row?._level==='store'?row._rateRanks?.[key]:null;return rank==='highest'?'全司单店最高（含并列）':rank==='lowest'?'全司单店最低（含并列）':'';}
-  function snapshot(rows,goals,asOf){return unique(active(rows).map(r=>r['门店'])).map(store=>{const g=rows.filter(r=>r['门店']===store);return {region:g[0]['大区'],store,payload:{asOf,...metrics(g),target:goals[store]??null,groups:unique(active(g).map(r=>r['店组'])).map(group=>({group,...metrics(g.filter(r=>r['店组']===group))}))}};});}
+  function snapshot(rows,goals,asOf){return unique(active(rows).map(r=>r['门店'])).sort(compareStore).map(store=>{const g=rows.filter(r=>r['门店']===store);return {region:g[0]['大区'],store,payload:{asOf,...metrics(g),target:goals[store]??null,groups:unique(active(g).map(r=>r['店组'])).sort(compareGroup).map(group=>({group,...metrics(g.filter(r=>r['店组']===group))}))}};});}
   function delta(current,previous){
     if(!previous)return {known:false,newMet:0,newGift:0};
     return {known:true,newMet:current.metIds.filter(id=>!previous.metIds.includes(id)).length,newGift:current.giftIds.filter(id=>!previous.giftIds.includes(id)).length,removedMet:previous.metIds.filter(id=>!current.metIds.includes(id)).length};
@@ -233,6 +260,6 @@
     }
     return {received,refunded,companyReceived,balances:[...balances].filter(([,amount])=>amount!==0).map(([name,amount])=>({name,amount}))};
   }
-  root.WBModel={text,number,flag,pct,unique,canonicalStore,storeCatalog,active,inScope,metrics,meetingCountValue,meetingCountLabel,table,withRateRanks,rateRankSymbol,rateRankLabel,snapshot,delta,validateImport,validateCustomerImport,split,ledger,expenseId,expenseQuantity,expenseAmount,findExpenseDuplicates,expenseCandidates,expenseRecords,cashSettlement,uuid};
+  root.WBModel={text,number,flag,pct,unique,canonicalStore,storeCatalog,compareText,compareRegion,compareStore,compareGroup,sortRegions,orderProgress,active,inScope,metrics,meetingCountValue,meetingCountLabel,table,withRateRanks,rateRankSymbol,rateRankLabel,snapshot,delta,validateImport,validateCustomerImport,split,ledger,expenseId,expenseQuantity,expenseAmount,findExpenseDuplicates,expenseCandidates,expenseRecords,cashSettlement,uuid};
   if(typeof module==='object')module.exports=root.WBModel;
 })(typeof window==='object'?window:globalThis);

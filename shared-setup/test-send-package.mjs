@@ -64,7 +64,7 @@ const all=await api.buildSendPackage(company),entries=unzip(await all.blob.array
 assert.equal(manifest.stores.length,18);assert.equal(manifest.asOf,'2026-11-08');assert.equal(manifest.status,'prepared');
 assert.equal(manifest.stores[0].modules.details.length,2,'25 houses must retain the second page');
 assert.equal(manifest.stores[0].metrics.met,25);assert.equal(manifest.stores[0].metrics.meetingCount,26);
-assert.match(read(entries,manifest.stores[0].message),/面见次数：26次/);
+assert.match(read(entries,manifest.stores[0].message),/全盘面见25套｜面见率100\.00%/,'current announcement template uses owner coverage; the manifest retains meeting counts');
 assert.equal(manifest.stores[1].metrics.met,0);assert.equal(manifest.stores[1].images.length,3,'zero meetings still yields all three modules');
 assert.equal(read(entries,'门店群配置.csv').split('\r\n').length,19);
 assert.ok(manifest.stores.every(s=>s.groupName===''),'never infer or prefill a WeChat recipient');

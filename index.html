@@ -156,7 +156,7 @@
 <script type="application/json" id="embedded-review">{"version":"20261026-r6","defaultMonth":"2026-10","years":[2026],"months":{"2026-10":{"meta":{"title":"10月在售业主面见复盘","cutoff":"系统数据截至2026年10月25日","week":"执行周期 10月27—31日","source_note":"数据来源：月度进展、面见及礼物底表、面见反馈明细；动作复盘来自10月26日BP复盘会","pace_note":"进度参考：10/25自然月时间进度80.65%，不替代正式周计划","month":"2026-10","updated_label":"10月26日更新"},"version":"20261026-r6","regions":[{"name":"花木大区","stores":["仁恒河滨城店","碧云店","御翠园店","浦东别墅旗舰店"]},{"name":"陆家嘴大区","stores":["星河湾店","陆家嘴金融中心店","陆家嘴旗舰店","陆家嘴滨江店","顶级豪宅部"]},{"name":"徐汇大区","stores":["嘉御庭公馆店","尚海湾店","徐汇滨江店"]},{"name":"滨江古北大区","stores":["融创滨江壹号院店","长宁古北店"]},{"name":"黄浦大区","stores":["黄浦滨江店","新天地一店","新天地二店","复兴香园店"]}],"views":{"company":{"scope":"company","role":"项目负责人","title":"10月在售业主面见复盘","name":"全司","region":null,"store":null,"kpis":[],"sections":[]}},"candidate_details":[],"word_url":null,"word_filename":""}}}</script>
 <script src="project-plan.js?v=20261109-owner-only-03"></script>
 <script src="operations/cloud-config.js?v=20261027-11"></script>
-<script src="operations/core.js?v=20261110-interviews-01"></script>
+<script src="operations/core.js?v=20261113-organization-order-01"></script>
 <script src="operations/xlsx-reader.js?v=20261027-11"></script>
 <script src="operations/cloud.js?v=20261111-project-send-04"></script>
 <script src="operations/proof-paste.js?v=20261027-11"></script>
@@ -170,7 +170,7 @@
 <script src="operations/plan-execution.js?v=20261109-week2-01"></script>
 <script src="operations/november-schedule.js?v=20261105-training-01"></script>
 <script src="operations/send-package.js?v=20261111-project-send-04"></script>
-<script src="operations/ui.js?v=20261112-owner-announcement-01"></script>
+<script src="operations/ui.js?v=20261113-organization-order-01"></script>
 <script>
 'use strict';
 let progressImageUrl = '';
@@ -188,6 +188,7 @@ function progressNotes() { return []; }
 
 
 function progressImagePlan(view, block, month, meta) {
+  block = window.WBModel.orderProgress(block);
   const identityCount = view.scope === 'company' ? 2 : 4;
   const columns = (block.columns || []).filter((c,i) => !(view.scope === 'company' && i >= 2 && i < 4));
   const width = 2000, padding = 28, tableWidth = width - padding * 2;
@@ -292,6 +293,13 @@ const MONTH_CATALOG = [
 const HISTORY_ARCHIVE_MONTHS = new Set(MONTH_CATALOG.filter(([,status]) => status === '历史复盘').map(([month]) => month));
 function isHistoryArchiveMonth(month) { return HISTORY_ARCHIVE_MONTHS.has(month); }
 const ARCHIVE = applyProjectPlans(JSON.parse(document.getElementById('embedded-review').textContent));
+// Normalize archived presentation models once so text, images and scope menus agree.
+for (const month of Object.values(ARCHIVE.months)) {
+  month.regions = window.WBModel.sortRegions(month.regions);
+  for (const view of Object.values(month.views || {})) {
+    for (const section of view.sections || []) section.blocks = (section.blocks || []).map(window.WBModel.orderProgress);
+  }
+}
 let currentMonth = monthFromUrl(), DATA = ARCHIVE.months[currentMonth];
 let currentView, tableSerial = 0, toastTimer, candidateReturnScroll = null;
 let currentMode = isHistoryArchiveMonth(currentMonth) ? 'review' : modeFromUrl();
@@ -439,6 +447,7 @@ function returnFromCandidates(link) {
 
 /* Shared table renderer keeps candidate counts numeric in text and Word exports. */
 function renderTable(block) {
+  block = window.WBModel.orderProgress(block);
   const id = 'review-table-' + (++tableSerial);
   const tabs = arr(block.tabs).length ? block.tabs : [{columns:block.columns, rows:arr(block.rows)}];
   tableModels.set(id, {block,tabs,active:0,expanded:false});
