@@ -2,7 +2,7 @@
 (function(root){
  'use strict';
  const M=root.WBModel,C=root.WBCloud,Q=root.WBQuality,W=root.WBWorkflow,F=root.WBFeedback,E=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const state={cache:{},loading:false,exporting:false,error:'',preview:null,customerPreview:null,scene:'',sceneDrafts:{},sceneAnalyses:{},scenePlans:{},expenseFilter:'todo',qualityFilters:{},selectedExpense:null,expenseContext:null,archiveNotice:''};
+ const state={cache:{},loading:false,exporting:false,error:'',preview:null,customerPreview:null,scene:'',sceneDrafts:{},sceneAnalyses:{},scenePlans:{},expenseFilter:'todo',qualityFilters:{},selectedExpense:null,expenseContext:null,archiveNotice:'',recordsController:null,recordsContextKey:'',recordDrafts:{}};
  const isMode=mode=>['daily','expense','admin'].includes(mode)||(mode==='review'&&new URL(location.href).searchParams.get('review')!=='archive'), cents=value=>Math.round(Number(value||0)*100),money=value=>(Number(value||0)/100).toFixed(2);
  const chinaToday=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
  const yesterday=()=>{const d=new Date(chinaToday()+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-1);return d.toISOString().slice(0,10);};
@@ -11,6 +11,7 @@
  const payload=(kind,id,store)=>item(kind,id,store)?.payload||{};
  const canonicalStore=value=>M.canonicalStore?M.canonicalStore(value):String(value||'');
  const noOwnerStore=store=>['徐汇一店','Hmall中心店','Hmall旗舰店'].includes(canonicalStore(store));
+ const hasPrivateScope=()=>!!C.member&&C.member.role!=='collaborator';
   const hiddenCustomerStores=new Set(['徐汇一店','Hmall中心店','Hmall旗舰店'].map(canonicalStore));
   const customerOptions=()=>({showCustomer:false});
  const customerValue=row=>row?.customer_count==='—'?'—':typeof row?.customer_count==='number'?row.customer_count+'次':'待导入';
@@ -34,7 +35,7 @@
   try{const tasks=W.mergeTasks(old.tasks,state.scenePlans[key].candidates,now,M.uuid),history=[...(old.history||[])];if(old.text&&old.text!==raw)history.push({text:old.text,analysisText:old.analysisText||'',updatedOn:old.updatedOn||existing.updated_at});const body={...old,text:raw,analysisText:analysis.text,analysisMethod:analysis.method,tasks,history,updatedOn:now};if(JSON.stringify(body).length>180000)throw Error('本店本月记录较多，请联系项目负责人归档后继续补充');await C.saveItem(month,'scene','daily',region,store,body,existing?.updated_at);delete state.sceneDrafts[key];delete state.sceneAnalyses[key];delete state.scenePlans[key];if(currentMonth===month&&sceneKey(currentView)===key)await refresh();else delete state.cache[month];notify('已同步：现场反馈、推动话术、确认动作及复盘记录');}finally{if(button.isConnected)button.disabled=false;}
  }
  function qualityData(view=currentView){const d=data(),s={region:view.region||'',store:view.scope==='store'?(view.store||view.name):''};if(!d?.housing.length)return null;
-  if(C.member){const all=Q.records(d.housing,d.meetings,d.items,currentMonth,d.imports[0]?.as_of),records=Q.scoped(all,s);return {summary:Q.summary(records),records,groups:Q.publicSummary(all,d.imports[0]?.as_of,d.imports[0]?.created_at).groups,asOf:d.imports[0]?.as_of,private:true};}
+  if(hasPrivateScope()){const all=Q.records(d.housing,d.meetings,d.items,currentMonth,d.imports[0]?.as_of),records=Q.scoped(all,s);return {summary:Q.summary(records),records,groups:Q.publicSummary(all,d.imports[0]?.as_of,d.imports[0]?.created_at).groups,asOf:d.imports[0]?.as_of,private:true};}
   const publicItem=d.items.find(x=>x.kind==='goals'&&x.payload.recordType==='public-quality'),pub=publicItem?.payload;
   if(d.meetings?.length){const all=Q.records(d.housing,d.meetings,d.items,currentMonth,d.imports[0]?.as_of),records=Q.scoped(all,s);return {summary:Q.summary(records),records,groups:Q.publicSummary(all,d.imports[0]?.as_of,d.imports[0]?.created_at).groups,asOf:d.imports[0]?.as_of,private:true};}
   if(!pub)return {summary:Q.summary([]),asOf:d.imports[0]?.as_of||'',generatedAt:'',private:false};
@@ -432,7 +433,7 @@ ${strategies}`;
    <div class="review-callout"><strong>11月检核方式</strong><p>同时检核线上覆盖、全盘与双TOP面见、逐套反馈和业务变化。未完成事项必须明确具体对象、责任人和完成时间，并在下一次周度复盘中继续跟进；月末单独完成礼物费用与凭证收口。</p></div>
   </div>`;
  }
- function reviewTextWithNovember(view=currentView){
+ function baseReviewTextWithNovember(view=currentView){
   const text=reviewText(view),ctx=reviewContext(view),marker='六、11月份目标及核心策略\n';
   if(currentMonth==='2026-11'){
    const week=reviewWeekTwoPlan();
@@ -444,7 +445,19 @@ ${strategies}`;
   const start=text.indexOf(marker);
   return text.slice(0,start)+marker+'以感恩连接为主题，将文化共识转化为全量顾客服务、在售业主面见和重点房源经营行动；管理方式升级为“组织进展＋逐套机会池”双层管理。\n\n'+reviewNovemberPlanTextV2(ctx);
  }
- function review(view){const d=data(),old=ARCHIVE.months[currentMonth]?.views[viewKey(view)],hasData=Boolean(d?.housing.length),source=`<div class="ops-actions">${old?.sections.length?'<button class="btn" data-ops="archive-review">查看已归档复盘</button>':''}${hasData?'<button class="btn primary" data-ops="copy-review">复制当前复盘</button>':''}</div>`;if(!hasData)return hero('周／月复盘 · '+view.name,'导入日常数据后，目标、质量和动作结果自动汇总')+source+(old?.sections||[]).map(x=>block(x.id,x.title,x.blocks.map(renderBlock).join(''))).join('');const ctx=reviewContext(view);currentView={...view,sections:[{id:'review-progress',blocks:[ctx.progress]}]};const month=Number(currentMonth.slice(5));return hero(`${month}月月度复盘 · ${view.name}`,`汇报型阅读复盘 · 数据截至${d.imports[0]?.as_of||'待导入'} · 筛选仅用于聚焦`)+source+block('review-progress','本月目标达成结果',reviewProgressHtml(ctx),'全司视角直接呈现大区与门店完整结果；筛选后同步聚焦当前范围。')+block('review-gifts','面见伴手礼',reviewGiftHtml(ctx))+block('review-quality','面见质量与业务转化',reviewQualityHtml(ctx))+block('review-highlights','标杆门店与重点提醒',reviewHighlightsHtml(ctx))+block('review-actions',currentMonth==='2026-11'?'上周策略复盘与本周承接':`${month}月关键动作复盘`,reviewActionsHtml(ctx))+block('review-next',currentMonth==='2026-11'?'11月第二周目标及核心策略':'11月份目标及核心策略',reviewNextHtmlV2(ctx));}
+ function workReviewRecords(view=currentView){
+  if(!C.canRecords)return [];
+  return (data()?.workRecords?.records||[]).filter(record=>record.month===currentMonth&&record.summaryStatus==='reviewed'&&String(record.summary?.review_text||'').trim()&&(!view.region||record.region===view.region)&&(view.scope!=='store'||record.store===(view.store||view.name)));
+ }
+ function workReviewText(view=currentView){
+  const rows=workReviewRecords(view);return rows.length?'已核实推动记录（复盘素材）\n'+rows.map(record=>(record.store||record.region||'组织待核对')+'｜'+(record.title||'推动记录')+'\n'+record.summary.review_text).join('\n\n'):'';
+ }
+ function reviewTextWithNovember(view=currentView){const base=baseReviewTextWithNovember(view),records=workReviewText(view);return base+(records?'\n\n'+records:'');}
+ function workReviewHtml(view=currentView){
+  if(!C.canRecords)return '';
+  const rows=workReviewRecords(view);return block('review-records','已核实推动记录',rows.map(record=>`<article class="ops-panel"><h3>${E(record.store||record.region||'组织待核对')} · ${E(record.title||'推动记录')}</h3><p class="ops-pre">${E(record.summary.review_text)}</p><p class="ops-muted">记录版本 ${Number(record.version)} · 只复用已核实归纳，原文保留在共享推动记录中。</p></article>`).join('')||'<p class="ops-muted">暂无已核实的归纳。原始资料和待整理内容保留在日常推动的共享记录中。</p>','归纳用于辅助本轮复盘，不自动改写已发布结论或项目规划。');
+ }
+ function review(view){const d=data(),old=ARCHIVE.months[currentMonth]?.views[viewKey(view)],hasData=Boolean(d?.housing.length),source=`<div class="ops-actions">${old?.sections.length?'<button class="btn" data-ops="archive-review">查看已归档复盘</button>':''}${hasData?'<button class="btn primary" data-ops="copy-review">复制当前复盘</button>':''}</div>`;if(!hasData)return hero('周／月复盘 · '+view.name,'导入日常数据后，目标、质量和动作结果自动汇总')+source+(old?.sections||[]).map(x=>block(x.id,x.title,x.blocks.map(renderBlock).join(''))).join('');const ctx=reviewContext(view);currentView={...view,sections:[{id:'review-progress',blocks:[ctx.progress]}]};const month=Number(currentMonth.slice(5));return hero(`${month}月月度复盘 · ${view.name}`,`汇报型阅读复盘 · 数据截至${d.imports[0]?.as_of||'待导入'} · 筛选仅用于聚焦`)+source+block('review-progress','本月目标达成结果',reviewProgressHtml(ctx),'全司视角直接呈现大区与门店完整结果；筛选后同步聚焦当前范围。')+block('review-gifts','面见伴手礼',reviewGiftHtml(ctx))+block('review-quality','面见质量与业务转化',reviewQualityHtml(ctx))+block('review-highlights','标杆门店与重点提醒',reviewHighlightsHtml(ctx))+block('review-actions',currentMonth==='2026-11'?'上周策略复盘与本周承接':`${month}月关键动作复盘`,reviewActionsHtml(ctx))+block('review-next',currentMonth==='2026-11'?'11月第二周目标及核心策略':'11月份目标及核心策略',reviewNextHtmlV2(ctx))+workReviewHtml(view);}
  function emptyData(month){const base=ARCHIVE.months[ARCHIVE.defaultMonth];return {meta:{month,cutoff:'本月日常数据待导入',week:'按实际快照查看'},regions:base.regions,views:Object.fromEntries(Object.entries(base.views).map(([k,v])=>[k,{scope:v.scope,role:v.role,name:v.name,region:v.region,store:v.store,sections:[],kpis:[],title:month+'项目工作台 · '+v.name}]))};}
  function goals(){const stored=payload('goals','monthly');if(Object.keys(stored).length)return stored;const archive=ARCHIVE.months[currentMonth];if(!archive)return {};return Object.fromEntries(Object.values(archive.views).filter(v=>v.scope==='store').map(v=>{const p=v.sections.flatMap(s=>s.blocks).find(b=>b.variant==='progress');const r=p?.rows.find(r=>r._level==='store');return [v.name,typeof r?.target==='number'?r.target:null];}));}
  function memberScopes(){const m=C.member;return m?.role==='store'?[{region:m.region,store:m.store},...(m.stores||[])].map(x=>({...x,store:canonicalStore(x.store)})):[];}
@@ -459,7 +472,7 @@ ${strategies}`;
  function syncScope(view){
   if(view.scope==='store'&&canonicalStore(view.store||view.name)!==(view.store||view.name))view=resolveView(view.region,canonicalStore(view.store||view.name));
   if(view.scope==='store'&&hiddenCustomerStores.has(canonicalStore(view.store||view.name))){view=resolveView(view.region,'');updateUrl(view);}
-  const member=C.member,assigned=memberScopes();
+  const member=C.member?.role==='collaborator'?null:C.member,assigned=memberScopes();
   if(member&&member.role==='region'&&view.region!==member.region){view=resolveView(member.region,'');updateUrl(view);}
   if(member?.role==='store'&&!assigned.some(x=>x.region===view.region&&x.store===view.name)){const fallback=assigned.find(x=>x.region===view.region)||assigned[0];view=resolveView(fallback.region,fallback.store);updateUrl(view);}
   const regions=M.sortRegions(DATA.regions).map(r=>({...r,stores:(r.stores||[]).filter(s=>!hiddenCustomerStores.has(canonicalStore(s)))})).filter(r=>r.stores.length).filter(r=>!member||member.role==='project'||member.role==='region'&&r.name===member.region||assigned.some(x=>x.region===r.name));
@@ -486,7 +499,7 @@ ${strategies}`;
  }
  function unmetTopRows(view){
   const d=data();
-  if(!C.member||!Array.isArray(d?.housing))return [];
+  if(!hasPrivateScope()||!Array.isArray(d?.housing))return [];
   const filter={region:view?.region||'',store:view?.scope==='store'?(view.store||view.name):''},seen=new Set(),rows=[];
   for(const source of M.active(M.inScope(d.housing,filter))){
     if(hiddenCustomerStores.has(canonicalStore(source['门店']))||M.flag(source['本月是否面见']))continue;
@@ -584,7 +597,7 @@ async function unmetTopImage(){
 
 function metHouseRows(view){
   const d=data();
-  if(!C.member||!Array.isArray(d?.housing))return [];
+  if(!hasPrivateScope()||!Array.isArray(d?.housing))return [];
   const filter={region:view?.region||'',store:view?.scope==='store'?(view.store||view.name):''},seen=new Set(),rows=[];
   for(const source of M.active(M.inScope(d.housing,filter))){
     if(hiddenCustomerStores.has(canonicalStore(source['门店']))||!M.flag(source['本月是否面见']))continue;
@@ -614,6 +627,7 @@ function metHouseSummary(rows){
   };
 }
 function metHouseTable(view){
+  if(C.member?.role==='collaborator')return '<div class="ops-notice">当前账号可查看数据公示、共享编辑推动记录；逐套房源明细沿用原业务授权。</div>';
   if(!C.member)return '<div class="ops-notice"><b>登录后查看逐套明细</b><p>分盘、房间号和维护人仅对已授权BP及项目负责人展示。</p><button class="btn primary" data-ops="login">BP／管理入口</button></div>';
   const rows=metHouseRows(view),summary=metHouseSummary(rows);
   if(!rows.length)return '<div class="ops-notice"><b>当前范围暂无当月已面见房源</b><p>当前底表尚未登记本月面见，或当前筛选范围暂无仍在售房源。</p></div>';
@@ -733,7 +747,8 @@ async function metHouseImage(){
   block('daily-unmet-top','本月未面见TOP房明细',unmetTopTable(view),'仅纳入本月仍在售、属于门店TOP或户型TOP且尚未面见的房源。')+
   block('daily-met-houses','当月面见房源明细',metHouseTable(view),'展示本月仍在售且已完成面见登记的房源；同一房源按套去重。')+
   block('daily-quality','面见质量',ownerApplicable?qualityPanel(view):'<div class="ops-notice">本店无在售房源，业主面见质量指标不适用。</div>')+
-  block('daily-message','今日重点与推动话术',`<div class="block ops-panel"><div class="ops-columns"><div><h3>优先推动</h3><ul>${risks.filter(t=>!String(t).includes('结合实际')).slice(0,3).map(t=>`<li>${E(t)}</li>`).join('')||(ownerApplicable?'<li>请优先推进目标未完成门店及TOP重点房源。</li>':'<li>本店当前无在售业主面见任务。</li>')}</ul></div><div><h3>进展与鼓励</h3>${praises.map(t=>`<p>${E(t)}</p>`).join('')||'<p>让每次面见带回具体信息，帮助下一步服务。</p>'}</div></div><p class="ops-muted">提示依据目标、登记与已保存动作形成；原因与优先级由BP和销售管理者核实。</p><label class="ops-field">补充单店现场信息<textarea id="ops-scene" placeholder="可输入经理已做动作、业主原话、邀约卡点及需要的支持">${E(sceneRaw(view))}</textarea></label><div class="ops-actions"><button class="btn" data-ops="voice">语音转文字</button><button class="btn primary" data-ops="voice-stop" hidden>结束语音</button><button class="btn" data-ops="generate-message">整理并预览</button><button class="btn primary" data-ops="save-scene" ${!C.member||!s.store?'disabled':''}>确认并同步</button><button class="btn" data-ops="copy-message">复制话术</button></div>${WBVoice.field()}${analysisPanel(view)}<div id="ops-plan-preview">${planPanel(view)}</div>${currentMonth==='2026-11'?'<p class="ops-muted">公示口径：套数与面见率等权综合排名，门店／店组各自比较，仅展示首末并保留并列。</p>':''}<textarea id="ops-message" class="ops-message" aria-label="当前范围推动话术">${E(message)}</textarea></div>`)+
+  block('daily-message','今日重点与推动话术',`<div class="block ops-panel"><div class="ops-columns"><div><h3>优先推动</h3><ul>${risks.filter(t=>!String(t).includes('结合实际')).slice(0,3).map(t=>`<li>${E(t)}</li>`).join('')||(ownerApplicable?'<li>请优先推进目标未完成门店及TOP重点房源。</li>':'<li>本店当前无在售业主面见任务。</li>')}</ul></div><div><h3>进展与鼓励</h3>${praises.map(t=>`<p>${E(t)}</p>`).join('')||'<p>让每次面见带回具体信息，帮助下一步服务。</p>'}</div></div>${currentMonth==='2026-11'?'<p class="ops-muted">公示口径：套数与面见率等权综合排名，门店／店组各自比较，仅展示首末并保留并列。</p>':''}<div class="ops-actions"><button class="btn" data-ops="copy-message">复制话术</button></div><textarea id="ops-message" class="ops-message" aria-label="当前范围推动话术">${E(message)}</textarea></div>`)+
+  block('daily-records','共享推动记录','<div id="ops-work-records"></div>','原始资料提交一次，保留来源；后续进展在同一条记录中补充。沟通记录不改变业务底表统计。')+
   block('daily-actions','动作追踪与结果',interviewShortlist(view)+actions(view),C.member?'记录保存到共享服务，下一次导入底表时继续保留。':'登录后可在负责范围内记录动作。');
  }
  function novemberRankedSelection(rows,level){
@@ -859,7 +874,7 @@ TOP重点房源
   try{const exportView=C.project?{scope:'company',name:'全司'}:currentView,result=await buildSendPackage(exportView,{pilot}),url=URL.createObjectURL(result.blob),link=document.createElement('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);notify('已生成'+result.manifest.stores.length+'家门店资料，尚未发送到微信');}
   finally{if(button.isConnected){button.disabled=false;button.textContent=label;}}
  }
- function actions(view){const s=scope();return `<div class="block ops-panel">${C.member?pilotPanel()+'<div class="ops-actions"><button class="btn primary" data-ops="send-package">'+(C.project?'生成全司18店资料包':'生成当前范围微信资料包')+'</button>'+(['company','region'].includes(view.scope)&&(C.project||C.member.role==='region'&&view.region===C.member.region)?'<button class="btn" data-ops="publication-package">下载'+E(view.name)+'公示图文</button>':'')+'</div><p class="ops-muted">按门店生成话术和三个图片模块；长明细自动分页。仅下载，不会发送到微信。</p>'+taskCards(view):'<p>日常进展与质量概览可直接查看；已授权成员进入后，可保存现场反馈和跟进结果。</p>'}${s.store&&C.member?`<details><summary>补充未包含在现场反馈中的事项</summary><form id="ops-task-form" class="ops-form"><label>推进事项<input name="title" required></label><label>项目／房间号<input name="house"></label><label>负责人<input name="owner" required></label><label>计划时间<input name="due" type="date" required></label><label class="wide">动作与卡点<textarea name="action" required></textarea></label><button class="btn primary" type="submit">保存补充事项</button></form></details>`:''}</div>`;}
+ function actions(view){if(C.member?.role==='collaborator')return '<p class="ops-muted">后续推进请在上方同一条共享记录中补充；历史动作保留原有授权。</p>';const s=scope();return `<div class="block ops-panel">${C.member?pilotPanel()+'<div class="ops-actions"><button class="btn primary" data-ops="send-package">'+(C.project?'生成全司18店资料包':'生成当前范围微信资料包')+'</button>'+(['company','region'].includes(view.scope)&&(C.project||C.member.role==='region'&&view.region===C.member.region)?'<button class="btn" data-ops="publication-package">下载'+E(view.name)+'公示图文</button>':'')+'</div><p class="ops-muted">按门店生成话术和三个图片模块；长明细自动分页。仅下载，不会发送到微信。</p>'+taskCards(view):'<p>日常进展与质量概览可直接查看；已授权成员进入后，可保存现场反馈和跟进结果。</p>'}${s.store&&C.member?`<details><summary>补充未包含在现场反馈中的事项</summary><form id="ops-task-form" class="ops-form"><label>推进事项<input name="title" required></label><label>项目／房间号<input name="house"></label><label>负责人<input name="owner" required></label><label>计划时间<input name="due" type="date" required></label><label class="wide">动作与卡点<textarea name="action" required></textarea></label><button class="btn primary" type="submit">保存补充事项</button></form></details>`:''}</div>`;}
  function loginPanel(){const disabled=C.configured?'':'disabled';return `<div class="block ops-panel"><h3>成员登录</h3><p class="ops-muted">日常进展无需登录。BP补充、核账及管理使用已授权工号后4位进入，无需密码；开头的0需要保留。</p><form id="ops-login-form" class="ops-login"><label>工号后4位<input name="loginId" type="text" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="username" placeholder="请输入4位工号" ${disabled} required></label><button class="btn primary" type="submit" ${disabled}>登录工作台</button></form>${C.configured?'':'<p class="ops-muted">共享服务尚未连接，账号开通后即可使用工号登录。</p>'}</div>`;}
  const archiveType=file=>/\.pdf$/i.test(file.original_name||'')?'PDF':'Word';
  const archiveSize=bytes=>{const n=Number(bytes||0);return n>=1024*1024?(n/1024/1024).toFixed(n>=10*1024*1024?0:1)+' MB':Math.max(1,Math.round(n/1024))+' KB';};
@@ -873,6 +888,7 @@ TOP重点房源
   return hero(`${Number(currentMonth.slice(5))}月历史复盘文件管理`,`${monthLabel(currentMonth)} · 可一次选择并上传多个留存文件`)+block('admin-archive','上传复盘文件',`<form id="ops-archive-form" class="block ops-panel"><div class="ops-form"><label>归档月份<input type="month" name="month" value="${E(currentMonth)}" readonly></label><label class="wide">历史周复盘／月复盘文件<input type="file" name="files" multiple accept=".doc,.docx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" required></label></div><p class="ops-muted">支持DOC、DOCX或PDF；单个文件不超过25MB。可一次选择多份，同名文件也会分别保留，不覆盖已有文件。</p><label class="ops-check archive-public-confirm"><input type="checkbox" name="publicConfirmed" required>我已确认所选复盘文件可以在免登录共享页面公开查看和下载</label><button class="btn primary" type="submit">上传并发布到本月归档</button><div id="ops-archive-progress" aria-live="polite"></div></form>${notice}`)+block('admin-archive-list',`本月已归档文件 · ${files.length}份`,archiveCards(files),'上传完成后不需要重新发布网页，其他人刷新原主链接即可看到。');
  }
  function finance(view){
+  if(C.member?.role==='collaborator')return hero('历史费用核销','保留原有账本及核销记录')+'<div class="ops-notice">当前账号用于共享工作记录协作；历史账本继续按原费用权限查看。</div>';
   if(!C.member)return hero('费用核账','由门店BP补齐资料、核对分摊与收付款；按月保留记录')+loginPanel();const d=data();if(!d)return hero('费用核账','正在读取共享账本');
   const s=scope();if(!s.store){const stores=DATA.regions.flatMap(r=>(!s.region||s.region===r.name)?r.stores:[]).filter(store=>!hiddenCustomerStores.has(canonicalStore(store)));return hero('费用核账 · '+view.name,currentMonth+' · 请选择单店核账')+`<div class="ops-store-grid">${stores.map(store=>{const candidates=M.expenseRecords(d.housing,d.items,currentMonth,{store}),priced=candidates.filter(c=>c.priceCents>0);const period=d.periods.find(p=>p.store===store);return `<button class="ops-store-card" data-ops="choose-store" data-store="${E(store)}"><b>${E(store)}</b><span>送礼候选 ${expenseCount(candidates)}份 · 已核价 ${expenseCount(priced)}份</span><span>${period?.locked?'已结账锁定':'本月核账中'}</span></button>`;}).join('')}</div>`;}
   const period=d.periods.find(p=>p.store===s.store),locked=!!period?.locked,confirmed=!!item('rules','monthly',s.store);
@@ -985,7 +1001,11 @@ TOP重点房源
   block('admin-goals','本月门店目标',`<form id="ops-goals-form" class="block ops-panel ops-form"><label class="wide">批量导入目标文件（CSV、TSV、XLSX或JSON）<input id="ops-goals-file" type="file" accept=".csv,.tsv,.xlsx,.json"></label><p class="ops-muted wide">文件至少包含“店面/门店”和“目标”两列；读取后会自动填入下方门店目标，确认无误后点击保存。</p>${stores.map(store=>currentMonth==='2026-11'&&noOwnerStore(store)?`<label>${E(store)}<input type="text" value="/（无在售房源）" disabled></label>`:`<label>${E(store)}<input type="number" min="0" step="1" name="${E(store)}" value="${storeGoals[store]??''}" placeholder="待确认"></label>`).join('')}<button class="btn primary">保存当月目标</button><div id="ops-goals-file-preview" class="wide" aria-live="polite"></div></form>`)+
   block('admin-history','更新记录与备份',`<div class="block ops-panel"><button class="btn" data-ops="backup">导出当前月份完整备份</button><p class="ops-muted">包含当前账号有权读取的本月底表、明细、动作、费用、规则、快照及账期信息；凭证原件另存。</p>${(d?.imports||[]).map(x=>`<div class="ops-history"><b>数据截至${E(x.as_of)}</b><span>${E(new Date(x.created_at).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'}))}更新 · ${x.housing_count}条底表</span></div>`).join('')||'<p>当前月份尚无共享导入记录。</p>'}</div>`);
  }
+ function disposeRecords(keepDraft=true){
+  if(state.recordsController){if(keepDraft&&state.recordsContextKey)state.recordDrafts[state.recordsContextKey]=state.recordsController.state?.draft;state.recordsController.destroy();state.recordsController=null;}
+ }
  function render(view){
+  disposeRecords();
   WBVoice.reset();
   const archiveMonth=isHistoryArchiveMonth(currentMonth);
   if(archiveMonth&&!['review','admin'].includes(currentMode))currentMode='review';
@@ -1000,12 +1020,14 @@ TOP重点房源
   const reviewButton=document.querySelector('[data-view-mode="review"]');if(reviewButton)reviewButton.textContent=archiveMonth?'历史复盘':'周/月复盘';
   document.getElementById('report').hidden=false;document.getElementById('status').hidden=true;document.getElementById('scope-panel').hidden=archiveMonth||currentMode==='admin';document.getElementById('toolbar').hidden=false;document.getElementById('word-download').hidden=true;
   document.getElementById('copy-progress-image').hidden=archiveMonth||!['daily','review'].includes(currentMode);document.getElementById('copy-progress-image').disabled=archiveMonth;document.getElementById('copy-report').hidden=archiveMonth;document.getElementById('copy-report').disabled=archiveMonth||!['daily','review'].includes(currentMode);document.getElementById('print-report').disabled=false;
-  let nav=archiveMonth?(currentMode==='admin'?[['admin-archive','上传复盘文件'],['admin-archive-list','已归档文件']]:[['history-files','复盘文件']]):currentMode==='daily'?[['daily-progress','面见及礼物进展'],['daily-unmet-top','本月未面见TOP房'],['daily-met-houses','当月面见房源'],['daily-quality','面见质量'],['daily-message','今日重点与话术'],['daily-actions','动作追踪与结果']]:currentMode==='review'?[['review-progress','本月目标达成结果'],['review-gifts','面见伴手礼'],['review-quality','面见质量与业务转化'],['review-highlights','标杆门店与重点提醒'],['review-actions',currentMonth==='2026-11'?'上周策略复盘与本周承接':Number(currentMonth.slice(5))+'月关键动作复盘'],['review-next',currentMonth==='2026-11'?'11月第二周目标及核心策略':'11月份目标及核心策略']]:currentMode==='expense'?[['expense-todo','BP核账待办'],['expense-head','账本与当月规则'],['expense-records','送礼明细与凭证'],['expense-settlement','分摊与收付款'],['expense-cash','实际收付款登记']]:[['admin-import','导入基础数据'],['admin-goals','本月门店目标'],['admin-history','更新与备份']];
+  let nav=archiveMonth?(currentMode==='admin'?[['admin-archive','上传复盘文件'],['admin-archive-list','已归档文件']]:[['history-files','复盘文件']]):currentMode==='daily'?[['daily-progress','面见及礼物进展'],['daily-unmet-top','本月未面见TOP房'],['daily-met-houses','当月面见房源'],['daily-quality','面见质量'],['daily-message','今日重点与话术'],['daily-records','共享推动记录'],['daily-actions','动作追踪与结果']]:currentMode==='review'?[['review-progress','本月目标达成结果'],['review-gifts','面见伴手礼'],['review-quality','面见质量与业务转化'],['review-highlights','标杆门店与重点提醒'],['review-actions',currentMonth==='2026-11'?'上周策略复盘与本周承接':Number(currentMonth.slice(5))+'月关键动作复盘'],['review-next',currentMonth==='2026-11'?'11月第二周目标及核心策略':'11月份目标及核心策略']]:currentMode==='expense'?[['expense-todo','BP核账待办'],['expense-head','账本与当月规则'],['expense-records','送礼明细与凭证'],['expense-settlement','分摊与收付款'],['expense-cash','实际收付款登记']]:[['admin-import','导入基础数据'],['admin-goals','本月门店目标'],['admin-history','更新与备份']];
+  if(!archiveMonth&&currentMode==='review'&&C.canRecords)nav.push(['review-records','已核实推动记录']);
   if(currentMonth==='2026-11'&&root.WBPlanExecution&&currentMode==='admin')nav.unshift(['pe-admin','计划分包与门店配置']);
   document.getElementById('nav').innerHTML=nav.map(([id,label],i)=>`<a href="#${id}"><span class="nav-no">0${i+1}</span><span>${E(label)}</span></a>`).join('');
   document.querySelector('.nav-label').textContent='CONTENTS / '+(archiveMonth?(currentMode==='admin'?'文件管理':'历史复盘'):({daily:'日常推动',review:'结果复盘',expense:'费用核销',admin:'数据管理'}[currentMode]||'项目工作台'));
   document.title=(archiveMonth?(currentMode==='admin'?'历史文件管理':'历史复盘归档'):({daily:'日常推动',review:'周／月复盘',expense:'费用核销',admin:'数据管理'}[currentMode]))+' · '+view.name+'｜面见项目工作台';
   document.getElementById('report').innerHTML=connection()+(archiveMonth&&currentMode==='review'?historyArchive(view):currentMode==='daily'?daily(view):currentMode==='expense'?finance(view):currentMode==='review'?review(view):admin(view));
+  if(currentMode==='daily'&&root.WBWorkRecords){const host=document.getElementById('ops-work-records'),month=currentMonth,member=C.member;state.recordsContextKey=month+'|'+(member?.login_id||'guest');if(host)state.recordsController=root.WBWorkRecords.mount(host,{month,view:currentView,cloud:C,initialDraft:(state.recordDrafts[state.recordsContextKey]?.rawText?.trim()||state.recordDrafts[state.recordsContextKey]?.files?.length)?state.recordDrafts[state.recordsContextKey]:undefined,onLogin:()=>dialog(loginPanel()),onChanged:async()=>{const feed=await C.records('list',{month});if(C.member===member&&state.cache[month])state.cache[month].workRecords=feed;}});}
   if(currentMonth==='2026-11'&&root.WBPlanExecution&&currentMode==='admin'){document.getElementById('report').insertAdjacentHTML('afterbegin',root.WBPlanExecution.renderAdmin(view));root.WBPlanExecution.boot();}
   if(C.configured&&!data()&&!state.loading&&!state.error)refresh();
  }
@@ -1019,7 +1041,7 @@ TOP重点房源
  function download(value,name){const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  async function handleClick(e){const b=e.target.closest('[data-ops]');if(!b)return;const action=b.dataset.ops;try{
   if(action==='login'){dialog(loginPanel());return;}if(action==='close-dialog'){document.getElementById('ops-dialog').close();return;}
-  if(action==='logout'){await C.logout();state.cache={};state.sceneDrafts={};state.sceneAnalyses={};state.scenePlans={};state.finance=null;document.getElementById('ops-dialog')?.close();render(viewFromUrl());return;}if(action==='refresh'){await refresh();return;}if(action==='admin'){setViewMode('admin');return;}
+  if(action==='logout'){disposeRecords(false);await C.logout();state.recordDrafts={};state.cache={};state.sceneDrafts={};state.sceneAnalyses={};state.scenePlans={};state.finance=null;document.getElementById('ops-dialog')?.close();render(viewFromUrl());return;}if(action==='refresh'){await refresh();return;}if(action==='admin'){setViewMode('admin');return;}
   if(action==='choose-store'){document.getElementById('store-filter').value=b.dataset.store;document.getElementById('store-filter').dispatchEvent(new Event('change'));return;}
   if(action==='generate-message'){await organizeAndUpdate(b);return;}
   if(action==='copy-message'){await copyText(document.getElementById('ops-message').value,'推动话术已复制');return;}
