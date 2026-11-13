@@ -168,5 +168,17 @@
     return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(Error('面见明细图片生成失败')), 'image/png'));
   }
 
-  root.WBSendPackage = { zip, groupTemplate, summaryImage, emptyMeetingImage, validatePilotConfig, loadPilotConfig, savePilotConfig, validateProjectConfig };
+  async function emptyFeedbackImage({store,month,asOf}) {
+    const canvas=document.createElement('canvas');canvas.width=1500;canvas.height=430;
+    const context=canvas.getContext('2d');if(!context)throw Error('真实反馈图片生成失败');
+    context.fillStyle='#f8f4ff';context.fillRect(0,0,canvas.width,canvas.height);
+    context.fillStyle='#7b32b4';context.fillRect(0,0,canvas.width,190);
+    context.fillStyle='#fff';context.font='600 42px "Microsoft YaHei","PingFang SC",sans-serif';context.fillText('业主面见 · 真实反馈',56,85);
+    context.font='23px "Microsoft YaHei","PingFang SC",sans-serif';context.fillText(`${month} | ${store} | 数据截至 ${asOf}`,56,140);
+    context.fillStyle='#514363';context.font='25px "Microsoft YaHei","PingFang SC",sans-serif';context.fillText('本店本月暂无已登记面见的在售房源，暂无真实反馈。',56,275);
+    return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('真实反馈图片生成失败')),'image/png'));
+  }
+
+  const moduleLabels={progress:'面见及礼物进展',details:'未面见TOP房明细',quality:'业主面见真实反馈'};
+  root.WBSendPackage = { moduleLabels, emptyFeedbackImage, zip, groupTemplate, summaryImage, emptyMeetingImage, validatePilotConfig, loadPilotConfig, savePilotConfig, validateProjectConfig };
 })(typeof window === 'object' ? window : globalThis);

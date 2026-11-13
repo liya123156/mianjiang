@@ -46,11 +46,8 @@
  function qualityText(q=qualityData()){if(!q||q.pending)return '面见质量概览待同步';const t=q.summary;const items=Object.entries(Q.labels).map(([k,v])=>({label:v,count:Number(t.counts?.[k]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count);return `面见质量｜截至${q.asOf}\n本月面见带来的业务反馈结构（按数量从高到低）：\n${items.map(x=>`${x.label}：${x.count}套（${M.pct(x.count,t.total)}）`).join('\n')||'暂无已归类反馈'}${Number(t.counts?.U||0)>0?`\n其中原文待补${Number(t.missing||0)}套，已有原文但结果待明确${Number(t.unclear||0)}套。`:''}`;}
  function novemberQualityMessage(q){
   if(!q||q.pending)return '面见质量概览待同步';
-  const t=q.summary,items=Object.entries(Q.labels).filter(([key])=>key!=='U').map(([key,label])=>({key,label,count:Number(t.counts?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count);
-  if(!items.length)return '具体面见收获待补充。期待伙伴记录业主的真实反馈，让每一次用心服务都能被看见。';
-  const actions={P:'明确价格与交易条件',M:'了解业主心态与出售动机',R:'开展关系维护与客户反馈沟通',E:'取得钥匙或委托授权',V:'确认看房方式与配合条件',C:'核实房源情况',O:'发现新的服务需求'};
-  const highlights=items.slice(0,2).map(x=>actions[x.key]).filter(Boolean).join('、');
-  return items.map(x=>`${x.label}：${x.count}套（${M.pct(x.count,t.total)}）`).join('\n')+`\n\n💡${highlights}，这些面见收获正在为下一步服务提供依据。\n👏一次有用的信息、一个有效的沟通方法，都值得被看见；欢迎分享具体动作和顾客原话，让好做法带动更多伙伴！`;
+  const items=Object.entries(Q.labels).filter(([key])=>key!=='U').map(([key,label])=>({key,label,count:Number(q.summary.counts?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count);
+  return items.map(x=>`${x.label}：${x.count}套`).join('\n')||'暂无已归类反馈';
  }
  function qualityStandards(){const standards=Q.standards||[];if(!standards.length)return '';return `<details class="quality-classification quality-standards"><summary>查看面见质量识别标准</summary><p class="ops-muted">依据原文中已获取的信息与已开展的维护沟通归类；价格不变、不急卖等真实现状同样计入。计划、待询问事项不视为已取得结果。每套房源只计一个主要结果，主题标签可重复。</p><div class="review-table-scroll"><table class="review-tier-table" aria-label="面见质量识别标准"><thead><tr><th scope="col">主要结果</th><th scope="col">计入标准</th><th scope="col">不直接计入</th><th scope="col">原文示例</th></tr></thead><tbody>${standards.map(x=>`<tr><th scope="row" style="white-space:normal;text-align:left">${E(Q.labels[x.code]||x.code)}</th><td style="white-space:normal;text-align:left">${E(x.accept)}</td><td style="white-space:normal;text-align:left">${E(x.exclude)}</td><td style="white-space:normal;text-align:left">${E(x.example)}</td></tr>`).join('')}</tbody></table></div><p class="ops-muted">反馈结果待明确表示原文缺失或记录尚不足以支持归类，不直接等同于面见没有收获。</p></details>`;}
  function qualitySelection(view=currentView,q=qualityData(view)){const key=currentMonth+'|'+viewKey(view),filter=state.qualityFilters[key]||={topic:'all',sort:'latest',page:0},rows=q?.private?F.select(q.records,filter.topic,filter.sort):[],pages=Math.max(1,Math.ceil(rows.length/6));filter.page=Math.min(filter.page,pages-1);return {filter,rows,pageRows:rows.slice(filter.page*6,filter.page*6+6),pages};}
@@ -535,7 +532,7 @@ function unmetTopCanvasLines(ctx,value,maxWidth){
   return lines;
 }
 async function unmetTopImageBlobs(rows,view){
-  const pages=[];for(let i=0;i<rows.length;i+=24)pages.push(rows.slice(i,i+24));
+  const pages=[];for(let i=0;i<rows.length;i+=24)pages.push(rows.slice(i,i+24));if(!pages.length)pages.push([]);
   const headers=['门店','店组','维护人姓名','分盘','房间号','房源标签'],keys=['store','group','advisor','project','room','tag'],widths=[210,190,210,350,390,230],left=40,top=176,headerHeight=58;
   const blobs=[];
   for(let pageIndex=0;pageIndex<pages.length;pageIndex++){
@@ -544,7 +541,7 @@ async function unmetTopImageBlobs(rows,view){
       const cells=keys.map((key,index)=>unmetTopCanvasLines(measure,row[key],widths[index]-24));
       return {cells,height:Math.max(54,Math.max(...cells.map(lines=>lines.length))*28+18)};
     });
-    const canvas=document.createElement('canvas');canvas.width=1660;canvas.height=top+headerHeight+layouts.reduce((sum,row)=>sum+row.height,0)+66;
+    const canvas=document.createElement('canvas');canvas.width=1660;canvas.height=top+headerHeight+layouts.reduce((sum,row)=>sum+row.height,0)+(rows.length?66:196);
     const ctx=canvas.getContext('2d');ctx.fillStyle='#fffdfa';ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.fillStyle='#5d3973';ctx.fillRect(0,0,canvas.width,105);
     ctx.fillStyle='#fff';ctx.font='bold 34px "Microsoft YaHei","PingFang SC",sans-serif';ctx.textBaseline='middle';ctx.fillText(`${currentMonth.replace('-','年')}月未面见TOP房明细`,left,42);
@@ -554,6 +551,7 @@ async function unmetTopImageBlobs(rows,view){
     ctx.strokeStyle='#d7cde0';ctx.lineWidth=1;ctx.font='bold 19px "Microsoft YaHei","PingFang SC",sans-serif';ctx.fillStyle='#533865';
     headers.forEach((label,index)=>{ctx.strokeRect(x,top,widths[index],headerHeight);ctx.fillText(label,x+12,top+headerHeight/2);x+=widths[index];});
     let y=top+headerHeight;ctx.font='20px "Microsoft YaHei","PingFang SC",sans-serif';
+    if(!rows.length){ctx.fillStyle='#675c6c';ctx.fillText('当前范围暂无本月未面见TOP房。',left,y+70);}
     layouts.forEach((layout,rowIndex)=>{
       x=left;ctx.fillStyle=rowIndex%2?'#fbf8fc':'#fffdfa';ctx.fillRect(left,y,widths.reduce((a,b)=>a+b,0),layout.height);
       layout.cells.forEach((lines,index)=>{
@@ -735,22 +733,35 @@ async function metHouseImage(){
   block('daily-unmet-top','本月未面见TOP房明细',unmetTopTable(view),'仅纳入本月仍在售、属于门店TOP或户型TOP且尚未面见的房源。')+
   block('daily-met-houses','当月面见房源明细',metHouseTable(view),'展示本月仍在售且已完成面见登记的房源；同一房源按套去重。')+
   block('daily-quality','面见质量',ownerApplicable?qualityPanel(view):'<div class="ops-notice">本店无在售房源，业主面见质量指标不适用。</div>')+
-  block('daily-message','今日重点与推动话术',`<div class="block ops-panel"><div class="ops-columns"><div><h3>优先推动</h3><ul>${risks.filter(t=>!String(t).includes('结合实际')).slice(0,3).map(t=>`<li>${E(t)}</li>`).join('')||(ownerApplicable?'<li>请优先推进目标未完成门店及TOP重点房源。</li>':'<li>本店当前无在售业主面见任务。</li>')}</ul></div><div><h3>进展与鼓励</h3>${praises.map(t=>`<p>${E(t)}</p>`).join('')||'<p>让每次面见带回具体信息，帮助下一步服务。</p>'}</div></div><p class="ops-muted">提示依据目标、登记与已保存动作形成；原因与优先级由BP和销售管理者核实。</p><label class="ops-field">补充单店现场信息<textarea id="ops-scene" placeholder="可输入经理已做动作、业主原话、邀约卡点及需要的支持">${E(sceneRaw(view))}</textarea></label><div class="ops-actions"><button class="btn" data-ops="voice">语音转文字</button><button class="btn primary" data-ops="voice-stop" hidden>结束语音</button><button class="btn" data-ops="generate-message">整理并预览</button><button class="btn primary" data-ops="save-scene" ${!C.member||!s.store?'disabled':''}>确认并同步</button><button class="btn" data-ops="copy-message">复制话术</button></div>${WBVoice.field()}${analysisPanel(view)}<div id="ops-plan-preview">${planPanel(view)}</div><textarea id="ops-message" class="ops-message" aria-label="当前范围推动话术">${E(message)}</textarea></div>`)+
+  block('daily-message','今日重点与推动话术',`<div class="block ops-panel"><div class="ops-columns"><div><h3>优先推动</h3><ul>${risks.filter(t=>!String(t).includes('结合实际')).slice(0,3).map(t=>`<li>${E(t)}</li>`).join('')||(ownerApplicable?'<li>请优先推进目标未完成门店及TOP重点房源。</li>':'<li>本店当前无在售业主面见任务。</li>')}</ul></div><div><h3>进展与鼓励</h3>${praises.map(t=>`<p>${E(t)}</p>`).join('')||'<p>让每次面见带回具体信息，帮助下一步服务。</p>'}</div></div><p class="ops-muted">提示依据目标、登记与已保存动作形成；原因与优先级由BP和销售管理者核实。</p><label class="ops-field">补充单店现场信息<textarea id="ops-scene" placeholder="可输入经理已做动作、业主原话、邀约卡点及需要的支持">${E(sceneRaw(view))}</textarea></label><div class="ops-actions"><button class="btn" data-ops="voice">语音转文字</button><button class="btn primary" data-ops="voice-stop" hidden>结束语音</button><button class="btn" data-ops="generate-message">整理并预览</button><button class="btn primary" data-ops="save-scene" ${!C.member||!s.store?'disabled':''}>确认并同步</button><button class="btn" data-ops="copy-message">复制话术</button></div>${WBVoice.field()}${analysisPanel(view)}<div id="ops-plan-preview">${planPanel(view)}</div>${currentMonth==='2026-11'?'<p class="ops-muted">公示口径：套数与面见率等权综合排名，门店／店组各自比较，仅展示首末并保留并列。</p>':''}<textarea id="ops-message" class="ops-message" aria-label="当前范围推动话术">${E(message)}</textarea></div>`)+
   block('daily-actions','动作追踪与结果',interviewShortlist(view)+actions(view),C.member?'记录保存到共享服务，下一次导入底表时继续保留。':'登录后可在负责范围内记录动作。');
+ }
+ function novemberRankedSelection(rows,level){
+  const name=row=>level==='group'?row.group:row.store;
+  const eligible=(rows||[]).filter(row=>row._level===level&&Number(row.stock)>0&&Number.isFinite(Number(row.met))&&Number(row.met)>=0&&Number.isFinite(Number.parseFloat(row.met_rate)));
+  // Equal weight, scale-free: add descending competition ranks for met homes and displayed meeting rate.
+  const ranked=eligible.map(row=>({row,volumeRank:1+eligible.filter(other=>Number(other.met)>Number(row.met)).length,rateRank:1+eligible.filter(other=>Number.parseFloat(other.met_rate)>Number.parseFloat(row.met_rate)).length})).map(result=>({...result,score:result.volumeRank+result.rateRank}));
+  const first=Math.min(...ranked.map(result=>result.score)),last=Math.max(...ranked.map(result=>result.score));
+  const ordered=list=>list.sort((a,b)=>level==='group'?(M.compareStore(a.store,b.store)||M.compareGroup(name(a),name(b))):M.compareStore(name(a),name(b)));
+  const best=ordered(ranked.filter(result=>result.score===first&&Number(result.row.met)>0).map(result=>result.row)),bestSet=new Set(best);
+  const low=ordered(ranked.filter(result=>result.score===last&&!bestSet.has(result.row)).map(result=>result.row));
+  return {level,name,best,low,ranked};
  }
  function novemberPraises(view,progress){
   const level=view.scope==='store'?'group':'store',rows=(progress.rows||[]).filter(r=>r._level===level&&Number(r.stock)>0&&Number(r.met)>0),best=rows.sort((a,b)=>Number.parseFloat(b.met_rate)-Number.parseFloat(a.met_rate)).slice(0,3);
   return best.map(r=>`👍 ${level==='group'?r.group:r.store}：面见${r.met}套，面见率${r.met_rate}。`);
  }
  function novemberMessage(view,progress,m,goal,cutoff){
-  const rows=progress.rows||[],level=view.scope==='store'?'group':'store',label=level==='group'?'店组':'门店',owner=m._ownerApplicable!==false,eligible=rows.filter(r=>r._level===level&&Number(r.stock)>0),name=r=>level==='group'?r.group:r.store,positive=eligible.filter(r=>Number(r.met)>0).sort((a,b)=>Number.parseFloat(b.met_rate)-Number.parseFloat(a.met_rate)||Number(b.met)-Number(a.met)||String(name(a)).localeCompare(String(name(b)),'zh-CN'));
-  const benchmark=positive.slice(0,view.scope==='company'?1:3).map(r=>`${name(r)}：面见${r.met}套｜面见率${r.met_rate}`).join('\n')||`当前暂无已产生业主面见登记的${label}`;
-  const zero=eligible.filter(r=>Number(r.met)===0),candidates=[...eligible].filter(r=>r.met<r._target||r._target==null||Number(r.met)===0).sort((a,b)=>Number.parseFloat(a.met_rate)-Number.parseFloat(b.met_rate)||Number(a.met)-Number(b.met)||String(name(a)).localeCompare(String(name(b)),'zh-CN')),low=view.scope==='company'?candidates.slice(0,2):(zero.length?zero:candidates.slice(0,3)),reminders=low.map(r=>`${name(r)}：面见${r.met}套｜面见率${r.met_rate}`).join('\n')||`当前无需要单独提示的${label}`;
-  const ownerProgress=owner?`月度目标：${goal==null?'待确认':goal+'套'}｜全盘面见${m.met}套｜面见率${m.met_rate}\n门店TOP：${m.store_top_met}套｜面见率${m.store_top_rate}\n户型TOP：${m.unit_top_met}套｜面见率${m.unit_top_rate}`:'业主面见：/（本店无在售房源，不涉及业主指标）';
-  const childLevel=view.scope==='region'?'store':'group',detailRows=view.scope==='company'?[]:rows.filter(r=>r._level===childLevel),detail=detailRows.map(r=>`${childLevel==='store'?r.store:r.group}：全盘${r.met}套（${r.met_rate}）｜门店TOP ${r.store_top_met}套（${r.store_top_rate}）｜户型TOP ${r.unit_top_met}套（${r.unit_top_rate}）`).join('\n');
-  const q=qualityData(view);
-  const closing=owner?`请结合${view.scope==='store'?'各组':'各店'}进展，继续明确重点业主的面见安排[太阳]`:'客户面见记录反映我们主动走近顾客的行动，请持续了解需求、记录真实反馈[太阳]';
-  return [`${view.scope==='store'?'各位经理和伙伴':view.scope==='region'?'各位店总和BP伙伴':'各位梦想合伙人'}，大家好☀️`,`🍁 11月感恩月｜${view.name}面见进展\n${cutoff}`,`🎯 一、本月目标与进展\n${ownerProgress}${detail?'\n\n'+(childLevel==='store'?'各店进展':'各组进展')+'👇\n'+detail:''}`,...(owner?[`🏅 二、标杆${label}进展\n${benchmark}`,`⚠️ 三、重点提醒${label}\n${reminders}`,`🔎 四、面见质量\n${novemberQualityMessage(q)}`]:[]),`${closing}\n感谢伙伴们把感恩落在一次次主动面见与专业服务中，也让真实的进步和可借鉴的做法被及时看见[爱心]`].join('\n\n');
+  const rows=progress.rows||[],owner=m._ownerApplicable!==false;
+  const selections=(view.scope==='region'?['store','group']:[view.scope==='store'?'group':'store']).map(level=>novemberRankedSelection(rows,level));
+  const lines=(kind)=>selections.map(s=>{
+   const label=s.level==='group'?'店组':'门店',list=s[kind].map(r=>`${s.name(r)}：面见${r.met}套（${r.met_rate}）`).join('\n');
+   return list?(selections.length>1?label+'：\n':'')+list:'';
+  }).filter(Boolean).join('\n')||(kind==='best'?'当前暂无已产生业主面见登记的对象':'当前无需要单独提示的对象');
+  const ownerProgress=owner?`全盘面见目标：${goal==null?'待确认':goal+'套'}\n全盘面见：${m.met}套（${m.met_rate}）\n门店TOP：${m.store_top_met}套（${m.store_top_rate}）\n户型TOP：${m.unit_top_met}套（${m.unit_top_rate}）`:'业主面见：/（本店无在售房源）';
+  const giftRows=rows.filter(r=>r._level==='store'&&Number(r.met)>0&&Number(r.gift)/Number(r.met)<.2);
+  const giftText=giftRows.length?`🎁 伴手礼提醒\n${giftRows.map(r=>r.store).join('、')}\n以上门店系统送礼登记覆盖率低于20%，请核实伴手礼准备、使用及补录情况。`:'';
+  return [`${view.scope==='store'?'各位经理和伙伴':view.scope==='region'?'各位店总和BP伙伴':'各位梦想合伙人'}，大家好☀️`,`🍁 11月感恩月｜${view.name}面见进展\n${cutoff}`,`🎯 本月目标与进展\n${ownerProgress}`,...(owner?[`🏅 标杆${view.scope==='region'?'门店与店组':view.scope==='store'?'店组':'门店'}\n${lines('best')}`,`⚠️ 重点提醒${view.scope==='region'?'门店与店组':view.scope==='store'?'店组':'门店'}\n${lines('low')}`,`🔎 面见质量\n${novemberQualityMessage(qualityData(view))}`,giftText]:[]),owner?'请结合进展明确重点业主的面见安排，让主动沟通带回有用信息、支持下一步服务。':'请持续主动连接顾客、了解需求，记录真实反馈。'].filter(Boolean).join('\n\n');
  }
  function makeMessage(view,progress,m,goal,cutoff,risks,praises){if(currentMonth==='2026-11')return novemberMessage(view,progress,m,goal,cutoff,praises);const name=view.name,month=Number(currentMonth.slice(5)),gap=goal==null?'待确认':Math.max(0,goal-m.met),detailLevel=view.scope==='region'?'store':view.scope==='store'?'group':'region',detailRows=progress.rows.filter(r=>r._level===detailLevel);const groupText=detailRows.map(r=>{const label=detailLevel==='store'?r.store:detailLevel==='group'?r.group:r.region;return `${label}：全盘${r.met}套（${r.met_rate}）｜门店TOP ${r.store_top_met}套（${r.store_top_rate}）｜户型TOP ${r.unit_top_met}套（${r.unit_top_rate}）`;}).join('\n');const scene=sceneRaw(view),analysis=sceneAnalysis(view);
   const qt=qualityData(view);const publicRisks=risks.filter(t=>!String(t).includes('结合实际')).slice(0,5);const topText=`
@@ -783,21 +794,50 @@ TOP重点房源
     assertCurrent();
     const storeView={scope:'store',name:store.store,region:store.region,store:store.store},progress=rankProgress(M.table(d.housing,storeView,monthlyGoals,month,d.meetings||[],customerOptions(d)),d),metric=progress.rows.find(r=>r._level==='store'),metRows=metHouseRows(storeView);
     if(!metric)throw Error(store.store+'进展数据不完整，请刷新后重试');
-    const quality=Q.summary(metric.metIds.map(id=>byId.get(id)).filter(Boolean));
+    const feedbackRows=F.select(metric.metIds.map(id=>byId.get(id)).filter(Boolean)),quality=Q.summary(feedbackRows);
     if(metRows.length!==metric.met||quality.total!==metric.met)throw Error(store.store+'面见量与明细不一致，请核对后再生成');
     const cutoff='业主数据截至'+asOf,message=makeMessage(storeView,progress,metric,metric._target,cutoff,priorityFacts(storeView,progress.rows.filter(r=>r._level==='group')),novemberPraises(storeView,progress));
-    storeView.kpis=[{label:'本月目标',value:metric._target==null?'待设置':metric._target+'套'},{label:'面见量',value:metric.met+'套'},{label:'面见次数',value:meetingValue(metric)+'次'},{label:'送礼登记',value:metric.gift+'套'}];
-    const [progressImage,detailImages,qualityImage]=await Promise.all([createProgressImage(storeView,progress,month,{cutoff}),metRows.length?metHouseImageBlobs(metRows,storeView):P.emptyMeetingImage({store:store.store,month,asOf}).then(blob=>[blob]),P.summaryImage({store:store.store,month,asOf,summary:quality,labels:Q.labels})]);
+    storeView.kpis=publicationKpis(metric);
+    const [progressImage,detailImages,qualityImages]=await Promise.all([createProgressImage(storeView,progress,month,{cutoff}),unmetTopImageBlobs(unmetTopRows(storeView),storeView),feedbackRows.length?F.images({rows:feedbackRows,summary:quality,month,scope:store.store,range:'本店共'+feedbackRows.length+'套',topicCounts:F.counts(feedbackRows)}):P.emptyFeedbackImage({store:store.store,month,asOf}).then(blob=>[blob])]);
     assertCurrent();
-    const folder=String(index+1).padStart(2,'0')+'_'+store.store,messageFile=folder+'/话术.txt',progressFile=folder+'/01_面见及礼物进展.png',qualityFile=folder+'/03_面见质量.png',detailFiles=detailImages.map((_,page)=>folder+'/02_本月面见明细_'+String(page+1).padStart(2,'0')+'.png');
-    files.push({name:messageFile,data:message},{name:progressFile,data:progressImage},...detailImages.map((blob,page)=>({name:detailFiles[page],data:blob})),{name:qualityFile,data:qualityImage});
-    manifest.stores.push({...store,groupName:configured.get(store.store)||'',deliveryKey:[month,asOf,source.created_at,store.store].join('|'),message:messageFile,images:[progressFile,...detailFiles,qualityFile],modules:{progress:[progressFile],details:detailFiles,quality:[qualityFile]},metrics:{met:metric.met,meetingCount:meetingValue(metric),gift:metric.gift,feedback:quality.feedback}});
+    const folder=String(index+1).padStart(2,'0')+'_'+store.store,messageFile=folder+'/话术.txt',progressFile=folder+'/01_面见及礼物进展.png',qualityFiles=qualityImages.map((_,page)=>folder+'/03_业主面见真实反馈_'+String(page+1).padStart(2,'0')+'.png'),detailFiles=detailImages.map((_,page)=>folder+'/02_未面见TOP房明细_'+String(page+1).padStart(2,'0')+'.png');
+    files.push({name:messageFile,data:message},{name:progressFile,data:progressImage},...detailImages.map((blob,page)=>({name:detailFiles[page],data:blob})),...qualityImages.map((blob,page)=>({name:qualityFiles[page],data:blob})));
+    manifest.stores.push({...store,groupName:configured.get(store.store)||'',deliveryKey:[month,asOf,source.created_at,store.store].join('|'),message:messageFile,images:[progressFile,...detailFiles,...qualityFiles],modules:{progress:[progressFile],details:detailFiles,quality:qualityFiles},moduleLabels:P.moduleLabels,metrics:{met:metric.met,meetingCount:meetingValue(metric),gift:metric.gift,feedback:quality.feedback}});
    }
    manifest.recipientsComplete=manifest.stores.every(s=>s.groupName);manifest.operatorRole=reader.role;
-   files.push({name:'manifest.json',data:JSON.stringify(manifest,null,2)},{name:'门店群配置.csv',data:P.groupTemplate(manifest.stores)},{name:'使用说明.txt',data:'本包已生成，尚未发送到微信。\n每店包含一段话术及面见礼物进展、本月面见明细、面见质量三个图片模块。明细较多时自动分页，保留全部房源。\n面见质量为主要结果分类汇总，规则建议仍需核对，不等同于高质量率。\n'+(pilot?'本包仅含试行名单中的门店，完整群名已写入门店群配置.csv。\n':'已知群名已写入门店群配置.csv；空白群名仍待补齐，不能发送到未知群。\n')+'本机发送程序仍需核对群名和发送状态；下载资料包不会发送消息。\n数据截至：'+asOf+'\n源数据版本：'+source.created_at+'\n生成时间：'+preparedAt});
+   files.push({name:'manifest.json',data:JSON.stringify(manifest,null,2)},{name:'门店群配置.csv',data:P.groupTemplate(manifest.stores)},{name:'使用说明.txt',data:'本包已生成，尚未发送到微信。\n每店包含一段话术及面见礼物进展、未面见TOP房明细、业主面见真实反馈三个图片模块。明细及原文较长时自动分页，保留全部房源与原文。\n真实反馈按同一房源的面见时间连续呈现，分类为规则建议，仍需结合原文核对。manifest中的details、quality为旧发送程序兼容键，实际内容以moduleLabels为准。\n'+(pilot?'本包仅含试行名单中的门店，完整群名已写入门店群配置.csv。\n':'已知群名已写入门店群配置.csv；空白群名仍待补齐，不能发送到未知群。\n')+'本机发送程序仍需核对群名和发送状态；下载资料包不会发送消息。\n数据截至：'+asOf+'\n源数据版本：'+source.created_at+'\n生成时间：'+preparedAt});
    const blob=await P.zip(files);assertCurrent();
    return {blob,manifest,filename:month+'_'+asOf+'_'+stores.length+'店'+(pilot?'试行':'微信')+'资料包.zip'};
   }finally{state.exporting=false;}
+ }
+ function publicationKpis(metric){
+  return [{label:'本月目标',value:metric._target==null?'待设置':metric._target+'套'},{label:'面见量',value:metric.met+'套'},{label:'面见次数',value:typeof meetingValue(metric)==='number'?meetingValue(metric)+'次':meetingValue(metric)},{label:'本月剩余差距',value:metric._target==null?'待确认':Math.max(0,metric._target-metric.met)+'套'},{label:'送礼登记',value:metric.gift+'套'}];
+ }
+ async function buildPublicationPackage(view=currentView){
+  const reader=C.member,d=data(),month=currentMonth,source=d?.imports?.[0],P=root.WBSendPackage;
+  if(!reader||!['project','region','store'].includes(reader.role))throw Error('请先通过BP／管理入口登录');
+  if(state.loading||!d?.housing?.length||d.reader!==reader)throw Error('请先刷新当前账号的共享数据，再生成资料包');
+  if(!source?.as_of||!source?.created_at)throw Error('当前数据缺少截止日期或版本，请重新导入后再试');
+  if(state.exporting)throw Error('资料包正在生成，请稍候');
+  if(!['company','region'].includes(view.scope))throw Error('全司与大区各生成一张进展图；门店请使用三类图资料包');
+  if(reader.role!=='project'&&(reader.role!=='region'||view.scope!=='region'||view.region!==reader.region))throw Error('当前账号无权导出该范围公示图文');
+  const assertCurrent=()=>{if(C.member!==reader||data()!==d||currentMonth!==month||d.imports[0]!==source||state.loading)throw Error('账号、月份或共享数据已变化，请刷新后重新生成');};
+  state.exporting=true;
+  try{
+   const exportView={scope:view.scope,name:view.name,region:view.scope==='region'?view.region:''},progress=rankProgress(M.table(d.housing,exportView,goals(),month,d.meetings||[],customerOptions(d)),d),levels=view.scope==='company'?['company','region','store']:['region','store','group'];
+   progress.rows=progress.rows.filter(row=>levels.includes(row._level));
+   const metric=progress.rows.find(row=>row._level===view.scope);if(!metric)throw Error('当前范围进展数据不完整，请刷新后重试');
+   exportView.kpis=publicationKpis(metric);
+   const cutoff='业主数据截至'+source.as_of,message=makeMessage(exportView,progress,metric,metric._target,cutoff,[],[]),image=await createProgressImage(exportView,progress,month,{cutoff});assertCurrent();
+   const manifest={recordType:'publication-package',schemaVersion:1,month,asOf:source.as_of,sourceVersion:source.created_at,preparedAt:new Date().toISOString(),status:'prepared',scope:view.scope,name:view.name,levels,operatorRole:reader.role,message:'话术.txt',images:['01_面见及礼物进展.png']};
+   const blob=await P.zip([{name:manifest.message,data:message},{name:manifest.images[0],data:image},{name:'manifest.json',data:JSON.stringify(manifest,null,2)},{name:'使用说明.txt',data:'本包为当前范围的公示图文，包含一段话术和一张面见及礼物进展图。\n仅下载，不会发送到微信；群名与转发由项目负责人处理。'}]);assertCurrent();
+   return {blob,manifest,filename:month+'_'+source.as_of+'_'+view.name+'公示资料包.zip'};
+  }finally{state.exporting=false;}
+ }
+ async function downloadPublicationPackage(button){
+  const label=button.textContent;button.disabled=true;button.textContent='资料生成中…';
+  try{const result=await buildPublicationPackage(currentView),url=URL.createObjectURL(result.blob),link=document.createElement('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);notify('已生成'+result.manifest.name+'公示图文，尚未发送到微信');}
+  finally{if(button.isConnected){button.disabled=false;button.textContent=label;}}
  }
  function importPilotConfig(){
   if(!C.member)throw Error('请先通过BP／管理入口登录');
@@ -819,7 +859,7 @@ TOP重点房源
   try{const exportView=C.project?{scope:'company',name:'全司'}:currentView,result=await buildSendPackage(exportView,{pilot}),url=URL.createObjectURL(result.blob),link=document.createElement('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);notify('已生成'+result.manifest.stores.length+'家门店资料，尚未发送到微信');}
   finally{if(button.isConnected){button.disabled=false;button.textContent=label;}}
  }
- function actions(view){const s=scope();return `<div class="block ops-panel">${C.member?pilotPanel()+'<div class="ops-actions"><button class="btn primary" data-ops="send-package">'+(C.project?'生成全司18店资料包':'生成当前范围微信资料包')+'</button></div><p class="ops-muted">按门店生成话术和三个图片模块；长明细自动分页。仅下载，不会发送到微信。</p>'+taskCards(view):'<p>日常进展与质量概览可直接查看；已授权成员进入后，可保存现场反馈和跟进结果。</p>'}${s.store&&C.member?`<details><summary>补充未包含在现场反馈中的事项</summary><form id="ops-task-form" class="ops-form"><label>推进事项<input name="title" required></label><label>项目／房间号<input name="house"></label><label>负责人<input name="owner" required></label><label>计划时间<input name="due" type="date" required></label><label class="wide">动作与卡点<textarea name="action" required></textarea></label><button class="btn primary" type="submit">保存补充事项</button></form></details>`:''}</div>`;}
+ function actions(view){const s=scope();return `<div class="block ops-panel">${C.member?pilotPanel()+'<div class="ops-actions"><button class="btn primary" data-ops="send-package">'+(C.project?'生成全司18店资料包':'生成当前范围微信资料包')+'</button>'+(['company','region'].includes(view.scope)&&(C.project||C.member.role==='region'&&view.region===C.member.region)?'<button class="btn" data-ops="publication-package">下载'+E(view.name)+'公示图文</button>':'')+'</div><p class="ops-muted">按门店生成话术和三个图片模块；长明细自动分页。仅下载，不会发送到微信。</p>'+taskCards(view):'<p>日常进展与质量概览可直接查看；已授权成员进入后，可保存现场反馈和跟进结果。</p>'}${s.store&&C.member?`<details><summary>补充未包含在现场反馈中的事项</summary><form id="ops-task-form" class="ops-form"><label>推进事项<input name="title" required></label><label>项目／房间号<input name="house"></label><label>负责人<input name="owner" required></label><label>计划时间<input name="due" type="date" required></label><label class="wide">动作与卡点<textarea name="action" required></textarea></label><button class="btn primary" type="submit">保存补充事项</button></form></details>`:''}</div>`;}
  function loginPanel(){const disabled=C.configured?'':'disabled';return `<div class="block ops-panel"><h3>成员登录</h3><p class="ops-muted">日常进展无需登录。BP补充、核账及管理使用已授权工号后4位进入，无需密码；开头的0需要保留。</p><form id="ops-login-form" class="ops-login"><label>工号后4位<input name="loginId" type="text" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="username" placeholder="请输入4位工号" ${disabled} required></label><button class="btn primary" type="submit" ${disabled}>登录工作台</button></form>${C.configured?'':'<p class="ops-muted">共享服务尚未连接，账号开通后即可使用工号登录。</p>'}</div>`;}
  const archiveType=file=>/\.pdf$/i.test(file.original_name||'')?'PDF':'Word';
  const archiveSize=bytes=>{const n=Number(bytes||0);return n>=1024*1024?(n/1024/1024).toFixed(n>=10*1024*1024?0:1)+' MB':Math.max(1,Math.round(n/1024))+' KB';};
@@ -984,6 +1024,7 @@ TOP重点房源
   if(action==='generate-message'){await organizeAndUpdate(b);return;}
   if(action==='copy-message'){await copyText(document.getElementById('ops-message').value,'推动话术已复制');return;}
   if(action==='send-package'){await downloadSendPackage(b);return;}
+  if(action==='publication-package'){await downloadPublicationPackage(b);return;}
   if(action==='pilot-import'){importPilotConfig();return;}
   if(action==='pilot-package'){await downloadSendPackage(b,true);return;}
   if(action==='save-scene'){await organizeAndUpdate(b,true);return;}
@@ -1062,7 +1103,7 @@ TOP重点房源
   const p=REVIEW_FACTS['2026-10'].november;
   return {total:p.company.target,regions:p.regions.map(([name,,,target])=>({name,target})),stores:p.stores.map(([region,store,,,target])=>({region,store,target}))};
  }
- root.WBOperations={isMode,emptyData,render,boot,refresh,ledgerText,reviewText:reviewTextWithNovember,qualityText,novemberTargets,buildSendPackage,state};
+ root.WBOperations={isMode,emptyData,render,boot,refresh,ledgerText,reviewText:reviewTextWithNovember,qualityText,novemberTargets,buildSendPackage,buildPublicationPackage,novemberMessage,novemberRankedSelection,state};
 })(window);
 
 
