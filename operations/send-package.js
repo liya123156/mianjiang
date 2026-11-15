@@ -94,16 +94,32 @@
     const catalog = root.WBModel.storeCatalog.filter(store => store.ownerApplicable !== false);
     if (value?.version !== 2 || value.recordType !== 'wechat-send-config' || !Array.isArray(value.stores) || value.stores.length !== catalog.length) throw Error('项目群配置须包含全部在售业主门店');
     const seenStores = new Set(), seenGroups = new Set();
+    const groupName = name => {
+      if (typeof name !== 'string' || name !== name.trim() || name.length > 200 || /[\u0000-\u001f\u007f]/.test(name) || name && seenGroups.has(name)) throw Error('微信群完整名称无效或重复，请保留原有表情和标点');
+      if (name) seenGroups.add(name);return name;
+    };
+    const company = {groupName: groupName(value.company?.groupName ?? '')};
+    const regionNames = [...new Set(catalog.map(store => store.region))], inputRegions = value.regions ?? [];
+    if (!Array.isArray(inputRegions) || inputRegions.length && inputRegions.length !== regionNames.length || new Set(inputRegions.map(row => row?.region)).size !== inputRegions.length || inputRegions.some(row => !regionNames.includes(row?.region))) throw Error('大区群配置须包含全部5个大区且不可重复');
+    const regions = regionNames.map(region => ({region, groupName:groupName(inputRegions.find(row=>row.region===region)?.groupName ?? '')}));
     const stores = value.stores.map(row => {
-      const known = catalog.find(store => store.store === row?.store), name = row?.groupName;
+      const known = catalog.find(store => store.store === row?.store);
       if (!known || seenStores.has(known.store)) throw Error('项目群配置的门店无效或重复');
-      if (typeof name !== 'string' || name !== name.trim() || name.length > 200 || /[\u0000-\u001f\u007f]/.test(name) || name && seenGroups.has(name)) throw Error('经理群完整名称无效或重复');
-      seenStores.add(known.store);if (name) seenGroups.add(name);
-      return { region: known.region, store: known.store, groupName: name };
+      seenStores.add(known.store);
+      return { region: known.region, store: known.store, groupName: groupName(row?.groupName) };
     });
     const pilotStores = value.pilotStores;
-    if (!Array.isArray(pilotStores) || !pilotStores.length || new Set(pilotStores).size !== pilotStores.length || pilotStores.some(store => !stores.some(row => row.store === store && row.groupName))) throw Error('试行名单须对应已配置完整群名的门店');
-    return { version: 2, recordType: 'wechat-send-config', mode: value.mode === 'all' ? 'all' : 'pilot', pilotStores: [...pilotStores], stores };
+    if (!Array.isArray(pilotStores) || value.mode !== 'all' && !pilotStores.length || new Set(pilotStores).size !== pilotStores.length || pilotStores.some(store => !stores.some(row => row.store === store && row.groupName))) throw Error('试行名单须对应已配置完整群名的门店');
+    return { version: 2, recordType: 'wechat-send-config', mode: value.mode === 'all' ? 'all' : 'pilot', company, regions, pilotStores: [...pilotStores], stores };
+  }
+  function projectConfigDefaults(pilot=null) {
+    const catalog = root.WBModel.storeCatalog.filter(store => store.ownerApplicable !== false);
+    const previous=pilot?.stores||[];
+    return validateProjectConfig({version:2,recordType:'wechat-send-config',mode:previous.length?'pilot':'all',pilotStores:previous.map(row=>row.store),stores:catalog.map(row=>({...row,groupName:previous.find(old=>old.store===row.store)?.groupName||''}))});
+  }
+  function allGroupTemplate(config) {
+    const value=validateProjectConfig(config),rows=[['层级','大区','组织','微信群完整名称','状态'],['全司','','全司',value.company.groupName,value.company.groupName?'已配置':'待配置'],...value.regions.map(row=>['大区',row.region,row.region,row.groupName,row.groupName?'已配置':'待配置']),...value.stores.map(row=>['门店',row.region,row.store,row.groupName,row.groupName?'已配置':'待配置'])];
+    return '\ufeff'+rows.map(row=>row.map(cell=>'"'+String(cell).replace(/"/g,'""')+'"').join(',')).join('\r\n');
   }
   function groupTemplate(stores) {
     const rows = [['大区', '门店', '微信群完整名称'], ...stores.map(store => [store.region, store.store, store.groupName || ''])];
@@ -180,5 +196,5 @@
   }
 
   const moduleLabels={progress:'面见及礼物进展',details:'未面见TOP房明细',quality:'业主面见真实反馈'};
-  root.WBSendPackage = { moduleLabels, emptyFeedbackImage, zip, groupTemplate, summaryImage, emptyMeetingImage, validatePilotConfig, loadPilotConfig, savePilotConfig, validateProjectConfig };
+  root.WBSendPackage = { moduleLabels, emptyFeedbackImage, zip, groupTemplate, summaryImage, emptyMeetingImage, validatePilotConfig, loadPilotConfig, savePilotConfig, validateProjectConfig, projectConfigDefaults, allGroupTemplate };
 })(typeof window === 'object' ? window : globalThis);

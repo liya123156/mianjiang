@@ -2,7 +2,7 @@
 (function(root){
  'use strict';
  const M=root.WBModel,C=root.WBCloud,Q=root.WBQuality,W=root.WBWorkflow,F=root.WBFeedback,E=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const state={cache:{},loading:false,exporting:false,error:'',preview:null,customerPreview:null,scene:'',sceneDrafts:{},sceneAnalyses:{},scenePlans:{},expenseFilter:'todo',qualityFilters:{},selectedExpense:null,expenseContext:null,archiveNotice:''};
+ const state={cache:{},loading:false,exporting:false,savingSendConfig:false,error:'',preview:null,customerPreview:null,scene:'',sceneDrafts:{},sceneAnalyses:{},scenePlans:{},expenseFilter:'todo',qualityFilters:{},selectedExpense:null,expenseContext:null,archiveNotice:''};
  const isMode=mode=>['daily','expense','admin'].includes(mode)||(mode==='review'&&new URL(location.href).searchParams.get('review')!=='archive'), cents=value=>Math.round(Number(value||0)*100),money=value=>(Number(value||0)/100).toFixed(2);
  const chinaToday=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
  const yesterday=()=>{const d=new Date(chinaToday()+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-1);return d.toISOString().slice(0,10);};
@@ -779,14 +779,20 @@ TOP重点房源
   if(state.loading||!d?.housing?.length||d.reader!==reader)throw Error('请先刷新当前账号的共享数据，再生成资料包');
   if(!source?.as_of||!source?.created_at)throw Error('当前数据缺少截止日期或版本，请重新导入后再试');
   if(state.exporting)throw Error('资料包正在生成，请稍候');
+  const allScopes=options.allScopes===true;
+  if(allScopes&&!C.project)throw Error('仅项目负责人可生成全司、5大区和18门店资料包');
+  if(allScopes&&options.pilot)throw Error('全量资料包不能使用两店试行范围');
+  if(state.savingSendConfig)throw Error('群名配置正在保存，请稍后生成');
   const pilot=options.pilot===true,config=pilot||C.project?sendConfig():null;
   if(pilot&&!config)throw Error('请先导入两店试行配置');
   const configured=new Map((config?.stores||[]).filter(s=>s.groupName).map(s=>[s.store,s.groupName])),pilotStores=new Set(config?.version===2?config.pilotStores:(config?.stores||[]).map(s=>s.store)),configVersion=JSON.stringify(config);
-  const requested={region:view.region||'',store:view.scope==='store'?canonicalStore(view.store||view.name):''},allowedStores=new Set(memberScopes().map(x=>x.store)),present=new Set(d.housing.map(h=>canonicalStore(h['门店'])));
+  const sourceDate=source.as_of,sourceVersion=source.created_at,configUpdatedAt=d.sendConfigItem?.updated_at||'';
+  const requested=allScopes?{region:'',store:''}:{region:view.region||'',store:view.scope==='store'?canonicalStore(view.store||view.name):''},allowedStores=new Set(memberScopes().map(x=>x.store)),present=new Set(d.housing.map(h=>canonicalStore(h['门店'])));
   const stores=M.storeCatalog.filter(s=>s.ownerApplicable!==false&&present.has(s.store)&&(!requested.region||s.region===requested.region)&&(!requested.store||s.store===requested.store)&&(!pilot||pilotStores.has(s.store))&&(reader.role==='project'||reader.role==='region'&&s.region===reader.region||reader.role==='store'&&allowedStores.has(s.store)));
+  if(allScopes){const missing=M.storeCatalog.filter(row=>row.ownerApplicable!==false&&!present.has(row.store));if(missing.length)throw Error('缺少门店在售数据：'+missing.map(row=>row.store).join('、')+'；请核对后再生成全量资料包');}
   if(pilot&&stores.length!==pilotStores.size)throw Error('两家试行店均须在当前授权和数据范围内，请切回包含两店的大区或全司后重试');
   if(!stores.length)throw Error('当前范围没有可导出的在售业主门店');
-  const assertCurrent=()=>{if(C.member!==reader||data()!==d||currentMonth!==month||d.imports[0]!==source||state.loading||(pilot||C.project)&&JSON.stringify(sendConfig())!==configVersion)throw Error('账号、月份、共享数据或试行群配置已变化，请刷新后重新生成');};
+  const assertCurrent=()=>{if(C.member!==reader||data()!==d||currentMonth!==month||d.imports[0]!==source||source.as_of!==sourceDate||source.created_at!==sourceVersion||state.loading||state.savingSendConfig||(d.sendConfigItem?.updated_at||'')!==configUpdatedAt||(pilot||C.project)&&JSON.stringify(sendConfig())!==configVersion)throw Error('账号、月份、共享数据或试行群配置已变化，请刷新后重新生成');};
   state.exporting=true;
   try{
    const preparedAt=new Date().toISOString(),asOf=source.as_of,allQuality=Q.records(d.housing,d.meetings,d.items,month,asOf),byId=new Map(allQuality.map(r=>[r.houseId,r])),files=[],manifest={schemaVersion:1,month,asOf,sourceVersion:source.created_at,preparedAt,status:'prepared',pilot,stores:[]},monthlyGoals=goals();
@@ -800,14 +806,33 @@ TOP重点房源
     storeView.kpis=publicationKpis(metric);
     const [progressImage,detailImages,qualityImages]=await Promise.all([createProgressImage(storeView,progress,month,{cutoff}),unmetTopImageBlobs(unmetTopRows(storeView),storeView),feedbackRows.length?F.images({rows:feedbackRows,summary:quality,month,scope:store.store,range:'本店共'+feedbackRows.length+'套',topicCounts:F.counts(feedbackRows)}):P.emptyFeedbackImage({store:store.store,month,asOf}).then(blob=>[blob])]);
     assertCurrent();
-    const folder=String(index+1).padStart(2,'0')+'_'+store.store,messageFile=folder+'/话术.txt',progressFile=folder+'/01_面见及礼物进展.png',qualityFiles=qualityImages.map((_,page)=>folder+'/03_业主面见真实反馈_'+String(page+1).padStart(2,'0')+'.png'),detailFiles=detailImages.map((_,page)=>folder+'/02_未面见TOP房明细_'+String(page+1).padStart(2,'0')+'.png');
+    const folder=(allScopes?'03_门店/':'')+String(index+1).padStart(2,'0')+'_'+store.store,messageFile=folder+'/话术.txt',progressFile=folder+'/01_面见及礼物进展.png',qualityFiles=qualityImages.map((_,page)=>folder+'/03_业主面见真实反馈_'+String(page+1).padStart(2,'0')+'.png'),detailFiles=detailImages.map((_,page)=>folder+'/02_未面见TOP房明细_'+String(page+1).padStart(2,'0')+'.png');
     files.push({name:messageFile,data:message},{name:progressFile,data:progressImage},...detailImages.map((blob,page)=>({name:detailFiles[page],data:blob})),...qualityImages.map((blob,page)=>({name:qualityFiles[page],data:blob})));
     manifest.stores.push({...store,groupName:configured.get(store.store)||'',deliveryKey:[month,asOf,source.created_at,store.store].join('|'),message:messageFile,images:[progressFile,...detailFiles,...qualityFiles],modules:{progress:[progressFile],details:detailFiles,quality:qualityFiles},moduleLabels:P.moduleLabels,metrics:{met:metric.met,meetingCount:meetingValue(metric),gift:metric.gift,feedback:quality.feedback}});
    }
-   manifest.recipientsComplete=manifest.stores.every(s=>s.groupName);manifest.operatorRole=reader.role;
-   files.push({name:'manifest.json',data:JSON.stringify(manifest,null,2)},{name:'门店群配置.csv',data:P.groupTemplate(manifest.stores)},{name:'使用说明.txt',data:'本包已生成，尚未发送到微信。\n每店包含一段话术及面见礼物进展、未面见TOP房明细、业主面见真实反馈三个图片模块。明细及原文较长时自动分页，保留全部房源与原文。\n真实反馈按同一房源的面见时间连续呈现，分类为规则建议，仍需结合原文核对。manifest中的details、quality为旧发送程序兼容键，实际内容以moduleLabels为准。\n'+(pilot?'本包仅含试行名单中的门店，完整群名已写入门店群配置.csv。\n':'已知群名已写入门店群配置.csv；空白群名仍待补齐，不能发送到未知群。\n')+'本机发送程序仍需核对群名和发送状态；下载资料包不会发送消息。\n数据截至：'+asOf+'\n源数据版本：'+source.created_at+'\n生成时间：'+preparedAt});
+   if(allScopes){
+    const allConfig=config?.version===2?config:P.projectConfigDefaults(config),regions=[...new Set(M.storeCatalog.filter(row=>row.ownerApplicable!==false).map(row=>row.region))];
+    manifest.recordType='all-scope-publication-package';manifest.publications=[];
+    const views=[{scope:'company',name:'全司',region:''},...regions.map(region=>({scope:'region',name:region,region}))];
+    for(const [index,exportView] of views.entries()){
+     assertCurrent();
+     const levels=exportView.scope==='company'?['company','region','store']:['region','store','group'],progress=rankProgress(M.table(d.housing,exportView,monthlyGoals,month,d.meetings||[],customerOptions(d)),d);
+     progress.rows=progress.rows.filter(row=>levels.includes(row._level));
+     const metric=progress.rows.find(row=>row._level===exportView.scope);if(!metric)throw Error(exportView.name+'进展数据不完整，请刷新后重试');
+     exportView.kpis=publicationKpis(metric);
+     const cutoff='业主数据截至'+asOf,message=makeMessage(exportView,progress,metric,metric._target,cutoff,[],[]),image=await createProgressImage(exportView,progress,month,{cutoff});assertCurrent();
+     const folder=index===0?'01_全司':'02_大区/'+String(index).padStart(2,'0')+'_'+exportView.name,messageFile=folder+'/话术.txt',imageFile=folder+'/01_面见及礼物进展.png',groupName=index===0?allConfig.company.groupName:allConfig.regions.find(row=>row.region===exportView.region)?.groupName||'';
+     files.push({name:messageFile,data:message},{name:imageFile,data:image});
+     manifest.publications.push({scope:exportView.scope,name:exportView.name,region:exportView.region,groupName,levels,message:messageFile,images:[imageFile],month,asOf,sourceVersion:source.created_at});
+    }
+    manifest.scopeCount=manifest.stores.length+manifest.publications.length;
+    manifest.recipientsComplete=[...manifest.stores,...manifest.publications].every(row=>row.groupName);
+    files.push({name:'全部群名配置.csv',data:P.allGroupTemplate(allConfig)});
+   }else manifest.recipientsComplete=manifest.stores.every(s=>s.groupName);
+   manifest.operatorRole=reader.role;
+   files.push({name:'manifest.json',data:JSON.stringify(manifest,null,2)},{name:'门店群配置.csv',data:P.groupTemplate(manifest.stores)},{name:'使用说明.txt',data:'本包已生成，尚未发送到微信。\n'+(allScopes?'包含全司1份、5个大区及18家门店，共24个范围。全司和大区各包含一段话术和一张进展图。\n':'')+'每店包含一段话术及面见礼物进展、未面见TOP房明细、业主面见真实反馈三个图片模块。明细及原文较长时自动分页，保留全部房源与原文。\n真实反馈按同一房源的面见时间连续呈现，分类为规则建议，仍需结合原文核对。manifest中的details、quality为旧发送程序兼容键，实际内容以moduleLabels为准。\n'+(pilot?'本包仅含试行名单中的门店，完整群名已写入门店群配置.csv。\n':'已知群名已写入配置CSV；空白群名标为待配置，可下载但不能发送到未知群。\n')+'下载资料包不会发送消息。\n数据截至：'+asOf+'\n源数据版本：'+source.created_at+'\n生成时间：'+preparedAt});
    const blob=await P.zip(files);assertCurrent();
-   return {blob,manifest,filename:month+'_'+asOf+'_'+stores.length+'店'+(pilot?'试行':'微信')+'资料包.zip'};
+   return {blob,manifest,filename:month+'_'+asOf+'_'+(allScopes?'全司_5大区_18门店_24范围公示资料包':stores.length+'店'+(pilot?'试行':'微信')+'资料包')+'.zip'};
   }finally{state.exporting=false;}
  }
  function publicationKpis(metric){
@@ -845,21 +870,35 @@ TOP重点房源
   input.addEventListener('change',async()=>{try{const file=input.files?.[0];if(!file)return;if(file.size>16384)throw Error('试行配置文件过大，请选择两店配置文件');const config=root.WBSendPackage.savePilotConfig(await file.text());render(currentView);notify('已保存'+config.stores.length+'家试行店群名，仅保存在本浏览器；尚未发送微信');}catch(error){notify(error.message||'试行配置导入失败');}});
   input.click();
  }
+ function projectSendConfig(){const value=sendConfig();return value?.version===2?value:root.WBSendPackage.projectConfigDefaults(value);}
+ function projectGroupRows(config){return [{scope:'company',name:'全司',region:'',groupName:config.company.groupName,field:'companyGroupName'},...config.regions.map((row,index)=>({scope:'region',name:row.region,region:row.region,groupName:row.groupName,field:'regionGroup_'+index})),...config.stores.map((row,index)=>({scope:'store',name:row.store,region:row.region,groupName:row.groupName,field:'storeGroup_'+index}))];}
+ async function saveSendConfig(values){
+  const reader=C.member,d=data();if(!C.project||!reader||reader.role!=='project')throw Error('仅项目负责人可修改群名配置');
+  if(state.exporting)throw Error('资料包正在生成，请完成后再保存群名');
+  if(state.savingSendConfig)throw Error('群名配置正在保存，请稍候');
+  if(!d||d.reader!==reader||state.loading)throw Error('请先刷新当前账号的共享数据');
+  const previous=d.sendConfigItem,expected=values.expectedVersion||null;
+  if((previous?.updated_at||null)!==expected)throw Error('群名配置已更新，请刷新后再保存');
+  const base=projectSendConfig(),stores=base.stores.map((row,index)=>({...row,groupName:values['storeGroup_'+index]??row.groupName})),pilotStores=base.pilotStores.filter(store=>stores.some(row=>row.store===store&&row.groupName)),body=root.WBSendPackage.validateProjectConfig({...base,mode:pilotStores.length?base.mode:'all',pilotStores,company:{groupName:values.companyGroupName??base.company.groupName},regions:base.regions.map((row,index)=>({...row,groupName:values['regionGroup_'+index]??row.groupName})),stores});
+  state.savingSendConfig=true;
+  try{const saved=await C.saveItem('2000-01','rules','wechat-send-config-v1',null,null,body,expected);if(C.member!==reader)return saved;for(const cached of Object.values(state.cache))if(cached?.reader===reader)cached.sendConfigItem=saved;return saved;}
+  finally{state.savingSendConfig=false;}
+ }
  function pilotPanel(){
-  if(C.project&&data()?.sendConfigItem){
-   let config;try{config=sendConfig();}catch(error){return '<div class="ops-notice">'+E(error.message)+'</div>';}
-   const total=config.stores.length,configured=config.stores.filter(s=>s.groupName).length;
-   return '<div class="ops-notice"><h3>项目负责人统一操作 · '+total+'家门店</h3><p>项目群配置已导入，无需各店BP分别操作。已配置 <b>'+configured+'/'+total+'</b> 店，待配置 '+(total-configured)+' 店。</p><p>本次试行：'+config.pilotStores.map(E).join('、')+'；每店生成对应话术和三个图片模块。</p><details><summary>查看'+total+'店经理群对应关系</summary><div class="review-table-scroll"><table class="review-tier-table" aria-label="全司经理群配置"><thead><tr><th>门店</th><th>经理群完整名称</th><th>状态</th></tr></thead><tbody>'+config.stores.map(s=>'<tr><td>'+E(s.store)+'</td><td>'+E(s.groupName||'待提供群名')+'</td><td>'+(config.pilotStores.includes(s.store)?'本次试行':s.groupName?'已配置':'待配置')+'</td></tr>').join('')+'</tbody></table></div></details><div class="ops-actions"><button class="btn primary" data-ops="pilot-package">生成'+config.pilotStores.length+'店试行资料包</button></div><p class="ops-muted">群配置随项目保存；下载资料包不会发送微信，实际群发仍需在办公电脑适配试跑。</p></div>';
+  if(C.project){
+   let config;try{config=projectSendConfig();}catch(error){return '<div class="ops-notice">'+E(error.message)+'</div>';}
+   const rows=projectGroupRows(config),configured=rows.filter(row=>row.groupName).length,storeConfigured=config.stores.filter(row=>row.groupName).length;
+   return '<div class="ops-notice send-config-panel"><h3>项目负责人统一操作 · 全司＋5大区＋18门店</h3><p>共24个公示范围，群名已配置 <b>'+configured+'/24</b> 个，待配置 '+(24-configured)+' 个。门店已配置 <b>'+storeConfigured+'/18</b> 店，待配置 '+(18-storeConfigured)+' 店。空白群名不影响下载。</p><details><summary>查看／修改24个范围的微信群完整名称</summary><form id="ops-send-config-form"><input type="hidden" name="expectedVersion" value="'+E(data()?.sendConfigItem?.updated_at||'')+'"><div class="review-table-scroll"><table class="review-tier-table send-config-table" aria-label="全司大区门店群配置"><thead><tr><th>层级</th><th>组织</th><th>微信群完整名称</th><th>状态</th></tr></thead><tbody>'+rows.map(row=>'<tr><td>'+({company:'全司',region:'大区',store:'门店'}[row.scope])+'</td><td>'+E(row.name)+'</td><td><input name="'+row.field+'" aria-label="'+E(row.name)+'微信群完整名称" maxlength="200" placeholder="待配置，可稍后填写" value="'+E(row.groupName)+'"></td><td>'+(row.groupName?'已配置':'待配置')+'</td></tr>').join('')+'</tbody></table></div><button class="btn primary" type="submit">保存全部群名配置</button></form></details>'+(config.pilotStores.length?'<details><summary>原两店试行入口</summary><p>试行门店：'+config.pilotStores.map(E).join('、')+'</p><button class="btn" data-ops="pilot-package">生成'+config.pilotStores.length+'店试行资料包</button></details>':'')+'<p class="ops-muted">群名由项目负责人统一保存，保留表情与标点。下载不会发送微信。</p></div>';
   }
   const config=root.WBSendPackage?.loadPilotConfig();
-  return '<div class="ops-notice"><h3>两店微信试行</h3>'+(config?'<p>'+config.stores.map(s=>'<b>'+E(s.store)+'</b> → '+E(s.groupName)).join('<br>')+'</p>':'<p>先导入两店试行配置，完整群名只保存在当前浏览器。</p>')+'<div class="ops-actions"><button class="btn" data-ops="pilot-import">导入两店试行配置</button><button class="btn primary" data-ops="pilot-package" '+(config?'':'disabled')+'>生成两店试行资料包</button></div><p class="ops-muted">仅导出配置中的两家门店，保留完整群名；本机发送程序尚需适配试跑，下载不会发送微信。</p></div>';
+  return '<div class="ops-notice"><h3>两店微信试行</h3>'+(config?'<p>'+config.stores.map(s=>'<b>'+E(s.store)+'</b> → '+E(s.groupName)).join('<br>')+'</p>':'<p>先导入两店试行配置，完整群名只保存在当前浏览器。</p>')+'<div class="ops-actions"><button class="btn" data-ops="pilot-import">导入两店试行配置</button><button class="btn primary" data-ops="pilot-package" '+(config?'':'disabled')+'>生成两店试行资料包</button></div><p class="ops-muted">仅导出配置中的两家门店，保留完整群名；下载不会发送微信。</p></div>';
  }
- async function downloadSendPackage(button,pilot=false){
-  const label=button.textContent;button.disabled=true;button.textContent='资料生成中…';notify('正在按门店生成话术与图片，请保留当前页面');
-  try{const exportView=C.project?{scope:'company',name:'全司'}:currentView,result=await buildSendPackage(exportView,{pilot}),url=URL.createObjectURL(result.blob),link=document.createElement('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);notify('已生成'+result.manifest.stores.length+'家门店资料，尚未发送到微信');}
+ async function downloadSendPackage(button,pilot=false,allScopes=false){
+  const label=button.textContent;button.disabled=true;button.textContent='资料生成中…';notify('正在生成公示话术与图片，请保留当前页面');
+  try{const exportView=C.project?{scope:'company',name:'全司'}:currentView,result=await buildSendPackage(exportView,{pilot,allScopes}),url=URL.createObjectURL(result.blob),link=document.createElement('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);notify('已生成'+(result.manifest.scopeCount?result.manifest.scopeCount+'个范围':result.manifest.stores.length+'家门店')+'公示资料，尚未发送到微信');}
   finally{if(button.isConnected){button.disabled=false;button.textContent=label;}}
  }
- function actions(view){const s=scope();return `<div class="block ops-panel">${C.member?pilotPanel()+'<div class="ops-actions"><button class="btn primary" data-ops="send-package">'+(C.project?'生成全司18店资料包':'生成当前范围微信资料包')+'</button>'+(['company','region'].includes(view.scope)&&(C.project||C.member.role==='region'&&view.region===C.member.region)?'<button class="btn" data-ops="publication-package">下载'+E(view.name)+'公示图文</button>':'')+'</div><p class="ops-muted">按门店生成话术和三个图片模块；长明细自动分页。仅下载，不会发送到微信。</p>'+taskCards(view):'<p>日常进展与质量概览可直接查看；已授权成员进入后，可保存现场反馈和跟进结果。</p>'}${s.store&&C.member?`<details><summary>补充未包含在现场反馈中的事项</summary><form id="ops-task-form" class="ops-form"><label>推进事项<input name="title" required></label><label>项目／房间号<input name="house"></label><label>负责人<input name="owner" required></label><label>计划时间<input name="due" type="date" required></label><label class="wide">动作与卡点<textarea name="action" required></textarea></label><button class="btn primary" type="submit">保存补充事项</button></form></details>`:''}</div>`;}
+ function actions(view){const s=scope();return `<div class="block ops-panel">${C.member?pilotPanel()+'<div class="ops-actions"><button class="btn primary" data-ops="'+(C.project?'all-publication-package':'send-package')+'">'+(C.project?'下载全部公示资料包（全司＋5大区＋18门店）':'生成当前范围微信资料包')+'</button>'+(['company','region'].includes(view.scope)&&(C.project||C.member.role==='region'&&view.region===C.member.region)?'<button class="btn" data-ops="publication-package">下载'+E(view.name)+'公示图文</button>':'')+'</div><p class="ops-muted">按门店生成话术和三个图片模块；长明细自动分页。仅下载，不会发送到微信。</p>'+taskCards(view):'<p>日常进展与质量概览可直接查看；已授权成员进入后，可保存现场反馈和跟进结果。</p>'}${s.store&&C.member?`<details><summary>补充未包含在现场反馈中的事项</summary><form id="ops-task-form" class="ops-form"><label>推进事项<input name="title" required></label><label>项目／房间号<input name="house"></label><label>负责人<input name="owner" required></label><label>计划时间<input name="due" type="date" required></label><label class="wide">动作与卡点<textarea name="action" required></textarea></label><button class="btn primary" type="submit">保存补充事项</button></form></details>`:''}</div>`;}
  function loginPanel(){const disabled=C.configured?'':'disabled';return `<div class="block ops-panel"><h3>成员登录</h3><p class="ops-muted">日常进展无需登录。BP补充、核账及管理使用已授权工号后4位进入，无需密码；开头的0需要保留。</p><form id="ops-login-form" class="ops-login"><label>工号后4位<input name="loginId" type="text" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="username" placeholder="请输入4位工号" ${disabled} required></label><button class="btn primary" type="submit" ${disabled}>登录工作台</button></form>${C.configured?'':'<p class="ops-muted">共享服务尚未连接，账号开通后即可使用工号登录。</p>'}</div>`;}
  const archiveType=file=>/\.pdf$/i.test(file.original_name||'')?'PDF':'Word';
  const archiveSize=bytes=>{const n=Number(bytes||0);return n>=1024*1024?(n/1024/1024).toFixed(n>=10*1024*1024?0:1)+' MB':Math.max(1,Math.round(n/1024))+' KB';};
@@ -1024,6 +1063,7 @@ TOP重点房源
   if(action==='generate-message'){await organizeAndUpdate(b);return;}
   if(action==='copy-message'){await copyText(document.getElementById('ops-message').value,'推动话术已复制');return;}
   if(action==='send-package'){await downloadSendPackage(b);return;}
+  if(action==='all-publication-package'){await downloadSendPackage(b,false,true);return;}
   if(action==='publication-package'){await downloadPublicationPackage(b);return;}
   if(action==='pilot-import'){importPilotConfig();return;}
   if(action==='pilot-package'){await downloadSendPackage(b,true);return;}
@@ -1053,6 +1093,7 @@ TOP重点房源
   if(action==='backup'){if(!C.project)throw Error('仅项目负责人可导出全司备份');download(data(),'面见项目_'+currentMonth+'_共享数据备份.json');return;}
  }catch(error){notify(error.message);if(['commit-import','commit-customer-import'].includes(action))b.disabled=false;}}
  async function handleSubmit(e){const form=e.target;if(!form.id.startsWith('ops-'))return;e.preventDefault();if(form.id==='ops-expense-form'&&form.dataset.saving==='true')return;if(form.id==='ops-expense-form')form.dataset.saving='true';const values=formData(form),button=form.querySelector('button[type="submit"],button:not([type])');if(button)button.disabled=true;try{
+  if(form.id==='ops-send-config-form'){await saveSendConfig(values);render(currentView);notify('24个范围群名配置已保存；空白项保留待配置');return;}
   if(form.id==='ops-login-form'){await C.login(values.loginId);form.reset();document.getElementById('ops-dialog')?.close();await refresh();return;}
   if(form.id==='ops-archive-form'){
     if(!C.project)throw Error('仅项目负责人可上传历史复盘文件');
@@ -1103,7 +1144,7 @@ TOP重点房源
   const p=REVIEW_FACTS['2026-10'].november;
   return {total:p.company.target,regions:p.regions.map(([name,,,target])=>({name,target})),stores:p.stores.map(([region,store,,,target])=>({region,store,target}))};
  }
- root.WBOperations={isMode,emptyData,render,boot,refresh,ledgerText,reviewText:reviewTextWithNovember,qualityText,novemberTargets,buildSendPackage,buildPublicationPackage,novemberMessage,novemberRankedSelection,state};
+ root.WBOperations={isMode,emptyData,render,boot,refresh,ledgerText,reviewText:reviewTextWithNovember,qualityText,novemberTargets,buildSendPackage,buildPublicationPackage,saveSendConfig,projectSendConfig,novemberMessage,novemberRankedSelection,state};
 })(window);
 
 

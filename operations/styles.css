@@ -61,3 +61,6 @@
 .interview-shortlist .review-tier-table td:last-child{min-width:180px;text-align:left;overflow-wrap:anywhere}
 .interview-shortlist .review-table-card>.ops-notice{margin:12px 14px}
 
+
+/* Company / region / store recipient configuration. */
+.send-config-panel>details{margin:14px 0;padding:12px 14px;border:1px solid #e5d7ef;border-radius:10px;background:#fff}.send-config-panel>details>summary{font-weight:600;color:#8550aa;cursor:pointer}.send-config-table{width:100%;min-width:720px;margin:14px 0;table-layout:fixed}.send-config-table th:first-child{width:70px}.send-config-table th:nth-child(2){width:220px}.send-config-table th:last-child{width:85px}.send-config-table th,.send-config-table td{text-align:left;padding:10px 12px}.send-config-table input{display:block;width:100%;min-width:220px;border:1px solid #ddcce9;border-radius:7px;padding:10px 12px;background:#fff;font:inherit;color:#4c365e}.send-config-table input:focus{outline:2px solid #b785d5;outline-offset:1px}.send-config-panel form>.btn{margin-top:8px}

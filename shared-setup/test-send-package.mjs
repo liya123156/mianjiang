@@ -124,14 +124,14 @@ assert.throws(()=>P.validatePilotConfig({version:1,stores:[pilotStores[0],{...pi
 assert.throws(()=>P.validatePilotConfig({version:1,stores:[pilotStores[0],{store:excluded.store,groupName:'不适用门店'}]}),/无效/);
 assert.throws(()=>P.validatePilotConfig({version:1,stores:[pilotStores[0],{...pilotStores[1],groupName:'群名\n其他群'}]}),/完整名称/);
 P.savePilotConfig({version:1,stores:pilotStores});install(project);api.render(company);
-assert.match(elements.get('report').innerHTML,/两店微信试行.*生成两店试行资料包/s);
+assert.ok(elements.get('report').innerHTML.includes('项目负责人统一操作 · 全司＋5大区＋18门店'));assert.ok(elements.get('report').innerHTML.includes('生成2店试行资料包'));
 assert.ok(elements.get('report').innerHTML.includes('测试💜经理群,一'));
 assert.ok(elements.get('report').innerHTML.includes('🏆测试经理群（两店试行）'));
 storage.clear();
 const projectConfig={recordType:'wechat-send-config',version:2,mode:'pilot',pilotStores:pilotStores.map(s=>s.store),stores:catalog.map(s=>({...s,groupName:pilotStores.find(p=>p.store===s.store)?'项目共享'+pilotStores.find(p=>p.store===s.store).groupName:''}))};
 const shared=install(project);shared.sendConfigItem={key:'2000-01|rules|@@company|wechat-send-config-v1',kind:'rules',payload:projectConfig};
 api.render(company);const projectPanel=elements.get('report').innerHTML;
-assert.match(projectPanel,/项目负责人统一操作 · 18家门店/);assert.match(projectPanel,/公示口径：套数与面见率等权综合排名，门店／店组各自比较，仅展示首末并保留并列。/);assert.match(projectPanel,/已配置 <b>2\/18<\/b> 店，待配置 16 店/);assert.doesNotMatch(projectPanel,/data-ops="pilot-import"/);
+assert.ok(projectPanel.includes('项目负责人统一操作 · 全司＋5大区＋18门店'));assert.match(projectPanel,/公示口径：套数与面见率等权综合排名，门店／店组各自比较，仅展示首末并保留并列。/);assert.ok(projectPanel.includes('门店已配置 <b>2/18</b> 店，待配置 16 店'));assert.equal((projectPanel.match(/name="(?:companyGroupName|regionGroup_\d+|storeGroup_\d+)"/g)||[]).length,24);assert.doesNotMatch(projectPanel,/data-ops="pilot-import"/);
 const sharedPilot=await api.buildSendPackage(company,{pilot:true});assert.equal(sharedPilot.manifest.stores.length,2);assert.equal(sharedPilot.manifest.recipientsComplete,true);assert.equal(sharedPilot.manifest.operatorRole,'project');assert.ok(sharedPilot.manifest.stores.every(s=>s.groupName.startsWith('项目共享')));
 if(process.env.PILOT_ZIP_PATH){assert.ok(realCanvas,'runner interoperability fixture must contain real PNGs');fs.writeFileSync(process.env.PILOT_ZIP_PATH,Buffer.from(await sharedPilot.blob.arrayBuffer()));}
 const sharedAll=await api.buildSendPackage(company);assert.equal(sharedAll.manifest.stores.length,18);assert.equal(sharedAll.manifest.stores.filter(s=>s.groupName).length,2);assert.equal(sharedAll.manifest.recipientsComplete,false);
@@ -161,6 +161,42 @@ install({role:'region',region:catalog[0].region});await api.buildPublicationPack
 install({role:'store',...catalog[0]});await assert.rejects(api.buildPublicationPackage(regionView),/无权/);
 install(project);once=false;onImage=()=>{if(!once){once=true;api.state.cache[month]=snapshot();}};
 await assert.rejects(api.buildPublicationPackage(company),/已变化/);onImage=null;assert.equal(api.state.exporting,false);
+// Complete 24-scope package ignores the current filter; blank recipients never block download.
+const configuredAll={...projectConfig,company:{groupName:'全司☀️店总群'},regions:[...new Set(catalog.map(s=>s.region))].map((region,index)=>({region,groupName:index===0?'花木💜店总群':''}))};
+const fullData=install(project);fullData.sendConfigItem={key:'2000-01|rules|@@company|wechat-send-config-v1',kind:'rules',payload:configuredAll,updated_at:'2026-11-10T10:00:00Z'};
+const complete=await api.buildSendPackage(storeView(catalog[0]),{allScopes:true}),completeFiles=unzip(await complete.blob.arrayBuffer()),completeManifest=complete.manifest;
+assert.equal(completeManifest.scopeCount,24);assert.equal(completeManifest.stores.length,18);assert.equal(completeManifest.publications.length,6);assert.equal(completeManifest.recipientsComplete,false);
+assert.match(complete.filename,/全司_5大区_18门店_24范围公示资料包/);
+assert.equal([...completeFiles.keys()].filter(name=>name.endsWith('/话术.txt')).length,24);
+assert.equal(read(completeFiles,'全部群名配置.csv').split('\r\n').length,25);assert.ok(read(completeFiles,'全部群名配置.csv').includes('全司☀️店总群'));assert.ok(read(completeFiles,'全部群名配置.csv').includes('待配置'));
+for(const publication of completeManifest.publications){assert.equal(publication.images.length,1);assert.ok(completeFiles.has(publication.message));assert.ok(completeFiles.has(publication.images[0]));assert.equal(publication.asOf,completeManifest.asOf);assert.equal(publication.sourceVersion,completeManifest.sourceVersion);}
+assert.equal(completeManifest.publications.filter(row=>row.scope==='company').length,1);assert.equal(completeManifest.publications.filter(row=>row.scope==='region').length,5);
+for(const row of completeManifest.stores){assert.ok(row.message.startsWith('03_门店/'));assert.equal(row.modules.progress.length,1);assert.ok(row.modules.details.length>=1);assert.ok(row.modules.quality.length>=1);assert.ok(row.images.every(name=>completeFiles.has(name)));}
+assert.ok(completeManifest.stores[0].modules.details.length>1);assert.ok(completeManifest.stores[0].modules.quality.length>1);
+assert.equal(completeManifest.publications[0].groupName,'全司☀️店总群');assert.equal(completeManifest.publications[1].groupName,'花木💜店总群');
+if(!realCanvas){const image=read(completeFiles,completeManifest.publications[0].images[0]);assert.ok(!image.includes('伙伴0'));assert.ok(!image.includes(catalog[0].store+'A组'));}
+if(process.env.FULL_ZIP_PATH){assert.ok(realCanvas);fs.writeFileSync(process.env.FULL_ZIP_PATH,Buffer.from(await complete.blob.arrayBuffer()));}
+install({role:'region',region:catalog[0].region});await assert.rejects(api.buildSendPackage(company,{allScopes:true}),/仅项目负责人/);
+const missing=install(project);missing.housing=housing.filter(row=>row['门店']!==catalog.at(-1).store);await assert.rejects(api.buildSendPackage(company,{allScopes:true}),/缺少门店在售数据/);
+install(project);once=false;onImage=()=>{if(!once){once=true;api.state.cache[month].imports[0].created_at='2026-11-15T10:00:00Z';}};await assert.rejects(api.buildSendPackage(company,{allScopes:true}),/已变化/);onImage=null;assert.equal(api.state.exporting,false);
+install(project);once=false;onImage=()=>{if(!once){once=true;api.state.cache[month].imports[0].as_of='2026-11-15';}};await assert.rejects(api.buildSendPackage(company,{allScopes:true}),/已变化/);onImage=null;assert.equal(api.state.exporting,false);
+install(project);api.state.savingSendConfig=true;await assert.rejects(api.buildSendPackage(company,{allScopes:true}),/正在保存/);api.state.savingSendConfig=false;
+// Global group configuration uses the existing private rules row and its optimistic version.
+const saveData=install(project);saveData.sendConfigItem={key:'2000-01|rules|@@company|wechat-send-config-v1',kind:'rules',payload:projectConfig,updated_at:'v1'};
+let savedArgs;x.WBCloud.saveItem=async(...args)=>{savedArgs=args;return {key:'2000-01|rules|@@company|wechat-send-config-v1',kind:'rules',payload:args[5],updated_at:'v2'};};
+await api.saveSendConfig({expectedVersion:'v1',companyGroupName:'全司🌞公示群',regionGroup_0:'花木⭐店总群'});
+assert.equal(savedArgs[0],'2000-01');assert.equal(savedArgs[1],'rules');assert.equal(savedArgs[2],'wechat-send-config-v1');assert.equal(savedArgs[6],'v1');assert.equal(savedArgs[5].company.groupName,'全司🌞公示群');assert.equal(savedArgs[5].regions[0].groupName,'花木⭐店总群');assert.equal(savedArgs[5].stores.filter(row=>row.groupName).length,2);assert.equal(saveData.sendConfigItem.updated_at,'v2');
+await assert.rejects(api.saveSendConfig({expectedVersion:'v1',companyGroupName:'stale'}),/已更新/);
+await api.saveSendConfig({expectedVersion:'v2',storeGroup_16:'',storeGroup_17:''});assert.equal(savedArgs[5].pilotStores.length,0);assert.equal(savedArgs[5].mode,'all');assert.equal(savedArgs[5].stores.filter(row=>row.groupName).length,0);
+let finishSave;x.WBCloud.saveItem=async(...args)=>new Promise(resolve=>{finishSave=()=>resolve({key:'2000-01|rules|@@company|wechat-send-config-v1',kind:'rules',payload:args[5],updated_at:'v3'});});
+const saving=api.saveSendConfig({expectedVersion:'v2',companyGroupName:'全司🌞公示群'});assert.equal(api.state.savingSendConfig,true);await assert.rejects(api.buildSendPackage(company,{allScopes:true}),/正在保存/);finishSave();await saving;assert.equal(api.state.savingSendConfig,false);
+assert.ok(read(completeFiles,'全部群名配置.csv').includes('项目共享测试💜经理群,一'));assert.ok(read(completeFiles,'全部群名配置.csv').includes('项目共享🏆测试经理群（两店试行）'));
+assert.throws(()=>P.validateProjectConfig({...configuredAll,company:{groupName:'花木💜店总群'}}),/重复/);
+assert.throws(()=>P.validateProjectConfig({...configuredAll,regions:[configuredAll.regions[0]]}),/大区群配置/);
+install({role:'region',region:catalog[0].region});await assert.rejects(api.saveSendConfig({}),/仅项目负责人/);
+install(project);api.state.exporting=true;await assert.rejects(api.saveSendConfig({}),/正在生成/);api.state.exporting=false;
+console.log('PASS complete 24-scope package: all-company + 5 regions + 18 stores, exact scope directories, blank-recipient CSV, pagination, scoped access, missing-store errors and source-version isolation.');
+console.log('PASS shared recipient editing: 24 inputs, legacy two-store compatibility, exact emoji names, global private rules persistence, optimistic conflicts and project-only writes.');
 // Gift prompts use registered coverage; no warning at 20%, no inference about preparation.
 install(project);
 const base={_level:'store',store:catalog[0].store,stock:100,met:10,met_rate:'10.00%',_target:20,store_top_met:1,store_top_rate:'10.00%',unit_top_met:1,unit_top_rate:'10.00%'};
