@@ -45,7 +45,7 @@ function form(d){const button=cell();return {elements:{target:{value:d.target??'
 function row(c,overrides={}){const z=P.calculate(c.businessData,week);return {key:'2026-11|review|@@company|company-week-plan:2026-11-16:2026-11-22',updated_at:'2026-11-15T10:30:00Z',payload:{recordType:'company-week-plan',periodStart:week.periodStart,periodEnd:week.periodEnd,target:80,strategyText:'保存的策略',status:'confirmed',updatedBy:'负责人',...z,...overrides}};}
 function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};}
 // Only the project owner can change the shared company plan.
-reset();let c=ctx();ready(c);U.render(c);assert.ok(c.host.innerHTML.includes('AI生成策略草稿'));assert.ok(c.host.innerHTML.includes('体积与等待时间以进度为准'));assert.ok(!c.host.innerHTML.includes('href='));assert.equal(U.editable(c),true);
+reset();let c=ctx();ready(c);U.render(c);assert.ok(!c.host.innerHTML.includes('AI'));assert.ok(!c.host.innerHTML.includes('模型'));assert.ok(c.host.innerHTML.includes('语音输入'));assert.ok(c.host.innerHTML.includes('保存全司周计划'));assert.ok(!c.host.innerHTML.includes('href='));assert.equal(U.editable(c),true);
 c.cloud.project=false;U.render(c);assert.match(c.host.innerHTML,/<fieldset disabled>/);assert.equal(U.editable(c),false);await assert.rejects(()=>U.save(c,form(U.draft(c,week))),/仅项目负责人/);
 reset();c=ctx({member:null});assert.equal(U.editable(c),false);await U.load(c);assert.equal(S.cache.size,0);
 
@@ -60,45 +60,16 @@ liveSource=business('2026-11-18','2026-11-19T00:00:00Z');c.businessData=liveSour
 d.target=95;liveSource=business('2026-11-19','2026-11-20T00:00:00Z');c.businessData=liveSource;P.mount(c);await S.pending.get(c.month);assert.equal(d.target,95);assert.equal(d.calculation.suggestedTarget,56);
 reset();c=ctx();const originalSaved=row(c);ready(c,[originalSaved]);d=U.draft(c,week);c.cloud.companyWeekPlan=async()=>({items:[originalSaved]});c.businessData=business('2026-11-18','2026-11-19T00:00:00Z');c.cloud.storeReview=async()=>({items:[],businessData:c.businessData});P.mount(c);await S.pending.get(c.month);d=U.draft(c,week);assert.equal(d.target,80);assert.equal(d.sourceAsOf,'2026-11-12');assert.equal(d.calculation.suggestedTarget,79);
 
-// AI context uses only store/region aggregate data and latest confirmed review excerpts.
-const reviews=[{store:'新天地二店',region:'黄浦大区',payload:{status:'confirmed',periodStart:'2026-11-09',periodEnd:'2026-11-15',fields:{highlights:'围绕价格交流',blockers:'需要加强邀约',nextActions:'逐组确认安排',owner:'不应进入上下文的责任人'}}}];
-reset();c=ctx();ready(c,[],reviews);d=U.draft(c,week);const aiContext=P.buildAIContext(c,week,d);assert.equal(aiContext.quantitativeGoal,79);assert.equal(aiContext.regions.length,5);assert.equal(aiContext.stores.length,18);assert.equal(aiContext.confirmedReviews.length,1);assert.ok(!JSON.stringify(aiContext).includes('不应进入'));assert.ok(!JSON.stringify(aiContext).includes('customer-only'));
-
-// AI returns a preview, not an automatic replacement. Late results cannot overwrite typing.
-reset();c=ctx();ready(c);d=U.draft(c,week);d.strategyText='项目负责人原稿';c.host.form=form(d);
-let generatedInput;const ai=deferred();x.WBReviewAI={organize:async arg=>{generatedInput=arg;arg.onProgress({message:'下载模型50%'});return ai.promise;}};
-let pending=U.generate(c);assert.equal(generatedInput.kind,'companyStrategy');assert.ok(generatedInput.signal);assert.equal(d.strategyText,'项目负责人原稿');
-ai.resolve({method:'local-model',text:'未来一周建议策略',warnings:['须核实']});await pending;assert.equal(d.strategyText,'项目负责人原稿');assert.equal(d.preview.text,'未来一周建议策略');
-const late=deferred();x.WBReviewAI.organize=()=>late.promise;pending=U.generate(c);c.host.form.elements.strategyText.value='生成期间继续编辑';late.resolve({method:'local-model',text:'过期结果',warnings:[]});await pending;assert.equal(d.strategyText,'生成期间继续编辑');assert.ok(d.notice.includes('有修改'));
-// A non-model or empty result is never reported as successful AI.
-x.WBReviewAI.organize=async()=>({method:'rules',text:'规则整理'});await U.generate(c);assert.match(d.error,/有效的本机AI/);
-
-// Cancelled/old-period results do not apply.
-const stale=deferred();x.WBReviewAI.organize=()=>stale.promise;pending=U.generate(c);U.cancelAI();S.selection.set(c.month,'2026-11-23');stale.resolve({method:'local-model',text:'不应出现',warnings:[]});await pending;assert.notEqual(U.draft(c,P.periods(c.month).find(p=>p.periodStart==='2026-11-23')).strategyText,'不应出现');
-
 // Save carries the original calculation separately from the manually adjusted target.
-reset();let submitted;const saveGate=deferred();c=ctx({call:async(action,args)=>{if(action==='save'){submitted=clone(args);return saveGate.promise;}return {items:[]};}});ready(c);d=U.draft(c,week);d.target=90;d.strategyText='人工确认后的重点动作';d.status='confirmed';c.host.form=form(d);pending=U.save(c,c.host.form);assert.equal(submitted.payload.target,90);assert.equal(submitted.payload.calculation.suggestedTarget,79);assert.equal(submitted.payload.sourceAsOf,'2026-11-12');assert.equal(submitted.periodStart,'2026-11-16');assert.ok(!('label' in submitted));
+reset();let submitted,pending;const saveGate=deferred();c=ctx({call:async(action,args)=>{if(action==='save'){submitted=clone(args);return saveGate.promise;}return {items:[]};}});ready(c);d=U.draft(c,week);d.target=90;d.strategyText='人工确认后的重点动作';d.status='confirmed';c.host.form=form(d);pending=U.save(c,c.host.form);assert.equal(submitted.payload.target,90);assert.equal(submitted.payload.calculation.suggestedTarget,79);assert.equal(submitted.payload.sourceAsOf,'2026-11-12');assert.equal(submitted.periodStart,'2026-11-16');assert.ok(!('label' in submitted));
 c.host.form.elements.strategyText.value='保存途中继续补充';saveGate.resolve(row(c,{...submitted.payload,status:'confirmed'}));await pending;assert.equal(d.strategyText,'保存途中继续补充');assert.equal(d.dirty,true);assert.ok(d.notice.includes('后续修改'));
 
 // A second window update is shown as a conflict instead of silently replacing local input.
 const newRow=row(c,{strategyText:'另一个窗口的版本'});newRow.updated_at='2026-11-15T11:00:00Z';c.cloud.companyWeekPlan=async()=>({items:[newRow]});await U.load(c,true);assert.equal(d.strategyText,'保存途中继续补充');assert.equal(d.remote.updated_at,newRow.updated_at);await assert.rejects(()=>U.save(c,c.host.form),/其他窗口/);U.adoptRemote(d);assert.equal(d.strategyText,'另一个窗口的版本');assert.equal(d.dirty,false);
 
-// AI restoration never overwrites words typed after adopting a draft.
-reset();c=ctx();ready(c);d=U.draft(c,week);d.strategyText='原稿';c.host.form=form(d);d.preview={original:'原稿',target:d.target,text:'AI草稿',warnings:[]};
-const click=async action=>handlers.get('click')({target:{closest:()=>({dataset:{cwp:action}})}});
-await click('apply-ai');assert.equal(d.restore.original,'原稿');assert.equal(d.restore.appliedText,'AI草稿');
-c.host.form.elements.strategyText.value='AI草稿加人工补充';await click('restore-ai');assert.equal(d.strategyText,'AI草稿加人工补充');assert.ok(notices.at(-1).includes('避免覆盖新输入'));
-c.host.form.elements.strategyText.value='AI草稿';await click('restore-ai');assert.equal(d.strategyText,'原稿');
-
-// Long existing drafts stay intact and are rejected for whole-text AI rather than truncated.
-d.strategyText='长'.repeat(6500);c.host.form=form(d);U.render(c);assert.ok(c.host.innerHTML.includes('长'.repeat(6500)));await assert.rejects(()=>U.generate(c),/全文保留/);assert.equal(d.strategyText.length,6500);
-
-// Strategy context stays bounded even when all eighteen reports have large texts.
-reset();c=ctx();const manyReviews=x.WBModel.storeCatalog.filter(s=>s.ownerApplicable!==false).map(s=>({store:s.store,region:s.region,payload:{status:'confirmed',periodStart:'2026-11-09',periodEnd:'2026-11-15',fields:{highlights:'有价值的场景'.repeat(3000),blockers:'需要核实的卡点'.repeat(3000),nextActions:'下一步的行动'.repeat(3000)}}}));ready(c,[],manyReviews);d=U.draft(c,week);const bounded=P.buildAIContext(c,week,d);assert.ok(JSON.stringify(bounded).length<16000);assert.equal(bounded.stores.length,18);assert.equal(bounded.regions.length,5);assert.ok(bounded.confirmedReviews.length>0);assert.ok(bounded.reviewExcerptNote.includes('摘要'));assert.ok(bounded.reviewExcerptNote.includes('完整原报告'));
-
-// A newly refreshed source/calculation invalidates in-flight strategy output.
-c.host.form=form(d);const changedSource=deferred();x.WBReviewAI.organize=()=>changedSource.promise;pending=U.generate(c);S.cache.get(c.month).businessData=business('2026-11-13','2026-11-14T00:00:00Z');d.calculation.remainingGap=190;changedSource.resolve({method:'local-model',text:'旧底表结果',warnings:[]});await pending;assert.equal(d.strategyText,'');assert.equal(d.preview,null);assert.ok(d.notice.includes('底表测算'));
+// Long existing drafts remain fully visible for manual editing.
+reset();c=ctx();ready(c);d=U.draft(c,week);d.strategyText='长'.repeat(6500);c.host.form=form(d);U.render(c);assert.ok(c.host.innerHTML.includes('长'.repeat(6500)));assert.equal(d.strategyText.length,6500);
 
 // Leaving a page with a modified company plan requests the standard unsaved-draft guard.
 let prevented=0;const unload={preventDefault(){prevented++;},returnValue:null};d.dirty=true;rootHandlers.get('beforeunload')(unload);assert.equal(prevented,1);assert.equal(unload.returnValue,'');d.dirty=false;rootHandlers.get('beforeunload')(unload);assert.equal(prevented,1);
-console.log('PASS company weekly planning: calendar defaults, 79-suite calculation, elapsed-day boundaries, owner-only edits, frozen history, local AI previews, stale/cancelled output protection, concurrent saves and aggregate-only context');
+console.log('PASS company weekly planning: calendar defaults, 79-suite calculation, elapsed-day boundaries, owner-only edits, frozen history, manual strategy editing, no model loading, concurrent saves and unsaved-draft protection');
