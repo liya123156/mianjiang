@@ -112,7 +112,7 @@
     "endDate": "2026-11-30",
     "dailyBundle": "目标共识",
     "status": "待核实",
-    "scheduleBasis": "沿用原建议节点作为首次检核；各店实际研讨日期需与店总确认，已生成任务与历史记录保留。",
+    "scheduleBasis": "沿用原建议节点作为首次检核；各店实际研讨日期需与店总确认，实际进展另行核对。",
     "assigneeRole": "店面BP"
   },
   {
@@ -710,7 +710,7 @@
     "endDate": null,
     "dailyBundle": "目标过程",
     "status": "待确认排期",
-    "scheduleBasis": "待确认排期；具体日期及承接安排确认后启用任务，不将建议节奏视为已确认安排。",
+    "scheduleBasis": "待确认排期；具体日期及承接安排确认后再执行，不将建议节奏视为已确认安排。",
     "assigneeRole": "大区BP",
     "enabled": false,
     "pendingSchedule": true,
@@ -898,7 +898,7 @@
     "endDate": null,
     "dailyBundle": "正反馈",
     "status": "待确认排期",
-    "scheduleBasis": "待确认排期；具体日期及承接安排确认后启用任务，不将建议节奏视为已确认安排。",
+    "scheduleBasis": "待确认排期；具体日期及承接安排确认后再执行，不将建议节奏视为已确认安排。",
     "assigneeRole": "项目负责人",
     "enabled": false,
     "pendingSchedule": true,
@@ -1077,7 +1077,7 @@
   }
 ];
   const metrics = [
-    {value:'21家',label:'项目覆盖门店',note:'按现有组织名册承接，任务按授权BP负责范围分派。'},
+    {value:'21家',label:'项目覆盖门店',note:'按现有组织名册承接，按大区与门店查看目标和业务进展。'},
     {value:'100%',label:'线上感恩表达',note:'以有效客户和业主名单为分母；服务协作群体单列。'},
     {id:'meeting-total',value:'300套',label:'11月全司面见目标',note:'已拆解至大区和门店，展开下方查看各组织目标。'},
     {value:'≥20%',label:'全盘在售面见率',note:'去重面见房源 ÷ 当月在售房源；重复面见次数另列。'},
@@ -1086,8 +1086,8 @@
   const roleRows = [
     ['项目负责人','全司目标与职责共识；研讨方案、物料、报告培训及首批门店统筹；全司日检核、周复盘、问题再推动。','检核逐店承接与行为变化，不能以向店总传达完成代替落地。'],
     ['店总','主持单店启动大会、文化研讨和日常早会；决定单店目标、资源与店组安排；组织报告学习、通关与首轮行动。','对本店组织落地和业务结果负责，带动经理把动作落实到伙伴。'],
-    ['大区BP','每周大区店总会共识；每日晒数据并点明差距、对象和下一步；安排固定承接人跟店支持（排班待确认）；汇聚标杆与资源问题。','复核本大区进展，协调卡点，按授权验收门店提交结果。'],
-    ['店面BP','协助共识；礼品贺卡与hmall图印刷取用；逐店组检核与现场支持；跟进报告参训、通关和补训；主动发现、核实和分享正反馈。','每天更新事实、卡点和下一步，提交结果后由管理者验收。'],
+    ['大区BP','每周大区店总会共识；每日晒数据并点明差距、对象和下一步；安排固定承接人跟店支持（排班待确认）；汇聚标杆与资源问题。','复核本大区进展，协调卡点，与店面管理者核对实际结果。'],
+    ['店面BP','协助共识；礼品贺卡与hmall图印刷取用；逐店组检核与现场支持；跟进报告参训、通关和补训；主动发现、核实和分享正反馈。','跟进事实、卡点和下一步，与管理者核对执行情况和支持需求。'],
     ['经理与伙伴','经理明确到组、到对象、到伙伴；伙伴完成顾客沟通、邀约、面见和专业服务，并结合报告培训开展讲解演练。','销售中心负责服务质量及业务推进；项目记录复用既有业务数据。']
   ];
   const cadence = [
@@ -1096,7 +1096,7 @@
     {date:'本周或下周 · 与店总确认',title:'文化研讨承接',text:'逐店确认文化研讨实际日期与状态，开展后看具体行动。',kind:'待确认排期'},
     {date:'预计11月12日及当晚',title:'全员培训与店总会同步',text:'面向全体伙伴开展上海城市报告培训；当晚全司店总会再次同步培训、通关标准及配套物料。随后由门店承接通关、补训和复查，具体日期与店总确认。培训与印刷并行。',kind:'预计节点'},
     {date:'预计11月15日前',title:'纸质报告分发到店',text:'下周跟进校样、印刷和配送；逐店核对数量、质量、接收人及取用方式，延期事项明确补齐时间。',kind:'预计节点'},
-    {date:'每日',title:'BP更新 · 管理者验收',text:'共识与行动变化、目标差距与卡点、正反馈三项合并为单店日检核；节点物料任务到期单独检查；跟店安排确认后进入日任务，报告通关与物料接收分别检核。',kind:'日常承接'},
+    {date:'每日',title:'BP跟进 · 结果复查',text:'结合数据公示与店面沟通，跟进目标差距、实际动作、卡点和正反馈；物料准备、报告通关及现场支持分别核对实际落实情况。',kind:'日常承接'},
     {date:'每周',title:'回看支持效果，调整下周动作',text:'建议11月6、13、20、27日归集；大区店总会沿实际会期。回看未解决问题、未行动店组、培训通关、跟店支持和首批做法采用；更新整月排期及接手人说明。',kind:'建议节奏'},
     {date:'11月30日—12月1日',title:'月度结果与方法沉淀',text:'11月30日统计截止，建议12月1日完成复盘；分开呈现项目交付、实际行动、顾客反馈与业务进展。',kind:'建议节奏'}
   ];
@@ -1262,9 +1262,9 @@
     const schedule=`<div class="np-cadence">${cadence.map(c=>`<article><div><strong>${E(c.date)}</strong><span>${E(c.kind)}</span></div><div><h3>${E(c.title)}</h3><p>${E(c.text)}</p></div></article>`).join('')}</div>`;
     const roles=`<details class="np-support"><summary>展开项目负责人、店总与BP的分工边界</summary><div class="np-role-list">${roleRows.map(r=>`<article><h3>${E(r[0])}</h3><p>${E(r[1])}</p><p><strong>交付与责任</strong>${E(r[2])}</p></article>`).join('')}</div></details>`;
     const planTargets=section('plan-targets','03','执行节奏与角色承接','排期与实际状态分开：已知交付包括启动、行动包发布、方案输出及店总会物料与落地规划共识；单店承接、培训和执行结果逐项核实。',schedule+(root.WBNovemberSchedule?.render?.(view)||'')+roles);
-    const daily=`<div class="np-handoff"><article><span>01</span><h3>规划形成任务</h3><p>以同一份行动定义按日期、门店和BP负责范围生成任务；一次性物料节点保留独立验收，日常共识、进度和标杆合并更新。</p></article><article><span>02</span><h3>BP更新事实</h3><p>填写当天实际推进、店组行动、卡点及下一步。有正反馈补充具体场景、动作和变化；暂无素材如实记录。</p></article><article><span>03</span><h3>每日验收</h3><p>管理者查看结果与验收标准，确认通过或退回补充。提交结果与验收完成分开，未解决问题持续跟进。</p></article><article><span>04</span><h3>每周复盘</h3><p>汇总完成、待验收、退回和未推进事项，回看目标差距与支持效果，明确下周重点、责任人和复查日期。</p></article></div><div class="np-bottom-note"><div><strong>当前查看：${E(scopeName||'全司')}</strong><p>规划面向全体BP共享；实际任务按登录账号的授权范围查看和更新。费用核销继续承接系统导入明细、礼品费用分摊与报销核对。</p></div><div class="np-buttons"><button type="button" class="btn primary" data-plan-mode="daily">进入日常推动</button><button type="button" class="btn" data-plan-mode="expense">查看费用核销</button><a class="btn" href="https://liya123156.github.io/gan-en-yue/" target="_blank" rel="noopener">打开感恩月行动包</a></div></div>`;
-    const hero=`<header class="hero plan-hero np-hero"><div class="eyebrow">LANDZ · NOVEMBER 2026</div><div class="plan-title-line"><h1>11月感恩月｜项目规划与执行</h1><span class="plan-badge">11月5日共创更新</span></div><p class="plan-theme">感恩相连，服务有光</p><div class="meta-row"><span>${E(scopeName||'全司')} · 共享规划</span><span>2026年11月1日—11月30日</span><span>21家店 · 四项策略 · ${actions.length}项行动</span></div><p class="np-hero-note">规划明确目标和动作，实际推进与验收结果在日常推动中持续更新。</p></header>`;
-    return `<div class="november-plan">${hero}${planGoals}${planActions}${planTargets}${section('plan-delivery','04','从规划承接到日检核与周复盘','规划、执行与复盘使用对应的行动编号，保留推进和验收结果。',daily)}<footer class="footer"><span>上海丽兹行 · 11月感恩月项目</span><span>2026/11/05 共创更新</span></footer></div>`;
+    const daily=`<div class="np-handoff"><article><span>01</span><h3>规划明确动作</h3><p>在同一份规划中讲清目标、关键动作、时间与复查标准，作为日常推动的共同依据。</p></article><article><span>02</span><h3>日常推动</h3><p>通过数据公示与店面沟通，了解实际动作、店组进展、卡点及下一步，及时提供物料和资源支持。</p></article><article><span>03</span><h3>结果复查</h3><p>结合业务底表和沟通情况核对执行结果；计划、邀约、实际面见和后续收获分别确认，未解决问题持续跟进。</p></article><article><span>04</span><h3>周月复盘</h3><p>沿用业务数据和已核实的推动情况，回看目标差距与支持效果，明确后续重点、责任人和复查时间。</p></article></div><div class="np-bottom-note"><div><strong>当前查看：${E(scopeName||'全司')}</strong><p>规划共享查看；日常推动统一生成公示话术和资料包，周月复盘结合业务结果与实际情况作出判断。历史费用继续在费用核销中查看。</p></div><div class="np-buttons"><button type="button" class="btn primary" data-plan-mode="daily">进入日常推动</button><button type="button" class="btn" data-plan-mode="expense">查看费用核销</button><a class="btn" href="https://liya123156.github.io/gan-en-yue/" target="_blank" rel="noopener">打开感恩月行动包</a></div></div>`;
+    const hero=`<header class="hero plan-hero np-hero"><div class="eyebrow">LANDZ · NOVEMBER 2026</div><div class="plan-title-line"><h1>11月感恩月｜项目规划与执行</h1><span class="plan-badge">11月5日共创更新</span></div><p class="plan-theme">感恩相连，服务有光</p><div class="meta-row"><span>${E(scopeName||'全司')} · 共享规划</span><span>2026年11月1日—11月30日</span><span>21家店 · 四项策略 · ${actions.length}项行动</span></div><p class="np-hero-note">规划明确目标和动作，日常推动结合数据公示与实际沟通核对进展。</p></header>`;
+    return `<div class="november-plan">${hero}${planGoals}${planActions}${planTargets}${section('plan-delivery','04','从规划承接到日常推动与周月复盘','规划提供动作依据，日常推动核对实际进展，周月复盘调整后续安排。',daily)}<footer class="footer"><span>上海丽兹行 · 11月感恩月项目</span><span>2026/11/05 共创更新</span></footer></div>`;
   }
   function exportText(){return [
     '11月感恩月｜项目规划','2026年11月5日共创更新','',goal,'',goalNarrative.boundary,
@@ -1279,5 +1279,5 @@
     ,root.WBNovemberSchedule?.exportText?.()||''
   ].filter(x=>x!==undefined).join('\n');}
   if(typeof document!=='undefined')document.addEventListener('click',e=>{const link=e.target.closest('[data-np-open]');if(link){const target=document.getElementById('nov-strategy-'+link.dataset.npOpen);if(target)target.open=true;}});
-  root.WBNovemberPlan={version,week2Plan,title:'11月感恩月｜项目规划与执行',status:'11月5日共创更新 · 按实际结果逐项检核',theme:'感恩相连，服务有光',period:'2026年11月1日—11月30日',goalNarrative,goal,goals,metrics,strategies,actions,executionActions,render,exportText,text:exportText,navigation:[['plan-goals','Part 1 · 项目目标'],['plan-actions','Part 2 · 核心策略与动作'],['plan-targets','执行节奏与角色承接'],['plan-delivery','日检核与周复盘承接']],nav:[{id:'plan-goals',title:'Part 1 · 项目目标'},{id:'plan-actions',title:'Part 2 · 核心策略与动作'},{id:'plan-targets',title:'执行节奏与角色承接'},{id:'plan-delivery',title:'日检核与周复盘承接'}]};
+  root.WBNovemberPlan={version,week2Plan,title:'11月感恩月｜项目规划与执行',status:'11月5日共创更新 · 按实际结果逐项检核',theme:'感恩相连，服务有光',period:'2026年11月1日—11月30日',goalNarrative,goal,goals,metrics,strategies,actions,executionActions,render,exportText,text:exportText,navigation:[['plan-goals','Part 1 · 项目目标'],['plan-actions','Part 2 · 核心策略与动作'],['plan-targets','执行节奏与角色承接'],['plan-delivery','日常推动与周月复盘']],nav:[{id:'plan-goals',title:'Part 1 · 项目目标'},{id:'plan-actions',title:'Part 2 · 核心策略与动作'},{id:'plan-targets',title:'执行节奏与角色承接'},{id:'plan-delivery',title:'日常推动与周月复盘'}]};
 })(window);
