@@ -50,7 +50,7 @@ reset();let ctx=context();ready(ctx);U.paint(ctx);
 assert.equal((ctx.host.innerHTML.match(/class="sr-region"/g)||[]).length,5);
 assert.equal((ctx.host.innerHTML.match(/class="sr-store"/g)||[]).length,18);
 for(const excluded of ['徐汇一店','Hmall中心店','Hmall旗舰店'])assert.ok(!ctx.host.innerHTML.includes(excluded),excluded+' is excluded from owner reviews');
-for(const label of ['一、目标达成与数据分析','二、核心动作与执行情况','三、有效做法与标杆分享','四、未到位事项与卡点分析','五、下周目标与核心举措'])assert.ok(ctx.host.innerHTML.includes(label),label);
+for(const label of ['一、目标达成与数据分析','二、核心动作与执行情况','三、有效做法与标杆分享','四、需要提升与卡点问题分析','五、下周目标与核心举措'])assert.ok(ctx.host.innerHTML.includes(label),label);
 ctx.view={region:'黄浦大区'};U.paint(ctx);assert.equal((ctx.host.innerHTML.match(/class="sr-store"/g)||[]).length,4);
 ctx.view={region:store.region,store:store.store};U.paint(ctx);assert.equal((ctx.host.innerHTML.match(/class="sr-store"/g)||[]).length,1);
 assert.ok(!ctx.host.innerHTML.includes('name="periodGoal" type="number" min="0" max="100000"'),'client target range matches server');
@@ -92,21 +92,21 @@ loading.resolve({items:[],businessData:business()});await loadingPromise;
 assert.doesNotMatch(U.storeHtml(ctx,period,store),/<fieldset disabled>/);
 // Even a programmatic draft entered before load retains words while adopting safe data.
 reset();const boot=deferred();ctx=context({cloudCall:()=>boot.promise});S.context=ctx;
-d=U.draft(ctx,period,store);d.fields.execution='读取期间保留的输入';d.dirty=true;
+d=U.draft(ctx,period,store);d.fields.actions='读取期间保留的输入';d.dirty=true;
 const bootPromise=U.load(ctx);boot.resolve({items:[],businessData:business(ctx.month,'source-new',0)});await bootPromise;
-assert.equal(d.fields.execution,'读取期间保留的输入');assert.equal(d.snapshot.sourceVersion,'source-new');assert.equal(d.snapshot.period.met,0);
+assert.equal(d.fields.actions,'读取期间保留的输入');assert.equal(d.snapshot.sourceVersion,'source-new');assert.equal(d.snapshot.period.met,0);
 
 // Shared conflicts merge independent fields and require a choice for overlapping edits.
 reset();ctx=context();saved=row(ctx);ready(ctx,business(),[saved]);d=U.draft(ctx,period,store);
 d.fields.actions='我的新动作';d.fields.highlights='我的新分享';d.dirty=true;
 let remote=copy(saved);remote.updated_at='2026-11-15T09:00:00Z';remote.payload.fields.execution='另一位BP的执行';remote.payload.fields.highlights='另一位BP的分享';
 U.mergeRemote(d,remote);
-assert.equal(d.fields.actions,'我的新动作');assert.equal(d.fields.execution,'另一位BP的执行');assert.equal(d.fields.highlights,'我的新分享');
+assert.equal(d.fields.actions,'我的新动作');assert.equal(d.fields.execution,'');assert.ok(d.conflicts.actions.includes('另一位BP的执行'));assert.equal(d.fields.highlights,'我的新分享');
 assert.equal(d.conflicts.highlights,'另一位BP的分享');assert.equal(d.row.updated_at,remote.updated_at);
 assert.ok(U.conflictHtml(d).includes('采用最新填写'));assert.ok(U.conflictHtml(d).includes('保留我的填写'));
 await assert.rejects(()=>U.save(form(d),ctx),/同时修改/);
 await click(ctx,'resolve',form(d),{field:'highlights',choice:'remote'});
-assert.equal(d.fields.highlights,'另一位BP的分享');assert.equal(Object.keys(d.conflicts).length,0);
+assert.equal(d.fields.highlights,'另一位BP的分享');await click(ctx,'resolve',form(d),{field:'actions',choice:'remote'});assert.ok(d.fields.actions.includes('另一位BP的执行'));assert.equal(Object.keys(d.conflicts).length,0);
 let submitted;
 ctx.cloud.storeReview=async(action,args)=>{assert.equal(action,'save');submitted=copy(args);return {...remote,updated_at:'2026-11-15T09:01:00Z',payload:{...remote.payload,...args.payload}};};
 await U.save(form(d),ctx);assert.equal(submitted.expectedUpdatedAt,remote.updated_at,'merged save advances its concurrency baseline');assert.equal(d.dirty,false);
@@ -127,9 +127,9 @@ assert.equal(loads,1);assert.equal(d.snapshot.sourceVersion,'source-v3');assert.
 // In-flight saves preserve later typing, then confirmation refreshes just the summary.
 reset();const saving=deferred();let saveArgs;ctx=context({cloudCall:async(action,args)=>{assert.equal(action,'save');saveArgs=copy(args);return saving.promise;}});ready(ctx);d=U.draft(ctx,period,store);d.fields.highlights='已核实的好做法';d.status='confirmed';d.dirty=true;
 let f=form(d);const pendingSave=U.save(f,ctx);assert.equal(f.submit.disabled,true);
-f.elements.execution.value='保存请求发出后的补充';U.dirty(f,ctx);
+f.elements.actions.value='保存请求发出后的补充';U.dirty(f,ctx);
 const firstSaved=row(ctx,{...period},{status:'confirmed',fields:copy(saveArgs.payload.fields)});firstSaved.updated_at='2026-11-15T09:03:00Z';saving.resolve(firstSaved);await pendingSave;
-assert.equal(d.fields.execution,'保存请求发出后的补充');assert.equal(d.dirty,true);assert.equal(d.row.updated_at,firstSaved.updated_at);assert.equal(f.submit.disabled,false);
+assert.equal(d.fields.actions,'保存请求发出后的补充');assert.equal(d.dirty,true);assert.equal(d.row.updated_at,firstSaved.updated_at);assert.equal(f.submit.disabled,false);
 assert.ok(notices.some(t=>t.includes('仍有后续修改待保存')));
 ctx.cloud.storeReview=async(action,args)=>({...firstSaved,updated_at:'2026-11-15T09:04:00Z',payload:{...firstSaved.payload,...copy(args.payload)}});
 await U.save(form(d),ctx);assert.equal(d.dirty,false);assert.ok(ctx.host.summary.innerHTML.includes('已确认1/18店'));assert.ok(ctx.host.summary.innerHTML.includes('已核实的好做法'));

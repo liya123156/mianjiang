@@ -40,6 +40,10 @@
   if(!session?.token)throw Error('请先进入BP／管理入口');
   return request('wb_store_review_api',{p_token:session.token,p_action:action,p_args:args});
  }
+ async function companyWeekPlan(action,args={}){
+  if(!session?.token)throw Error('请先进入BP／管理入口');
+  return request('wb_company_week_plan_api',{p_token:session.token,p_action:action,p_args:args});
+ }
  async function plan(action,args={}){
   if(!['public'].includes(action)&&!session?.token)throw Error('请先进入BP／管理入口');
   return request('wb_plan_api',{p_token:session?.token||null,p_action:action,p_args:args});
@@ -61,6 +65,6 @@
   if(!response.ok||result.error)throw Error(result.error||result.message||'文件上传失败：'+response.status);
   return {...result.asset,url:archiveUrl(result.asset.object_path),downloadUrl:archiveUrl(result.asset.object_path,result.asset.original_name)};
  }
- root.WBCloud={configured,validateCode,login,membership,logout,load,rpc,storeReview,plan,importCustomerSnapshot,saveItem,uploadProof,proofUrl,uploadArchive,archiveUrl,get member(){return member;},get hasSession(){return !!session;},get project(){return member?.role==='project';}};
+ root.WBCloud={configured,validateCode,login,membership,logout,load,rpc,storeReview,companyWeekPlan,plan,importCustomerSnapshot,saveItem,uploadProof,proofUrl,uploadArchive,archiveUrl,get member(){return member;},get hasSession(){return !!session;},get project(){return member?.role==='project';}};
 })(window);
 

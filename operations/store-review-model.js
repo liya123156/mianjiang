@@ -91,9 +91,9 @@
   const nextPeriod=suggestNext(s),statusLabel=status==='confirmed'?'已确认复盘':'待BP确认';
   return {title:`${s.store} · 面见${periodLabel}复盘`,subtitle:`${s.region}｜${s.periodStart}—${s.periodEnd}`,meta:[statusLabel,`业主数据截至${s.asOf||'待核实'}`,updatedBy?'更新人：'+text(updatedBy):'',updatedAt?'更新：'+text(updatedAt).replace('T',' ').slice(0,16):''].filter(Boolean).join(' · '),sections:[
    {title:'一、目标与达成／数据分析',lines:[...analyze(s,goal),...(quality.length?['本期面见收获：',...quality]:[])]},
-   {title:'二、核心动作与执行情况',lines:['原定核心动作：'+value(fields.actions,'待BP补充'),'实际执行与结果变化：'+value(fields.execution,'待BP补充；未填写不代表未执行')]},
+   {title:'二、核心动作与执行情况',lines:[[text(fields.actions),text(fields.execution)?'实际执行结果：'+text(fields.execution):''].filter(Boolean).join('\n')||'待BP补充核心动作与实际执行结果；未填写不代表未执行']},
    {title:'三、有效做法与标杆分享',lines:[value(fields.highlights,'待BP补充具体场景、关键动作、实际变化和可借鉴做法')]},
-   {title:'四、未到位事项与卡点分析',lines:[value(fields.blockers,'待BP补充已核实的卡点、原因、尝试及所需支持')]},
+   {title:'四、需要提升与卡点问题分析',lines:[value(fields.blockers,'待BP补充已核实的卡点、原因、尝试及所需支持')]},
    {title:`五、下${periodLabel}目标与核心举措`,lines:[`下一周期：${nextPeriod.periodStart}—${nextPeriod.periodEnd}`,`下${periodLabel}目标：${next===null?'待BP调整确认':next+'套（BP填入／调整）'}`,value(fields.nextActions,'待BP补充核心举措'),`责任人：${value(fields.owner,'待明确')}｜完成／复查日期：${value(fields.due,'待明确')}`]}
   ]};
  }
