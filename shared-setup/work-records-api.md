@@ -2,6 +2,20 @@
 
 `database-work-records.sql` 是独立SQL草稿。它依赖现有 `wb_members`、`wb_code_sessions`，不创建个人名单，不配置模型或收费服务。
 
+## 仅配置账号的预授权阶段
+
+`database-record-collaborator-access.sql` 仅修改 `wb_members` 的两个角色/组织CHECK约束，使无组织归属的 `collaborator` 账号可以登记。它不创建共享记录表、附件、队列或RPC，也不发布记录入口。负责人既有 `project` 角色保持不变，其他获批成员可登记为 `collaborator`；名单需另行私下配置。
+
+此阶段的“共享记录权限”属于账号角色预授权，不能宣称已经可以操作尚未上线的共享记录功能。现有 `wb_can_read_scope`、`wb_can_write_item`、工号登录及旧RPC均不改写，因此旧私有房源、费用、全司导入和目标管理权限不会扩大。
+
+账号预授权的隔离测试：
+
+```sh
+PGLITE_MODULE=/tmp/work-records-pglite/node_modules/@electric-sql/pglite/dist/index.js node shared-setup/test-record-collaborator-access.mjs
+```
+
+它用8位虚构成员和源码中的原始登录/权限RPC验证：账号可登录，7位协作者无需虚构组织，旧业务权限仍拒绝，共享记录表及RPC仍不存在。
+
 ## 账号和权限
 
 - 保留现有工号登录及8小时自定义会话。
