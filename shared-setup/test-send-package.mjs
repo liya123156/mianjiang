@@ -124,7 +124,7 @@ assert.throws(()=>P.validatePilotConfig({version:1,stores:[pilotStores[0],{...pi
 assert.throws(()=>P.validatePilotConfig({version:1,stores:[pilotStores[0],{store:excluded.store,groupName:'不适用门店'}]}),/无效/);
 assert.throws(()=>P.validatePilotConfig({version:1,stores:[pilotStores[0],{...pilotStores[1],groupName:'群名\n其他群'}]}),/完整名称/);
 P.savePilotConfig({version:1,stores:pilotStores});install(project);api.render(company);
-assert.ok(elements.get('report').innerHTML.includes('项目负责人统一操作 · 全司＋5大区＋18门店'));assert.ok(elements.get('report').innerHTML.includes('生成2店试行资料包'));
+assert.ok(elements.get('report').innerHTML.includes('项目负责人统一操作 · 全司＋5大区＋18门店'));assert.doesNotMatch(elements.get('report').innerHTML,/原两店试行入口|data-ops="pilot-(?:import|package)"|生成2店试行资料包/);
 assert.ok(elements.get('report').innerHTML.includes('测试💜经理群,一'));
 assert.ok(elements.get('report').innerHTML.includes('🏆测试经理群（两店试行）'));
 storage.clear();
@@ -139,7 +139,7 @@ assert.throws(()=>P.validateProjectConfig({...projectConfig,stores:projectConfig
 assert.throws(()=>P.validateProjectConfig({...projectConfig,pilotStores:[catalog[0].store]}),/试行名单/);
 once=false;onImage=()=>{if(!once){once=true;shared.sendConfigItem={...shared.sendConfigItem,payload:{...projectConfig,stores:projectConfig.stores.map(s=>({...s,groupName:s.groupName?s.groupName+'改名':''}))}};}};
 await assert.rejects(api.buildSendPackage(company,{pilot:true}),/配置已变化/);onImage=null;
-install({role:'region',region:'黄浦大区'}).sendConfigItem={payload:projectConfig};api.render({scope:'region',region:'黄浦大区',name:'黄浦大区'});assert.ok(!elements.get('report').innerHTML.includes('项目共享'));
+install({role:'region',region:'黄浦大区'}).sendConfigItem={payload:projectConfig};api.render({scope:'region',region:'黄浦大区',name:'黄浦大区'});assert.ok(!elements.get('report').innerHTML.includes('项目共享'));assert.doesNotMatch(elements.get('report').innerHTML,/两店微信试行|data-ops="pilot-(?:import|package)"/);
 // Current-range publications export one progress image, with the agreed identity levels.
 install(project);
 const companyPublication=await api.buildPublicationPackage(company),companyFiles=unzip(await companyPublication.blob.arrayBuffer());
@@ -169,7 +169,8 @@ assert.equal(completeManifest.scopeCount,24);assert.equal(completeManifest.store
 assert.match(complete.filename,/全司_5大区_18门店_24范围公示资料包/);
 assert.equal([...completeFiles.keys()].filter(name=>name.endsWith('/话术.txt')).length,24);
 assert.equal(read(completeFiles,'全部群名配置.csv').split('\r\n').length,25);assert.ok(read(completeFiles,'全部群名配置.csv').includes('全司☀️店总群'));assert.ok(read(completeFiles,'全部群名配置.csv').includes('待配置'));
-for(const publication of completeManifest.publications){assert.equal(publication.images.length,1);assert.ok(completeFiles.has(publication.message));assert.ok(completeFiles.has(publication.images[0]));assert.equal(publication.asOf,completeManifest.asOf);assert.equal(publication.sourceVersion,completeManifest.sourceVersion);}
+for(const row of completeManifest.stores){assert.ok(read(completeFiles,row.message).startsWith('各位战友，大家好☀️\n'));}
+for(const publication of completeManifest.publications){assert.ok(read(completeFiles,publication.message).startsWith((publication.scope==='company'?'各位梦想合伙人':'各位战友')+'，大家好☀️\n'));assert.equal(publication.images.length,1);assert.ok(completeFiles.has(publication.message));assert.ok(completeFiles.has(publication.images[0]));assert.equal(publication.asOf,completeManifest.asOf);assert.equal(publication.sourceVersion,completeManifest.sourceVersion);}
 assert.equal(completeManifest.publications.filter(row=>row.scope==='company').length,1);assert.equal(completeManifest.publications.filter(row=>row.scope==='region').length,5);
 for(const row of completeManifest.stores){assert.ok(row.message.startsWith('03_门店/'));assert.equal(row.modules.progress.length,1);assert.ok(row.modules.details.length>=1);assert.ok(row.modules.quality.length>=1);assert.ok(row.images.every(name=>completeFiles.has(name)));}
 assert.ok(completeManifest.stores[0].modules.details.length>1);assert.ok(completeManifest.stores[0].modules.quality.length>1);
