@@ -13,7 +13,7 @@
  const pct=(n,d)=>d>0?((n/d)*100).toFixed(2)+'%':'—';
  function periods(month){
   const end=monthEnd(month),out=[];let start=month+'-01';
-  while(start<=end){const weekday=new Date(start+'T00:00:00Z').getUTCDay(),last=[shiftDate(start,(7-weekday)%7),end].sort()[0];out.push({periodType:'weekly',periodStart:start,periodEnd:last,label:`第${out.length+1}周 · ${start.slice(5).replace('-','/')}—${last.slice(5).replace('-','/')}`});start=shiftDate(last,1);}
+  while(start<=end){const weekday=new Date(start+'T00:00:00Z').getUTCDay(),last=[shiftDate(start,(7-weekday)%7),end].sort()[0];out.push({periodType:'weekly',periodStart:start,periodEnd:last,label:`${start.slice(5).replace('-','/')}—${last.slice(5).replace('-','/')}`});start=shiftDate(last,1);}
   return out;
  }
  function periodForDate(month,date){const rows=periods(month),day=isoDate(date);return rows.find(p=>day>=p.periodStart&&day<=p.periodEnd)||(day&&day<month+'-01'?rows[0]:rows.at(-1));}

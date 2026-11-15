@@ -38,6 +38,7 @@
   let carried=false;
   if(!row){
    if(period.periodType==='monthly')fields.periodGoal=snapshot.monthly.target;
+   if(ctx.month==='2026-11'&&period.periodType==='weekly'&&period.periodStart==='2026-11-09'&&period.periodEnd==='2026-11-15'){const original=root.WBNovemberPlan?.week2Plan?.targetBreakdown?.regions?.flatMap(r=>r.stores||[]).find(s=>s.store===store.store);if(original&&Number.isInteger(original.weekTarget))fields.periodGoal=original.weekTarget;}
    if(prior){const next=R().suggestNext(prior.payload.snapshot);if(next.periodStart===period.periodStart&&next.periodEnd===period.periodEnd){fields.periodGoal=prior.payload.fields.nextGoal??fields.periodGoal;fields.actions=prior.payload.fields.nextActions||'';carried=fields.periodGoal!=null||!!fields.actions;}}
   }
   d={row,snapshot:clone(snapshot),fields,status:row?.payload?.status||'draft',dirty:false,carried};state.drafts.set(key,d);return d;
