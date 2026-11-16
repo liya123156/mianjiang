@@ -14,7 +14,7 @@ for(const name of ['core','quality-feed','quality-rules','quality','store-review
 const marker='root.WBStoreReviews={';
 const source=read('operations/store-reviews.js');
 assert.ok(source.includes(marker),'private test seam remains explicit');
-vm.runInContext(source.replace(marker,'root.testStoreReviews={catalog,draftKey,fieldsDefault,existing,draft,currentSnapshot,storeHtml,paint,check,load,save,dirty,mergeRemote,conflictHtml,synthesis,reportData};'+marker),x,{filename:'store-reviews.js'});
+vm.runInContext(source.replace(marker,'root.testStoreReviews={catalog,draftKey,fieldsDefault,existing,draft,currentSnapshot,storeHtml,paint,check,load,save,dirty,mergeRemote,conflictHtml,synthesis,reportData,image,showImage};'+marker),x,{filename:'store-reviews.js'});
 const U=x.testStoreReviews,S=x.WBStoreReviews.state,R=x.WBStoreReviewModel;
 const store={region:'黄浦大区',store:'新天地一店'};
 const period={periodType:'weekly',periodStart:'2026-11-09',periodEnd:'2026-11-15'};
@@ -143,3 +143,46 @@ for(const code of ['0003','0921','1317','1446','3401','3448','3273','0562'])asse
 assert.match(sql,/s\.expires_at>now\(\)/);assert.match(sql,/m\.enabled/);
 
 console.log('PASS: 18-store structure, persisted dates, frozen snapshots, cross-month carryover, safe initial load, three-way conflicts, source refresh, in-flight input preservation, confirmation summary and login protection');
+
+
+// Review body and all hierarchy data are copied as exactly one PNG item.
+reset();ctx=context();ready(ctx);d=U.draft(ctx,period,store);f=form(d);
+const copied=[];const singleBlob=new Blob(['one complete review image'],{type:'image/png'});
+x.ClipboardItem=class{constructor(data){this.data=data;}};
+x.navigator.clipboard={async write(items){copied.push(items);}};
+let imageInput;
+x.WBStoreReviewEvidence={async image(input){imageInput=input;return singleBlob;}};
+await U.image(f,ctx);
+assert.equal(copied.length,1);assert.equal(copied[0].length,1);
+assert.deepEqual(Object.keys(copied[0][0].data),['image/png']);
+assert.equal(copied[0][0].data['image/png'],singleBlob);
+assert.equal(imageInput.snapshot.store,store.store);assert.equal(imageInput.businessData.imports[0].created_at,'source-v1');
+assert.match(imageInput.report.title,/面见周复盘/);assert.ok(notices.some(t=>t.includes('个人数据')));
+
+// Preview and clipboard-denied fallback offer one image and one download, never pages.
+const dialogs=new Map();document.getElementById=id=>dialogs.get(id)||null;
+document.body={append(el){dialogs.set(el.id,el);}};
+document.createElement=type=>{assert.equal(type,'dialog');return {showModal(){this.open=true;}};};
+await U.image(form(d),ctx,true);let dialog=dialogs.get('store-review-image-dialog');
+assert.equal((dialog.innerHTML.match(/<img /g)||[]).length,1);
+assert.equal((dialog.innerHTML.match(/download=/g)||[]).length,1);
+assert.equal((dialog.innerHTML.match(/data-sr="copy-image"/g)||[]).length,1);
+assert.ok(!/第[0-9]+页|分为.*页|data-sr="copy-page"/.test(dialog.innerHTML));
+assert.equal(copied.length,1,'preview does not silently copy');
+x.navigator.clipboard.write=async()=>{throw Error('permission denied');};
+await U.image(form(d),ctx);assert.equal(S.imageBlobs.length,1);assert.equal((dialog.innerHTML.match(/<img /g)||[]).length,1);
+
+// No partial or stale export when source, period, or BP text changes during image generation.
+for(const change of ['source','period','text']){
+ reset();ctx=context();ready(ctx);d=U.draft(ctx,period,store);f=form(d);const drawing=deferred();
+ x.WBStoreReviewEvidence.image=()=>drawing.promise;let writes=0;x.navigator.clipboard.write=async()=>{writes++;};
+ const generating=U.image(f,ctx);
+ if(change==='source')S.cache.get(ctx.month).businessData.imports[0].created_at='new-source';
+ if(change==='period')S.selection.set(ctx.month,{type:'weekly',start:'2026-11-16'});
+ if(change==='text'){f.elements.actions.value='new manual text';U.dirty(f,ctx);}
+ drawing.resolve(singleBlob);await assert.rejects(generating,/变化/);assert.equal(writes,0);assert.equal(S.imageBusy,false);
+}
+reset();ctx=context();ready(ctx);d=U.draft(ctx,period,store);f=form(d);
+x.WBStoreReviewEvidence.image=async()=>{throw Error('复盘与数据明细底表版本不一致，请先更新本期底表数据');};
+await assert.rejects(U.image(f,ctx),/版本不一致/);assert.equal(f.image.disabled,false);
+console.log('PASS: one PNG clipboard item, one-image preview/download fallback, source/period/prose guards and no partial-export success');

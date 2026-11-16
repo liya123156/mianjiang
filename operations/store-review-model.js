@@ -99,7 +99,7 @@
  }
  async function images(value){
   if(!root.document?.createElement)throw Error('当前环境不支持生成图片');
-  const width=1500,pad=64,contentWidth=width-2*pad,font='"Microsoft YaHei","PingFang SC",sans-serif',maxHeight=5600,header=230,footer=70,measure=root.document.createElement('canvas').getContext('2d');
+  const width=1500,pad=64,contentWidth=width-2*pad,font='"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif',maxHeight=5600,header=230,footer=70,measure=root.document.createElement('canvas').getContext('2d');
   function wrap(raw,size,max=contentWidth-48){measure.font=`${size}px ${font}`;const lines=[];for(const part of String(raw??'').split(/\r?\n/)){let line='';for(const ch of part){if(line&&measure.measureText(line+ch).width>max){lines.push(line);line='';}line+=ch;}lines.push(line);}return lines;}
   const segments=[];
   for(const section of value.sections||[]){const all=(section.lines||[]).flatMap(line=>wrap(line,24)),maxLines=Math.floor((maxHeight-header-footer-100)/38);for(let i=0;i<Math.max(1,all.length);i+=maxLines){const lines=all.slice(i,i+maxLines),titles=wrap(section.title+(i?'（续）':''),28);segments.push({titles,lines,height:48+titles.length*42+lines.length*38});}}
@@ -118,3 +118,4 @@
  root.WBStoreReviewModel={periods,periodForDate,makeSnapshot,analyze,suggestNext,report,images,escapeHtml,isoDate,numberOrNull};
  if(typeof module==='object')module.exports=root.WBStoreReviewModel;
 })(typeof window==='object'?window:globalThis);
+
