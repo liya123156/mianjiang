@@ -9,10 +9,12 @@
  const outcomeOrder=Object.keys(labels);
  function iso(value){const day=text(value).slice(0,10);if(!/^20\d{2}-\d{2}-\d{2}$/.test(day))return '';const d=new Date(day+'T00:00:00Z');return Number.isFinite(d.valueOf())&&d.toISOString().slice(0,10)===day?day:'';}
  function managerFor(row){return root.WBManagerDirectory?.nameFor?.(row)||(!row.group||row.group==='/'?'—':'待补充');}
- function rank(rows,limit){
-  const sorted=rows.filter(r=>r.met>0).sort((a,b)=>b.met-a.met||b.meetingCount-a.meetingCount||M.compareStore(a.store,b.store)||M.compareGroup(a.group,b.group)||M.compareText(a.name,b.name));
-  return sorted.map((row,i)=>({...row,rank:i>0&&row.met===sorted[i-1].met&&row.meetingCount===sorted[i-1].meetingCount?null:i+1})).map((row,i,all)=>{if(row.rank===null){let prior=i-1;while(prior>=0&&all[prior].rank===null)prior--;row.rank=all[prior].rank;}return row;}).filter(r=>r.rank<=limit);
+ function rank(rows,limit,level){
+  const byRate=['store','group'].includes(level||rows[0]?.level),rateOrder=(a,b)=>b.met*a.stock-a.met*b.stock;
+  const sorted=rows.filter(r=>r.met>0&&(!byRate||Number.isFinite(r.stock)&&r.stock>0)).sort((a,b)=>(byRate?rateOrder(a,b):0)||b.met-a.met||b.meetingCount-a.meetingCount||M.compareStore(a.store,b.store)||M.compareGroup(a.group,b.group)||M.compareText(a.name,b.name));
+  return sorted.map((row,i)=>({...row,rank:i>0&&(!byRate||rateOrder(row,sorted[i-1])===0)&&row.met===sorted[i-1].met&&row.meetingCount===sorted[i-1].meetingCount?null:i+1})).map((row,i,all)=>{if(row.rank===null){let prior=i-1;while(prior>=0&&all[prior].rank===null)prior--;row.rank=all[prior].rank;}return row;}).filter(r=>r.rank<=limit);
  }
+ function rateText(row){return Number(row.stock)>0?(Number(row.met)/Number(row.stock)*100).toFixed(2)+'%':'—';}
  function build({businessData:b,month}={}){
   if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(String(month)))throw Error('全司标杆榜月份不正确');
   if(!b||!Array.isArray(b.housing)||!Array.isArray(b.meetings))throw Error('全司底表尚未读取完成，请刷新共享数据');
@@ -37,7 +39,7 @@
    const outcomes=outcomeOrder.filter(code=>Number(summary.counts[code])>0).map(code=>({code,label:labels[code],count:Number(summary.counts[code])})).sort((a,b)=>b.count-a.count||outcomeOrder.indexOf(a.code)-outcomeOrder.indexOf(b.code));
    const pending=[];if(summary.missing)pending.push('原文待补'+summary.missing+'套');if(summary.unclear)pending.push('收获待核实'+summary.unclear+'套');
    const feedbackLines=outcomes.map(x=>x.label+'：'+x.count+'套');if(pending.length)feedbackLines.push(pending.join('；'));if(!feedbackLines.length)feedbackLines.push('面见收获待补充核实');
-   const row={level,region,store,group,name,met:metric.met,meetingCount:metric.met_count,met_count:metric.met_count,feedbackCount:summary.feedback,missingFeedbackCount:summary.missing,unclearFeedbackCount:summary.unclear,outcomes,feedbackLines,feedbackText:feedbackLines.join('\n')};
+   const row={level,region,store,group,name,stock:metric.stock,rate:metric.stock>0?metric.met/metric.stock:null,met_rate:metric.met_rate,met:metric.met,meetingCount:metric.met_count,met_count:metric.met_count,feedbackCount:summary.feedback,missingFeedbackCount:summary.missing,unclearFeedbackCount:summary.unclear,outcomes,feedbackLines,feedbackText:feedbackLines.join('\n')};
    row.manager=managerFor(row);return row;
   }
   const levels={store:[],group:[],advisor:[]};
@@ -47,16 +49,16 @@
    }
   }
   const unidentified=new Set(['','—','-','/','未填写','未分配','待补充','未分组']);
-  const sections=[{key:'store',title:'全司门店 TOP3',limit:3},{key:'group',title:'全司店组 TOP5',limit:5},{key:'advisor',title:'全司个人 TOP5',limit:5}].map(s=>({...s,rows:rank(levels[s.key].filter(r=>s.key==='advisor'?!unidentified.has(r.name):s.key==='group'?!unidentified.has(r.group):true),s.limit)}));
+  const sections=[{key:'store',title:'全司门店 TOP3',limit:3},{key:'group',title:'全司店组 TOP5',limit:5},{key:'advisor',title:'全司个人 TOP5',limit:5}].map(s=>({...s,rows:rank(levels[s.key].filter(r=>s.key==='advisor'?!unidentified.has(r.name):s.key==='group'?!unidentified.has(r.group):true),s.limit,s.key)}));
   const company=M.metrics(homes,monthlyEvents),summary=Q.summary(records);
-  return {title:'全司面见标杆榜',month,asOf,sourceVersion,sections,rows:sections.flatMap(s=>s.rows),summary:{stores:catalog.length,stock:company.stock,met:company.met,meetingCount:company.met_count,feedback:summary.feedback,missing:summary.missing,unclear:summary.unclear},slogans:[...slogans],notes:['按月度面见套数排序，同套数按面见次数排序；两项相同保留并列。','个人按房源维护人归属统计；同名伙伴按门店、店组分别计算。','面见后正反馈按已识别的主要结果逐套归类；原文待补或收获待核实，不等同于面见无价值。']};
+  return {title:'全司面见标杆榜',month,asOf,sourceVersion,sections,rows:sections.flatMap(s=>s.rows),summary:{stores:catalog.length,stock:company.stock,met:company.met,meetingCount:company.met_count,feedback:summary.feedback,missing:summary.missing,unclear:summary.unclear},slogans:[...slogans],notes:['门店、店组按月度全盘面见率排序，同率按面见套数、次数；三项相同保留并列。','个人按月度面见套数、次数排序，按房源维护人归属统计；同名伙伴按门店、店组分别计算。','面见后正反馈按已识别的主要结果逐套归类；原文待补或收获待核实，不等同于面见无价值。']};
  }
  function columnSpec(key){
-  return key==='store'?[['rank','排名',95],['store','门店',370],['met','面见量',155],['meetingCount','面见次数',165],['feedbackText','面见后正反馈',1119]]:key==='group'?[['rank','排名',80],['store','门店',220],['group','店组',270],['manager','经理',120],['met','面见量',120],['meetingCount','面见次数',140],['feedbackText','面见后正反馈',954]]:[['rank','排名',70],['store','门店',205],['group','店组',250],['manager','经理',115],['name','姓名',120],['met','面见量',115],['meetingCount','面见次数',125],['feedbackText','面见后正反馈',904]];
+  return key==='store'?[['rank','排名',95],['store','门店',370],['met_rate','面见率',160],['met','面见量',155],['meetingCount','面见次数',165],['feedbackText','面见后正反馈',1119]]:key==='group'?[['rank','排名',80],['store','门店',220],['group','店组',270],['manager','经理',120],['met_rate','面见率',145],['met','面见量',120],['meetingCount','面见次数',140],['feedbackText','面见后正反馈',954]]:[['rank','排名',70],['store','门店',205],['group','店组',250],['manager','经理',115],['name','姓名',120],['met','面见量',115],['meetingCount','面见次数',125],['feedbackText','面见后正反馈',904]];
  }
  function html(board){
   if(!board?.sections)throw Error('全司标杆榜数据尚未就绪');
-  return '<section class="company-benchmark" aria-label="全司面见标杆榜"><header class="cb-hero"><p class="cb-brand">LANDZ · OWNER MEETING</p><div class="cb-honor">✦ 荣誉时刻 · 榜样同行 ✦</div><h3>'+esc(board.title)+'</h3><p class="cb-date">'+esc(Number(board.month.slice(5))+'月｜月度累计 · 数据截至'+board.asOf)+'</p><div class="cb-hero-line"></div><p class="cb-hero-note">让每一次主动走近，都被看见</p></header>'+board.sections.map(s=>{const cols=columnSpec(s.key);return '<section class="cb-tier"><h4><span>✦</span> '+esc(s.title)+' <span>✦</span></h4><div class="cb-scroll"><table aria-label="'+esc(s.title)+'"><thead><tr>'+cols.map(([,label])=>'<th scope="col">'+esc(label)+'</th>').join('')+'</tr></thead><tbody>'+s.rows.map(row=>'<tr class="'+(row.rank===1?'cb-first':'')+'">'+cols.map(([key])=>'<td class="cb-'+key+'">'+(key==='feedbackText'?row.feedbackLines.map((line,i)=>'<div class="cb-feedback-line '+(i<row.outcomes.length?'':'cb-pending')+'">'+(i<row.outcomes.length?'<span aria-hidden="true">✦</span> ':'')+esc(line)+'</div>').join(''):key==='met'?'<b>'+row.met+'<small>套</small></b>':key==='meetingCount'?row.meetingCount+'次':key==='rank'?'<span class="cb-rank cb-rank-'+row.rank+'">'+row.rank+'</span>':esc(row[key])).replace(/^undefined$/,'')+'</td>').join('')+'</tr>').join('')+(s.rows.length?'':'<tr><td colspan="'+cols.length+'">当前暂无已登记面见的上榜对象，待数据更新后呈现。</td></tr>')+'</tbody></table></div></section>';}).join('')+'<footer class="cb-footer">'+board.slogans.map(line=>'<p>'+esc(line)+'</p>').join('')+'</footer><div class="cb-notes">'+board.notes.map(line=>'<p>'+esc(line)+'</p>').join('')+'</div></section>';
+  return '<section class="company-benchmark" aria-label="全司面见标杆榜"><header class="cb-hero"><p class="cb-brand">LANDZ · OWNER MEETING</p><div class="cb-honor">✦ 荣誉时刻 · 榜样同行 ✦</div><h3>'+esc(board.title)+'</h3><p class="cb-date">'+esc(Number(board.month.slice(5))+'月｜月度累计 · 数据截至'+board.asOf)+'</p><div class="cb-hero-line"></div><p class="cb-hero-note">让每一次主动走近，都被看见</p></header>'+board.sections.map(s=>{const cols=columnSpec(s.key);return '<section class="cb-tier"><h4><span>✦</span> '+esc(s.title)+' <span>✦</span></h4><div class="cb-scroll"><table aria-label="'+esc(s.title)+'"><thead><tr>'+cols.map(([,label])=>'<th scope="col">'+esc(label)+'</th>').join('')+'</tr></thead><tbody>'+s.rows.map(row=>'<tr class="'+(row.rank===1?'cb-first':'')+'">'+cols.map(([key])=>'<td class="cb-'+key+'">'+(key==='feedbackText'?row.feedbackLines.map((line,i)=>'<div class="cb-feedback-line '+(i<row.outcomes.length?'':'cb-pending')+'">'+(i<row.outcomes.length?'<span aria-hidden="true">✦</span> ':'')+esc(line)+'</div>').join(''):key==='met'?'<b>'+row.met+'<small>套</small></b>':key==='meetingCount'?row.meetingCount+'次':key==='met_rate'?rateText(row):key==='rank'?'<span class="cb-rank cb-rank-'+row.rank+'">'+row.rank+'</span>':esc(row[key])).replace(/^undefined$/,'')+'</td>').join('')+'</tr>').join('')+(s.rows.length?'':'<tr><td colspan="'+cols.length+'">当前暂无已登记面见的上榜对象，待数据更新后呈现。</td></tr>')+'</tbody></table></div></section>';}).join('')+'<footer class="cb-footer">'+board.slogans.map(line=>'<p>'+esc(line)+'</p>').join('')+'</footer><div class="cb-notes">'+board.notes.map(line=>'<p>'+esc(line)+'</p>').join('')+'</div></section>';
  }
  function wrap(ctx,value,width,size=25,bold=false){ctx.font=`${bold?'600 ':''}${size}px ${font}`;const out=[];for(const p of String(value??'').split(/\r?\n/)){let line='';for(const ch of p){if(line&&ctx.measureText(line+ch).width>width){out.push(line);line='';}line+=ch;}out.push(line);}return out;}
  // Export uses compact honor rows so the same company board stays readable in WeChat.
@@ -81,12 +83,12 @@
     const identityHeight=mainLines.length*(mainSize+5)+metaLines.length*38+6;
     const source=posterFeedback(row),feedbackText=[source.text,source.pending].filter(Boolean).join('；'),feedbackLines=feedbackText?wrap(ctx,feedbackText,feedbackWidth,bodyFontSize):[],pendingLines=[];
     const feedbackHeight=feedbackLines.length*42;
-    return {row,mainLines,mainSize,managerText,metaLines,identityHeight,feedbackLines,pendingLines,feedbackHeight,height:Math.max(94,identityHeight,feedbackHeight)+20};
+    return {row,organizational:section.key!=='advisor',mainLines,mainSize,managerText,metaLines,identityHeight,feedbackLines,pendingLines,feedbackHeight,height:Math.max(94,identityHeight,feedbackHeight)+20};
    });
    return {...section,cards,height:76+(cards.length?cards.reduce((n,c)=>n+c.height+gap,0):112)+12};
   });
   const sloganLines=board.slogans.flatMap(line=>wrap(ctx,line,contentWidth-36,38,true));
-  const notes=['月度面见套数优先，同套数按次数；两项相同保留并列。','个人按房源维护人统计；正反馈按房源归类，待补充不等于无收获。'].flatMap(line=>wrap(ctx,line,contentWidth-32,27));
+  const notes=['门店、店组按面见率优先，同率按套数、次数；三项相同保留并列。','个人按套数、次数排序；正反馈按房源归类，待补充不等于无收获。'].flatMap(line=>wrap(ctx,line,contentWidth-32,27));
   const naturalHeight=220+sections.reduce((n,s)=>n+s.height,0)+22+sloganLines.length*52+28+notes.length*36+42;
   let scale=Math.min(1,30000/naturalHeight,Math.sqrt(64000000/(width*naturalHeight))),outputWidth=Math.max(1,Math.floor(width*scale)),outputHeight=Math.ceil(naturalHeight*outputWidth/width);while(outputWidth>1&&(outputHeight>30000||outputWidth*outputHeight>64000000)){outputWidth--;outputHeight=Math.ceil(naturalHeight*outputWidth/width);}scale=outputWidth/width;if(scale<.35||outputHeight>30000)throw Error('全司标杆榜内容超出单张图片的可读尺寸，请核实异常反馈分类或重复对象');
   return {width,pad,contentWidth,gap,identityX,identityWidth,metricX,feedbackX,feedbackWidth,bodyFontSize,sections,notes,sloganLines,naturalHeight,scale,outputWidth,outputHeight};
@@ -115,14 +117,14 @@
    if(item.managerText)write(item.managerText,p.identityX+p.identityWidth,iy+10,32,'#9375a1',false,'right');
    for(const line of item.mainLines){write(line,p.identityX,iy,item.mainSize,first?'#7d4b22':'#6f3b8b',true,'left');iy+=item.mainSize+5;}
    iy+=6;for(const line of item.metaLines){write(line,p.identityX,iy,32,'#9375a1',false,'left');iy+=38;}
-   write(row.met+'套',p.metricX,cy-47,56,'#913fc0',true);write(row.meetingCount+'次',p.metricX,cy+18,33,'#9d7835',true);
+   if(item.organizational){write(rateText(row),p.metricX,cy-43,44,'#913fc0',true);write(row.met+'套 · '+row.meetingCount+'次',p.metricX,cy+16,30,'#9d7835',true);}else{write(row.met+'套',p.metricX,cy-47,56,'#913fc0',true);write(row.meetingCount+'次',p.metricX,cy+18,33,'#9d7835',true);}
    let fy=rowY+(item.height-item.feedbackHeight)/2;
    for(const line of item.feedbackLines){write(line,p.feedbackX,fy,p.bodyFontSize,'#6e577c',false,'left');fy+=42;}
    for(const line of item.pendingLines){write(line,p.feedbackX,fy,32,'#a692b0',false,'left');fy+=40;}
   }
   for(const section of p.sections){
    star(ctx,p.width/2-242,y+22,11);star(ctx,p.width/2+242,y+22,11);write(section.title,p.width/2,y,40,'#7b3c9e',true);
-   write('榜样与团队',p.identityX,y+44,28,'#a38ab0',false,'left');write('面见量／次数',p.metricX,y+44,27,'#a38ab0');write('面见后正反馈',p.feedbackX+p.feedbackWidth/2,y+44,28,'#967347',true);y+=76;
+   write('榜样与团队',p.identityX,y+44,28,'#a38ab0',false,'left');write(section.key==='advisor'?'面见量／次数':'面见率／量／次数',p.metricX,y+44,25,'#a38ab0');write('面见后正反馈',p.feedbackX+p.feedbackWidth/2,y+44,28,'#967347',true);y+=76;
    if(!section.cards.length){rounded(ctx,p.pad,y,p.contentWidth,100,20,'#fff','#e7daf1');write('当前暂无已登记面见的上榜对象，待数据更新后呈现。',p.width/2,y+33,32,'#a28baf');y+=112;}
    for(const item of section.cards){honorRow(item,y);y+=item.height+p.gap;}y+=12;
   }
@@ -131,5 +133,5 @@
   for(const line of p.notes){write(line,p.width/2,y,27,'#a38bb2');y+=36;}
   return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('全司标杆榜图片生成失败')),'image/png'));
  }
- root.WBCompanyBenchmark={build,html,image,rank,labels,slogans,posterLayout:layout,posterFeedbackLabels,posterTemplate:'compact-honor-rows-v1'};if(typeof module==='object')module.exports=root.WBCompanyBenchmark;
+ root.WBCompanyBenchmark={build,html,image,rank,rateText,labels,slogans,posterLayout:layout,posterFeedbackLabels,posterTemplate:'compact-honor-rows-v1'};if(typeof module==='object')module.exports=root.WBCompanyBenchmark;
 })(typeof window==='object'?window:globalThis);

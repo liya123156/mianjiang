@@ -283,3 +283,14 @@ for(const change of ['private-reader','private-replacement','private-version','m
  assert.equal(writes,0);assert.equal(S.imageBusy,false);assert.equal(f.image.disabled,false);
 }
 console.log('PASS: signed maintainer source, exact reader/month/import matching, complete aggregate reconciliation, redacted-cache rejection and private-source async isolation');
+
+// Monthly coverage drives organization comparisons even if volume or weekly results disagree.
+reset();ctx=context();const orgA={region:'花木大区',store:'仁恒河滨城店'},orgB={region:'花木大区',store:'御翠园店'};
+const rateRow=(org,met,stock,periodMet)=>{const value=row(ctx);Object.assign(value,org);value.key=ctx.month+'|review|'+org.store+'|store-period-review:weekly:2026-11-09:2026-11-15';Object.assign(value.payload.snapshot,org);Object.assign(value.payload.snapshot.monthly,{met,stock,meetingCount:met});Object.assign(value.payload.snapshot.period,{met:periodMet,pendingDateCount:0});return value;};
+ready(ctx,business(),[rateRow(orgA,10,100,9),rateRow(orgB,5,10,1)]);
+let coverageHtml=U.synthesis(ctx,period,[orgA,orgB]);
+assert.match(coverageHtml,/月度面见率标杆门店<\/span><h4>御翠园店/);
+assert.match(coverageHtml,/月度面见率进展偏慢门店<\/span><h4>仁恒河滨城店/);
+assert.ok(!coverageHtml.includes('等权综合'));
+U.paint(ctx);assert.match(ctx.host.innerHTML,/大区复盘与本周承接/);assert.match(ctx.host.innerHTML,/草稿供BP核实和共识/);
+console.log('PASS: rate-first review synthesis and saved regional overview');

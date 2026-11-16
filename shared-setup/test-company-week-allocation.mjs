@@ -1,0 +1,65 @@
+/* Weekly company planning separates a calculated suggestion, a chosen goal,
+ * and saved plan facts while sharing one exact store/region allocation. */
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+
+function harness(role='project'){
+ const listeners={},notices=[],saves=[],controls={target:{value:''},strategyText:{value:''},confirmed:{checked:false}},status={textContent:''},badge={textContent:''},allocation={innerHTML:''},button={disabled:false};let markup='';
+ const form={elements:controls,reportValidity:()=>true,querySelector:()=>button,matches:selector=>selector==='[data-cwp-form]'};
+ const host={isConnected:true,contains:()=>true,querySelector(selector){return selector==='[data-cwp-form]'?form:selector==='[data-cwp-status]'?status:selector==='.cwp-badge'?badge:selector==='[data-cwp-allocation]'?allocation:null;},get innerHTML(){return markup;},set innerHTML(value){markup=value;controls.target.value=value.match(/name="target"[^>]*value="([^"]*)"/)?.[1]||'';controls.strategyText.value=value.match(/name="strategyText"[^>]*>([\s\S]*?)<\/textarea>/)?.[1]||'';controls.confirmed.checked=/name="confirmed" checked/.test(value);}};
+ const document={addEventListener(type,handler){(listeners[type]||=[]).push(handler);}};
+ const member={login_id:'0921',display_name:'张亚玲',role},x={window:null,document,console,Intl,Date,AbortController};x.window=x;x.addEventListener=()=>{};vm.createContext(x);
+ for(const name of ['core','store-review-model','company-week-plan'])vm.runInContext(fs.readFileSync(new URL('../operations/'+name+'.js',import.meta.url),'utf8'),x,{filename:name+'.js'});
+ const W=x.WBCompanyWeekPlan,catalog=x.WBModel.storeCatalog.filter(s=>s.ownerApplicable!==false),targets=[15,8,20,20,31,23,28,21,22,12,20,22,20,10,25,15,17,21],met=[2,3,13,10,12,4,5,8,12,6,7,6,9,3,6,2,3,13];
+ let business={housing:[],meetings:[],items:[{key:'2026-11|goals|@@company|monthly',kind:'goals',updated_at:'2026-11-16T09:00:00Z',payload:Object.fromEntries(catalog.map((s,i)=>[s.store,targets[i]]))}],imports:[{as_of:'2026-11-15',created_at:'new-source'}]},plans=[];
+ for(const [i,entry] of catalog.entries())for(let n=0;n<targets[i]+5;n++)business.housing.push({房源编号:i+'-'+n,大区:entry.region,门店:entry.store,店组:entry.store+'A组',细分在售户数:1,本月是否面见:n<met[i]?1:0});
+ const cloud={member,project:role==='project',async storeReview(){return {businessData:business,items:[]};},async companyWeekPlan(action,args){if(action==='load')return {items:plans};saves.push(args);return {key:'saved-key',updated_at:'2026-11-16T10:00:00Z',payload:{...args.payload,periodStart:args.periodStart,periodEnd:args.periodEnd,updatedBy:member.display_name}};}};
+ const ctx={host,cloud,month:'2026-11',today:'2026-11-16',businessData:business,notify:message=>notices.push(message)};
+ const settle=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
+ const mount=async()=>{W.mount(ctx);await settle();};
+ const event=async(type,target)=>{for(const handler of listeners[type]||[])await handler({target,preventDefault(){}});await settle();};
+ const click=action=>event('click',{closest:()=>({dataset:{cwp:action}})});
+ return {W,x,catalog,ctx,host,controls,allocation,notices,saves,form,mount,event,click,setBusiness(value){business=value;ctx.businessData=value;},get business(){return business;},setPlans(rows){plans=rows;}};
+}
+
+const h=harness(),{W}=h;
+assert.deepEqual(JSON.parse(JSON.stringify(W.defaultPeriod('2026-11','2026-11-16'))),{periodStart:'2026-11-16',periodEnd:'2026-11-22',label:'11/16—11/22'});
+assert.equal(W.defaultPeriod('2026-11','2026-11-22').periodStart,'2026-11-16','Sunday stays in the execution week');
+assert.equal(W.defaultPeriod('2026-11','2026-11-15').periodStart,'2026-11-09');
+assert.equal(W.defaultPeriod('2026-11','2026-10-31').periodStart,'2026-11-01');
+assert.equal(W.defaultPeriod('2026-11','2026-12-01').periodEnd,'2026-11-30');
+const p=W.defaultPeriod('2026-11','2026-11-16'),computed=W.calculate(h.business,p);
+assert.equal(computed.calculation.monthlyTarget,350);assert.equal(computed.calculation.monthlyMet,124);assert.equal(computed.calculation.remainingGap,226);assert.equal(computed.calculation.suggestedTarget,106,'ceil(226 * 7 / 15) remains an honest automatic suggestion');
+assert.deepEqual(Object.keys(computed.calculation).sort(),['monthlyTarget','monthlyMet','periodDays','remainingDays','remainingGap','suggestedTarget'].sort(),'calculation respects the existing six-field server contract');
+const older={...h.business.items[0],updated_at:'2026-11-15T09:00:00Z',payload:Object.fromEntries(h.catalog.map(s=>[s.store,1]))};
+assert.equal(W.calculate({...h.business,items:[older,...h.business.items]},p).calculation.monthlyTarget,350,'new drafts use the latest acknowledged monthly record');
+const plan=W.allocate(h.business,120);assert.equal(plan.requestedTarget,120);assert.equal(plan.allocatedTarget,120);assert.equal(plan.unallocatedTarget,0);assert.equal(plan.stores.length,18);assert.equal(plan.regions.length,5);assert.equal(plan.stores.reduce((n,s)=>n+s.weeklyTarget,0),120);assert.equal(plan.regions.reduce((n,s)=>n+s.weeklyTarget,0),120);
+for(const row of plan.stores){assert.ok(Number.isInteger(row.weeklyTarget)&&row.weeklyTarget>=0&&row.weeklyTarget<=row.remainingGap);assert.ok([Math.floor(120*row.remainingGap/226),Math.ceil(120*row.remainingGap/226)].includes(row.weeklyTarget),'each store receives floor or ceiling of its proportional share');}
+for(const region of plan.regions)assert.equal(region.weeklyTarget,plan.stores.filter(s=>s.region===region.region).reduce((n,s)=>n+s.weeklyTarget,0));
+const basis=[{region:'大区甲',store:'甲',monthlyTarget:3,monthlyMet:0},{region:'大区甲',store:'乙',monthlyTarget:2,monthlyMet:0},{region:'大区乙',store:'丙',monthlyTarget:1,monthlyMet:0}],before=JSON.stringify(basis);
+assert.deepEqual(Array.from(W.allocateTargets(basis,4).stores,s=>s.weeklyTarget),[2,1,1],'largest fractional remainder gets the final unit');assert.equal(JSON.stringify(basis),before,'allocation is pure');
+assert.deepEqual(Array.from(W.allocateTargets(basis,99).stores,s=>s.weeklyTarget),[3,2,1]);assert.equal(W.allocateTargets(basis,99).unallocatedTarget,93,'a goal exceeding the remaining gap is explicit, never assigned beyond capacity');
+assert.ok(W.allocateTargets(basis,0).stores.every(s=>s.weeklyTarget===0));assert.throws(()=>W.allocateTargets([{...basis[0],monthlyTarget:null}],1),/不完整/);assert.throws(()=>W.allocateTargets(basis,-1),/非负整数/);assert.throws(()=>W.allocateTargets([basis[0],basis[0]],1),/不完整/);
+
+const lines=plan.stores.map(s=>`${s.store}：本周${s.weeklyTarget}套｜月目标${s.monthlyTarget}套｜已面见${s.monthlyMet}套｜月余${s.remainingGap}套`),strategy='本周策略：先落实重点邀约与面见安排。\n\n本周目标分解\n'+lines.join('\n');
+assert.equal(W.parseAllocation(strategy,120).allocatedTarget,120);assert.equal(W.parseAllocation(strategy).regions.length,5);assert.equal(W.parseAllocation(lines.slice(1).join('\n'),120),null);assert.equal(W.parseAllocation(strategy,119),null);assert.equal(W.parseAllocation(strategy+'\n'+lines[0],120),null);assert.equal(W.parseAllocation(strategy.replace(h.catalog[0].store,'未知门店'),120),null);assert.equal(W.parseAllocation(strategy.replace('月余13套','月余14套'),120),null);assert.equal(W.parseAllocation(strategy.replace('：本周7套','：本周99套'),120),null);
+
+await h.mount();assert.match(h.host.innerHTML,/<option value="2026-11-16" selected/);assert.match(h.host.innerHTML,/自动建议周量<\/span><strong>106/);assert.match(h.host.innerHTML,/五大区周目标分解/);assert.match(h.host.innerHTML,/18家门店周目标分解/);
+h.controls.target.value='120';h.controls.strategyText.value='人工确认的本周策略';h.controls.confirmed.checked=true;await h.event('input',{name:'target',closest:()=>h.form});
+assert.match(h.allocation.innerHTML,/全司120套/);assert.match(h.allocation.innerHTML,/按最新底表测算的分解建议/);assert.equal(W.state.drafts.get('2026-11|2026-11-16|2026-11-22').calculation.suggestedTarget,106);
+await h.event('submit',h.form);assert.equal(h.saves.length,1);assert.equal(h.saves[0].payload.target,120);assert.equal(h.saves[0].payload.calculation.suggestedTarget,106);assert.equal(h.saves[0].payload.sourceVersion,'new-source');assert.equal(h.saves[0].expectedUpdatedAt,null);assert.equal(Object.keys(h.saves[0].payload.calculation).length,6);
+
+// A complete saved decomposition uses its original values, even after source refresh.
+const frozen=harness();frozen.setPlans([{key:'original-plan',updated_at:'2026-11-16T08:00:00Z',payload:{...computed,target:120,strategyText:strategy,status:'confirmed',periodStart:p.periodStart,periodEnd:p.periodEnd,updatedBy:'张亚玲'}}]);await frozen.mount();
+assert.match(frozen.host.innerHTML,/已保存的本周分解/);const savedDraft=frozen.W.state.drafts.get('2026-11|2026-11-16|2026-11-22');assert.equal(savedDraft.sourceVersion,'new-source');
+const changed=structuredClone(frozen.business);changed.imports[0].created_at='later-source';changed.items[0].payload[frozen.catalog[0].store]+=10;frozen.setBusiness(changed);await frozen.mount();
+assert.equal(frozen.W.state.drafts.get('2026-11|2026-11-16|2026-11-22').calculation.monthlyTarget,350,'saved summary stays frozen');assert.match(frozen.host.innerHTML,/已保存的本周分解/);
+await frozen.event('change',{dataset:{cwpControl:'period'},value:'2026-11-23',closest:()=>null});assert.match(frozen.host.innerHTML,/<option value="2026-11-23" selected/);assert.equal(frozen.W.state.drafts.get('2026-11|2026-11-23|2026-11-29').calculation.monthlyTarget,360,'a new manually selected period uses the latest goal');
+await frozen.mount();assert.match(frozen.host.innerHTML,/<option value="2026-11-23" selected/,'mount never overrides the manual period');
+
+// Legacy saved plans have no fabricated frozen breakdown, and BP roles cannot save.
+const legacy=harness('region');legacy.setPlans([{key:'legacy',updated_at:'2026-11-15T08:00:00Z',payload:{...computed,calculation:{...computed.calculation,monthlyTarget:300,remainingGap:176,suggestedTarget:83},target:83,strategyText:'旧计划正文',sourceVersion:'old-source',status:'confirmed',periodStart:p.periodStart,periodEnd:p.periodEnd}}]);await legacy.mount();
+assert.match(legacy.host.innerHTML,/按最新底表测算的分解建议，保存的原计划未被更改/);assert.match(legacy.host.innerHTML,/<fieldset disabled>/);await legacy.event('submit',legacy.form);assert.equal(legacy.saves.length,0);assert.ok(legacy.notices.some(t=>t.includes('仅项目负责人')));
+assert.equal(legacy.W.state.drafts.get('2026-11|2026-11-16|2026-11-22').calculation.monthlyTarget,300);assert.equal(legacy.W.state.drafts.get('2026-11|2026-11-16|2026-11-22').sourceVersion,'old-source');
+console.log('PASS company week allocation: execution-week default, manual period retained, live350 target and106 suggestion distinct from manual120, pure largest remainders, 18-store/5-region totals and caps, strict frozen decomposition, six-field API, saved facts and project-only writes.');

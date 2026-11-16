@@ -2,7 +2,7 @@
 (function(root){
  'use strict';
  const M=root.WBModel,C=root.WBCloud,Q=root.WBQuality,W=root.WBWorkflow,F=root.WBFeedback,E=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const state={cache:{},refreshSerial:{},goalCommits:{},loading:false,exporting:false,savingSendConfig:false,error:'',preview:null,customerPreview:null,scene:'',sceneDrafts:{},sceneAnalyses:{},scenePlans:{},expenseFilter:'todo',qualityFilters:{},selectedExpense:null,expenseContext:null,archiveNotice:''};
+ const state={cache:{},refreshSerial:{},goalCommits:{},loading:false,exporting:false,savingSendConfig:false,error:'',preview:null,customerPreview:null,scene:'',sceneDrafts:{},sceneAnalyses:{},scenePlans:{},expenseFilter:'todo',qualityFilters:{},reviewNotesReaders:new Map(),selectedExpense:null,expenseContext:null,archiveNotice:''};
  const isMode=mode=>['daily','expense','admin'].includes(mode)||(mode==='review'&&new URL(location.href).searchParams.get('review')!=='archive'), cents=value=>Math.round(Number(value||0)*100),money=value=>(Number(value||0)/100).toFixed(2);
  const chinaToday=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
  const yesterday=()=>{const d=new Date(chinaToday()+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-1);return d.toISOString().slice(0,10);};
@@ -124,17 +124,24 @@
   const displayCells=row=>{const values=cells(row);if(withManager)values.splice(2,0,managerName(row));return values;};
   return `<div class="review-table-card"><h3>${E(title)}</h3><div class="review-table-scroll"><table class="review-tier-table"><thead><tr>${headers.map(x=>`<th>${E(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr class="review-row-${E(row._level)}">${displayCells(row).map((value,i)=>`<td class="${String(value).includes('%')?'review-percent':''} ${i===1?'review-org-name':''}">${E(value)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
  }
+ // All organizational comparisons use the exact monthly whole-inventory meeting rate.
+ // Counts and repeat visits break rate ties; organization names stabilize display only.
+ function reviewMonthlyRate(row){const stock=Number(row?.stock),met=Number(row?.met);return Number.isFinite(stock)&&stock>0&&Number.isFinite(met)&&met>=0?met/stock:null;}
+ function reviewOrganizationCompare(a,b,descending=true){
+  const direction=descending?-1:1,rate=reviewMonthlyRate(a)-reviewMonthlyRate(b);
+  return direction*rate||direction*(Number(a.met||0)-Number(b.met||0))||direction*(Number(meetingValue(a)||0)-Number(meetingValue(b)||0))||M.compareRegion(a.region,b.region)||M.compareStore(a.store,b.store)||M.compareGroup(a.group,b.group)||M.compareText(a.name,b.name);
+ }
+ function reviewOrganizationEqual(a,b){return reviewMonthlyRate(a)===reviewMonthlyRate(b)&&Number(a.met||0)===Number(b.met||0)&&Number(meetingValue(a)||0)===Number(meetingValue(b)||0);}
+ function reviewOrganizationRank(rows,limit=3,descending=true,positiveOnly=false){
+  const sorted=rows.filter(row=>reviewMonthlyRate(row)!==null&&(!positiveOnly||Number(row.met)>0)).sort((a,b)=>reviewOrganizationCompare(a,b,descending));
+  let priorRank=0;return sorted.map((row,i)=>{const rank=i&&reviewOrganizationEqual(row,sorted[i-1])?priorRank:i+1;priorRank=rank;return {...row,reviewRank:rank};}).filter(row=>row.reviewRank<=limit);
+ }
  function reviewRegionAnalysis(rows){
-  if(!rows.length)return null;
-  const completion=row=>row._target>0?row.met/row._target:0,coverage=row=>reviewRate(row.met_rate)*.45+reviewRate(row.store_top_rate)*.3+reviewRate(row.unit_top_rate)*.25;
-  const volume=[...rows].sort((a,b)=>b.met-a.met||completion(b)-completion(a))[0],balanced=[...rows].sort((a,b)=>coverage(b)-coverage(a)||completion(b)-completion(a))[0],slowCoverage=[...rows].sort((a,b)=>coverage(a)-coverage(b)||completion(a)-completion(b))[0],slowProgress=[...rows].sort((a,b)=>completion(a)-completion(b)||a.met-b.met)[0];
-  const benchmark=[];
-  benchmark.push(`${reviewRowName(volume)}：面见${volume.met}套，目标完成率${reviewCompletion(volume)}，门店TOP面见率${volume.store_top_rate}，在面见规模与目标推进上表现领先。`);
-  if(balanced!==volume)benchmark.push(`${reviewRowName(balanced)}：全盘面见率${balanced.met_rate}、门店TOP面见率${balanced.store_top_rate}、户型TOP面见率${balanced.unit_top_rate}，送礼覆盖率${balanced.gift_rate}，整体推进更均衡。`);
-  const reminder=[];
-  reminder.push(`${reviewRowName(slowCoverage)}：全盘面见率${slowCoverage.met_rate}、门店TOP面见率${slowCoverage.store_top_rate}、户型TOP面见率${slowCoverage.unit_top_rate}，三项核心覆盖整体偏低，需要进一步下钻到门店、店组和具体房源。`);
-  if(slowProgress!==slowCoverage)reminder.push(`${reviewRowName(slowProgress)}：目标完成率${reviewCompletion(slowProgress)}，当前目标进度偏慢；但全盘面见率${slowProgress.met_rate}、门店TOP面见率${slowProgress.store_top_rate}，说明覆盖效率不弱，主要需要扩大面见规模。`);
-  return {benchmark,reminder};
+  const eligible=rows.filter(row=>reviewMonthlyRate(row)!==null);if(!eligible.length)return null;
+  const high=reviewOrganizationRank(eligible,1,true,true),highNames=new Set(high.map(row=>row.region)),low=reviewOrganizationRank(eligible,1,false).filter(row=>!highNames.has(row.region));
+  const benchmark=high.map(row=>`${reviewRowName(row)}：全盘面见${row.met}套/在售${row.stock}套，面见率${row.met_rate}，为当前大区面见率最高组织；目标完成率${reviewCompletion(row)}，门店TOP面见率${row.store_top_rate}、户型TOP面见率${row.unit_top_rate}。`);
+  const reminder=low.map(row=>`${reviewRowName(row)}：全盘面见${row.met}套/在售${row.stock}套，面见率${row.met_rate}，为当前大区面见率最低组织；目标完成率${reviewCompletion(row)}。请结合门店、店组及具体房源核实推进卡点。`);
+  return {benchmark:benchmark.length?benchmark:['当前暂无已有面见的标杆大区。'],reminder:reminder.length?reminder:['当前暂无可独立列出的进展偏慢大区。']};
  }
  function reviewRegionAnalysisText(rows){const data=reviewRegionAnalysis(rows);return data?`标杆大区：\n${data.benchmark.join('\n')}\n\n进展偏慢大区：\n${data.reminder.join('\n')}`:'';}
  function reviewRegionAnalysisHtml(rows){const data=reviewRegionAnalysis(rows);if(!data)return '';return `<div class="review-region-analysis"><h3>区域表现分析</h3><div class="review-region-analysis-grid"><article class="benchmark"><span>标杆大区</span>${data.benchmark.map(x=>`<p>${E(x)}</p>`).join('')}</article><article class="reminder"><span>进展偏慢大区</span>${data.reminder.map(x=>`<p>${E(x)}</p>`).join('')}</article></div></div>`;}
@@ -158,79 +165,91 @@
  function reviewTopAverage(row){const rates=[];if(row.store_top_stock>0)rates.push(reviewRate(row.store_top_rate));if(row.unit_top_stock>0)rates.push(reviewRate(row.unit_top_rate));return rates.length?rates.reduce((sum,x)=>sum+x,0)/rates.length:null;}
  function reviewRankScore(row){const top=reviewTopAverage(row);return reviewRate(row.met_rate)*.55+(top==null?reviewRate(row.met_rate):top)*.45;}
 
- function reviewWarningCompletion(row){
-  const target=Number(row?._target);
-  return target>0?Number(row.met||0)/target:Number.POSITIVE_INFINITY;
- }
- function reviewWarningCompare(a,b){
-  return Number(a.met||0)-Number(b.met||0)
-   ||reviewWarningCompletion(a)-reviewWarningCompletion(b)
-   ||reviewRate(a.met_rate)-reviewRate(b.met_rate)
-   ||Number(b.stock||0)-Number(a.stock||0)
-   ||String(a.store||'').localeCompare(String(b.store||''),'zh-CN');
- }
- function reviewNovemberWarningCandidates(rows){
-  return rows.filter(row=>Number(row.stock)>0).sort(reviewWarningCompare);
+ function reviewWarningCompare(a,b){return reviewOrganizationCompare(a,b,false);}
+ function reviewNovemberWarningCandidates(rows){return rows.filter(row=>reviewMonthlyRate(row)!==null).sort(reviewWarningCompare);}
+ function reviewCompanySource(ctx){
+  const catalog=M.storeCatalog.filter(row=>row.ownerApplicable!==false),complete=source=>Array.isArray(source?.housing)&&catalog.every(row=>source.housing.some(h=>canonicalStore(h['门店'])===row.store));
+  return complete(ctx.d)?ctx.d:complete(ctx.d.companyProgress)?ctx.d.companyProgress:null;
  }
  function reviewCompanyStoreRows(ctx){
-  const company=ctx.d.companyProgress;
-  if(!Array.isArray(company?.housing))return [];
+  const company=reviewCompanySource(ctx);if(!company)return [];
   if(!ctx.warningCompanyRows)ctx.warningCompanyRows=M.table(company.housing,{},goals(),currentMonth,company.meetings||[],customerOptions(company)).rows.filter(row=>row._level==='store');
   return ctx.warningCompanyRows;
  }
  function reviewRankSets(ctx){
-  const facts=ctx.facts,rows=reviewStoreRows(ctx),byName=name=>rows.find(x=>x.store===name),fixedBench=(facts?.benchmark||[]).map(byName).filter(Boolean),fixedReminder=(facts?.reminders||[]).map(byName).filter(Boolean);
-  if(currentMonth==='2026-11'){
-   if(ctx.view.scope==='store')return {bench:[],remind:[],single:ctx.root};
-   const ranked=reviewNovemberWarningCandidates(rows);
-   const oneMet=ranked.filter(row=>row.met===1);
-   const focus=oneMet.length?`本月仅面见1套的门店共${oneMet.length}家，${oneMet.map(row=>row.store).join('、')}。`:'';
-   return {bench:fixedBench,remind:ranked.slice(0,3),single:null,focus};
-  }
-  if(ctx.view.scope==='company')return {bench:fixedBench.slice(0,3),remind:fixedReminder.slice(0,5),single:null};
-  if(ctx.view.scope==='region'){
-   const bench=(fixedBench.length?fixedBench:[[...rows].sort((a,b)=>reviewRankScore(b)-reviewRankScore(a)||b.met-a.met)[0]]).filter(Boolean);
-   const remind=(fixedReminder.length?fixedReminder:[[...rows].filter(x=>!bench.includes(x)).sort((a,b)=>reviewRankScore(a)-reviewRankScore(b)||b.stock-a.stock)[0]]).filter(Boolean);
-   return {bench:bench.slice(0,3),remind:remind.slice(0,5),single:null};
-  }
-  return {bench:[],remind:[],single:ctx.root};
+  const rows=reviewStoreRows(ctx);if(ctx.view.scope==='store')return {bench:[],remind:[],single:ctx.root};
+  const limit=ctx.view.scope==='region'?1:3,bench=reviewOrganizationRank(rows,limit,true,true),benchNames=new Set(bench.map(row=>row.store));
+  return {bench,remind:reviewOrganizationRank(rows,limit,false).filter(row=>!benchNames.has(row.store)),single:null,focus:''};
+ }
+ function reviewGroupSets(ctx){
+  const global=reviewCompanySource(ctx),source=global||ctx.d,table=M.table(source.housing,{},goals(),currentMonth,source.meetings||[],{...customerOptions(source),includeAllLevels:true}),stores=new Map(table.rows.filter(row=>row._level==='store').map(row=>[row.store,row]));
+  const valid=group=>!['','/','—','-','未分组','未填写','待补充'].includes(M.text(group)),groups=table.rows.filter(row=>row._level==='group'&&Number(row.stock)>0&&valid(row.group)).map(row=>({...row,storeStock:Number(stores.get(row.store)?.stock||0),stockShare:stores.get(row.store)?.stock>0?row.stock/stores.get(row.store).stock:0}));
+  const inView=row=>(!ctx.s.region||row.region===ctx.s.region)&&(!ctx.s.store||row.store===ctx.s.store);
+  return {benchmarkReady:!!global,benchmark:global?reviewOrganizationRank(groups,5,true,true):[],slow:groups.filter(row=>inView(row)&&row.storeStock>0&&row.stock*4>=row.storeStock&&Number(row.met)===0).sort((a,b)=>b.stockShare-a.stockShare||b.stock-a.stock||reviewOrganizationCompare(a,b,false))};
+ }
+ // Reuse only records already returned by the signed-in store-review API. The
+ // selected review period stays separate from the monthly organization ranking.
+ function reviewSavedMeetingRecord(ctx,row){
+  const reviews=root.WBStoreReviews,rs=reviews?.state,member=C.member,binding=state.reviewNotesReaders.get(currentMonth),cache=rs?.cache?.get(currentMonth),context=rs?.context;
+  if(!member||binding!==member||!context||context.month!==currentMonth||rs.actor!==(member.login_id||member.display_name||'guest')||cache?.loading||cache?.error)return null;
+  if(context.privateData&&context.privateData.reader!==member)return null;
+  const period=reviews.selectedPeriod?.(context);if(!period)return null;
+  const catalog=M.storeCatalog.find(entry=>entry.ownerApplicable!==false&&entry.store===row.store&&entry.region===row.region);if(!catalog)return null;
+  const record=(cache?.items||[]).find(item=>item.kind==='review'&&item.month===currentMonth&&item.store===row.store&&item.region===row.region&&item.payload?.recordType==='store-period-review'&&item.payload.periodType===period.periodType&&item.payload.periodStart===period.periodStart&&item.payload.periodEnd===period.periodEnd);
+  const fields=record?.payload?.fields;if(!fields||!['highlights','blockers','nextActions'].some(key=>String(fields[key]||'').trim()))return null;
+  return {record,fields,period};
+ }
+ function reviewSavedNotesText(ctx,row,group=false){
+  const saved=reviewSavedMeetingRecord(ctx,row);if(!saved)return '';
+  const {record,fields,period}=saved,compact=value=>{const text=String(value||'').trim().replace(/\s+/g,' ');return text.length>160?text.slice(0,160)+'…':text;},status=record.payload.status==='confirmed'?'已确认复盘':'已保存草稿，待BP确认',heading=period.periodType==='monthly'?'月度复盘与下期安排':'周会复盘与本周安排',lines=[`${group?'所属门店'+row.store+'｜':''}${heading}（${period.periodStart}—${period.periodEnd}；${status}）`];
+  if(fields.highlights?.trim())lines.push('有效做法：'+compact(fields.highlights));
+  if(fields.blockers?.trim())lines.push('提升与卡点：'+compact(fields.blockers));
+  if(fields.nextActions?.trim())lines.push((group?'门店本周安排：':'本周安排：')+compact(fields.nextActions));
+  return lines.join('\n');
+ }
+ function reviewSavedNotesHtml(ctx,row,group=false){const text=reviewSavedNotesText(ctx,row,group);if(!text)return '';const [heading,...lines]=text.split('\n');return `<div class="review-meeting-notes"><p><b>${E(heading)}</b></p>${lines.map(line=>`<p>${E(line)}</p>`).join('')}</div>`;}
+ function updateReviewMeetingHighlights(){
+  if(currentMode!=='review'||currentMonth<'2026-11')return;const host=document.getElementById('ops-review-highlights-content');if(!host)return;const ctx=reviewContext(currentView);if(ctx)host.innerHTML=reviewHighlightsHtml(ctx);
+ }
+ function reviewCloudForHighlights(){
+  const cloud=Object.create(C);cloud.storeReview=async(action,args={})=>{const member=C.member,month=currentMonth,result=await C.storeReview(action,args);if(['load','save'].includes(action))setTimeout(()=>{if(C.member!==member||currentMonth!==month||args.month!==month)return;if(action==='load')state.reviewNotesReaders.set(month,member);updateReviewMeetingHighlights();},0);return result;};return cloud;
+ }
+ function reviewGroupAnalysisText(ctx){
+  const sets=reviewGroupSets(ctx),describe=row=>`${row.group}｜经理${managerName(row)}：面见${row.met}/${row.stock}套，面见率${row.met_rate}；在售占本店${M.pct(row.stock,row.storeStock)}（${row.stock}/${row.storeStock}套）`;
+  return `标杆店组｜全司店组排名TOP5（按月度全盘面见率）：\n${sets.benchmarkReady?sets.benchmark.map(row=>`第${row.reviewRank}名 ${describe(row)}${reviewSavedNotesText(ctx,row,true)?'\n'+reviewSavedNotesText(ctx,row,true):''}`).join('\n')||'当前暂无已有面见的上榜店组。':'全司18家门店数据未完整，暂不生成全司排名。'}\n\n进展偏慢店组｜在售占本店≥25%且本月0面见：\n${sets.slow.map(row=>describe(row)+(reviewSavedNotesText(ctx,row,true)?'\n'+reviewSavedNotesText(ctx,row,true):'')).join('\n')||'当前范围暂无符合条件的店组。'}`;
+ }
+ function reviewGroupAnalysisHtml(ctx){
+  const sets=reviewGroupSets(ctx),table=(title,rows,benchmark)=>`<div class="review-table-card"><h3>${E(title)}</h3><div class="review-table-scroll"><table class="review-tier-table" aria-label="${E(title)}"><thead><tr>${benchmark?'<th>排名</th>':''}<th>大区</th><th>门店</th><th>店组</th><th>经理</th><th>面见量／在售</th><th>全盘面见率</th><th>在售占本店</th></tr></thead><tbody>${rows.map(row=>`<tr>${benchmark?`<td>${row.reviewRank}</td>`:''}<td>${E(row.region)}</td><td>${E(row.store)}</td><td>${E(row.group)}</td><td>${E(managerName(row))}</td><td>${row.met}/${row.stock}套</td><td>${E(row.met_rate)}</td><td>${E(M.pct(row.stock,row.storeStock))}（${row.stock}/${row.storeStock}套）</td></tr>`).join('')}</tbody></table></div></div>`;
+  const benchmark=sets.benchmarkReady?sets.benchmark.length?table('标杆店组｜全司店组排名TOP5',sets.benchmark,true):'<p class="ops-muted">当前暂无已有面见的上榜店组。</p>':'<p class="ops-notice">全司18家门店数据未完整，暂不生成全司店组排名。</p>';
+  const slow=sets.slow.length?table('进展偏慢店组',sets.slow,false):'<p class="ops-muted">当前范围暂无符合“在售占本店≥25%且本月0面见”的店组。</p>';
+  const notes=rows=>rows.map(row=>{const note=reviewSavedNotesHtml(ctx,row,true);return note?`<article class="review-rank-card neutral"><span>${E(row.group)}</span>${note}</article>`:'';}).join('');
+  return `<div class="review-group-analysis"><div class="review-subhead"><h3>店组表现分析</h3><p>标杆店组按全司月度全盘面见率排序；同率依次看面见套数、面见次数，相同保留并列。进展偏慢店组须同时满足“店组在售套数÷本店在售套数≥25%”与“本月累计0面见”。</p></div>${benchmark}<div class="review-rank-grid">${notes(sets.benchmark)}</div>${slow}<div class="review-rank-grid">${notes(sets.slow)}</div></div>`;
  }
  function reviewStoreDetail(ctx,row){if(!ctx.reviewStoreDetails)ctx.reviewStoreDetails=new Map();if(!ctx.reviewStoreDetails.has(row.store))ctx.reviewStoreDetails.set(row.store,M.table(ctx.d.housing,{region:row.region,store:row.store},goals(),currentMonth,ctx.d.meetings||[],customerOptions(ctx.d)).rows);return ctx.reviewStoreDetails.get(row.store);}
  function reviewTopTopics(ctx,row,limit=2){const q=reviewQualityGroup(ctx,row);return Object.entries(F.labels).map(([key,label])=>({label,count:Number(q?.topics?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count).slice(0,limit).map(x=>`${x.label}${x.count}套`);}
  function reviewGroupLabel(row,group,detail){const leaders={'御翠园店|御翠园店C组':'宋春杰团队'},special=leaders[`${row.store}|${group.group}`],advisors=detail.filter(x=>x._level==='advisor'&&x.group===group.group&&x.met>0).sort((a,b)=>b.met-a.met).slice(0,1).map(x=>x.name),people=special||advisors.length?special||`${advisors.join('、')}等伙伴`:'';return `${group.group}${people?`（${people}）`:''}`;}
- function reviewStoreInsight(ctx,row,tone){const detail=reviewStoreDetail(ctx,row),groups=detail.filter(x=>x._level==='group'&&x.stock>0);if(!groups.length)return '当前门店暂无可下钻的店组数据。';if(tone!=='reminder'){const lead=[...groups].sort((a,b)=>b.met-a.met||reviewRankScore(b)-reviewRankScore(a)||b.stock-a.stock)[0],topLead=[...groups].sort((a,b)=>(b.store_top_met+b.unit_top_met)-(a.store_top_met+a.unit_top_met)||reviewTopAverage(b)-reviewTopAverage(a))[0],topics=reviewTopTopics(ctx,lead),share=M.pct(lead.met,row.met);let text=`下钻到店组，${reviewGroupLabel(row,lead,detail)}贡献${lead.met}套，占全店面见量${share}；该组全盘面见${lead.met}套/在售${lead.stock}套，面见率${lead.met_rate}。`;if(topLead&&(topLead.store_top_met+topLead.unit_top_met)>0){if(topLead.group===lead.group)text+=`该组门店TOP面见${topLead.store_top_met}套/${topLead.store_top_stock}套，户型TOP面见${topLead.unit_top_met}套/${topLead.unit_top_stock}套。`;else text+=`TOP房推进以${reviewGroupLabel(row,topLead,detail)}更突出：门店TOP面见${topLead.store_top_met}套/${topLead.store_top_stock}套，户型TOP面见${topLead.unit_top_met}套/${topLead.unit_top_stock}套。`;}if(topics.length)text+=`反馈主要涉及${topics.join('、')}。`;return text;}const zero=[...groups].filter(x=>x.met===0).sort((a,b)=>b.stock-a.stock),weak=(zero.length?zero:[...groups].sort((a,b)=>reviewRankScore(a)-reviewRankScore(b)||b.stock-a.stock)).slice(0,2);if(zero.length){const stock=weak.reduce((sum,x)=>sum+x.stock,0),storeTopStock=weak.reduce((sum,x)=>sum+x.store_top_stock,0),unitTopStock=weak.reduce((sum,x)=>sum+x.unit_top_stock,0),topNote=storeTopStock||unitTopStock?`这些组包含门店TOP ${storeTopStock}套、户型TOP ${unitTopStock}套，当前同样尚未形成面见。`:'这些组当前无TOP房源，主要影响全盘覆盖，不直接用于判断TOP短板。';return `从数据下钻看，当前低覆盖主要集中在${weak.map(x=>reviewGroupLabel(row,x,detail)).join('、')}：合计在售${stock}套，目前0套面见。${topNote}`;}const first=weak[0],topics=reviewTopTopics(ctx,first);return `从数据下钻看，${reviewGroupLabel(row,first,detail)}当前全盘面见${first.met}套/在售${first.stock}套，面见率${first.met_rate}；门店TOP面见${first.store_top_met}套/${first.store_top_stock}套，户型TOP面见${first.unit_top_met}套/${first.unit_top_stock}套。${topics.length?`已有反馈主要涉及${topics.join('、')}，但整体覆盖仍不足。`:''}`;}
+ function reviewStoreInsight(ctx,row,tone){const detail=reviewStoreDetail(ctx,row),groups=detail.filter(x=>x._level==='group'&&x.stock>0);if(!groups.length)return '当前门店暂无可下钻的店组数据。';if(tone!=='reminder'){const lead=[...groups].sort((a,b)=>reviewOrganizationCompare(a,b,true))[0],topLead=[...groups].sort((a,b)=>(b.store_top_met+b.unit_top_met)-(a.store_top_met+a.unit_top_met)||reviewTopAverage(b)-reviewTopAverage(a))[0],topics=reviewTopTopics(ctx,lead),share=M.pct(lead.met,row.met);let text=`下钻到店组，${reviewGroupLabel(row,lead,detail)}贡献${lead.met}套，占全店面见量${share}；该组全盘面见${lead.met}套/在售${lead.stock}套，面见率${lead.met_rate}。`;if(topLead&&(topLead.store_top_met+topLead.unit_top_met)>0){if(topLead.group===lead.group)text+=`该组门店TOP面见${topLead.store_top_met}套/${topLead.store_top_stock}套，户型TOP面见${topLead.unit_top_met}套/${topLead.unit_top_stock}套。`;else text+=`TOP房推进以${reviewGroupLabel(row,topLead,detail)}更突出：门店TOP面见${topLead.store_top_met}套/${topLead.store_top_stock}套，户型TOP面见${topLead.unit_top_met}套/${topLead.unit_top_stock}套。`;}if(topics.length)text+=`反馈主要涉及${topics.join('、')}。`;return text;}const zero=[...groups].filter(x=>x.met===0).sort((a,b)=>b.stock-a.stock),weak=(zero.length?zero:[...groups].sort((a,b)=>reviewOrganizationCompare(a,b,false))).slice(0,2);if(zero.length){const stock=weak.reduce((sum,x)=>sum+x.stock,0),storeTopStock=weak.reduce((sum,x)=>sum+x.store_top_stock,0),unitTopStock=weak.reduce((sum,x)=>sum+x.unit_top_stock,0),topNote=storeTopStock||unitTopStock?`这些组包含门店TOP ${storeTopStock}套、户型TOP ${unitTopStock}套，当前同样尚未形成面见。`:'这些组当前无TOP房源，主要影响全盘覆盖，不直接用于判断TOP短板。';return `从数据下钻看，当前低覆盖主要集中在${weak.map(x=>reviewGroupLabel(row,x,detail)).join('、')}：合计在售${stock}套，目前0套面见。${topNote}`;}const first=weak[0],topics=reviewTopTopics(ctx,first);return `从数据下钻看，${reviewGroupLabel(row,first,detail)}当前全盘面见${first.met}套/在售${first.stock}套，面见率${first.met_rate}；门店TOP面见${first.store_top_met}套/${first.store_top_stock}套，户型TOP面见${first.unit_top_met}套/${first.unit_top_stock}套。${topics.length?`已有反馈主要涉及${topics.join('、')}，但整体覆盖仍不足。`:''}`;}
  function reviewMetricSentence(label,met,stock,rate){return stock>0?`${label}：面见${met}套 / 在售${stock}套，面见率${rate}`:`${label}：当前无在售房源`;}
  function reviewRankReason(row,tone){
-  if(currentMonth==='2026-11'&&tone==='reminder')return `本月${row.met===1?'仅':''}面见${row.met}套，目标完成率${reviewCompletion(row)}，已列入本周重点预警。请BP与店总、经理确认本周要面见的房源、责任人和计划完成时间，周复盘核对进展。`;
-  const top=[['门店TOP',row.store_top_stock,reviewRate(row.store_top_rate),row.store_top_rate],['户型TOP',row.unit_top_stock,reviewRate(row.unit_top_rate),row.unit_top_rate]].filter(x=>x[1]>0).sort((a,b)=>tone==='benchmark'?b[2]-a[2]:a[2]-b[2])[0];
-  if(tone==='neutral')return `全盘面见率${row.met_rate}，门店TOP面见率${row.store_top_rate}，户型TOP面见率${row.unit_top_rate}。`;
-  return tone==='benchmark'?`全盘面见率${row.met_rate}${top?`，${top[0]}面见率${top[3]}`:''}，在当前范围内表现较突出。`:`全盘面见率${row.met_rate}${top?`，${top[0]}面见率${top[3]}`:''}，当前覆盖相对偏低。`;
+  const direction=tone==='benchmark'?'较高':tone==='reminder'?'较低':'当前';
+  return `月度全盘面见${row.met}套/在售${row.stock}套，面见率${row.met_rate}，在当前比较范围内覆盖${direction}；目标完成率${reviewCompletion(row)}。门店TOP和户型TOP覆盖作为补充观察，不替代全盘面见率排序。`;
  }
  function reviewRankCard(ctx,row,tone,reason){
   const analysisLabel=tone==='benchmark'?'突出表现':tone==='reminder'?'主要表现':'本店表现';
   const progress=currentMonth==='2026-11'?`<p>${E(`目标进度：面见${row.met}套 / 目标${row._target??'待确认'}套，完成率${reviewCompletion(row)}；面见次数${meetingValue(row)}次`)}</p>`:'';
-  return `<article class="review-rank-card ${tone}"><span>${E(reviewRowName(row))}</span><div class="review-rank-metrics">${progress}<p>${E(reviewMetricSentence('全盘',row.met,row.stock,row.met_rate))}</p><p>${E(reviewMetricSentence('门店TOP',row.store_top_met,row.store_top_stock,row.store_top_rate))}</p><p>${E(reviewMetricSentence('户型TOP',row.unit_top_met,row.unit_top_stock,row.unit_top_rate))}</p></div><p class="review-rank-reason"><b>${analysisLabel}：</b>${E(reason)}</p><small>${E(reviewStoreInsight(ctx,row,tone))}</small></article>`;
+  return `<article class="review-rank-card ${tone}"><span>${E(reviewRowName(row))}</span><div class="review-rank-metrics">${progress}<p>${E(reviewMetricSentence('全盘',row.met,row.stock,row.met_rate))}</p><p>${E(reviewMetricSentence('门店TOP',row.store_top_met,row.store_top_stock,row.store_top_rate))}</p><p>${E(reviewMetricSentence('户型TOP',row.unit_top_met,row.unit_top_stock,row.unit_top_rate))}</p></div><p class="review-rank-reason"><b>${analysisLabel}：</b>${E(reason)}</p><small>${E(reviewStoreInsight(ctx,row,tone))}</small>${reviewSavedNotesHtml(ctx,row)}</article>`;
  }
  function reviewSingleTone(ctx,row){
-  if(!row)return 'neutral';
-  if((ctx.facts?.benchmark||[]).includes(row.store))return 'benchmark';
-  if(currentMonth==='2026-11'&&reviewNovemberWarningCandidates(reviewCompanyStoreRows(ctx)).slice(0,3).some(item=>item.store===row.store))return 'reminder';
-  if((ctx.facts?.reminders||[]).includes(row.store))return 'reminder';
+  if(!row)return 'neutral';const all=reviewCompanyStoreRows(ctx);if(!all.length)return 'neutral';
+  if(reviewOrganizationRank(all,3,true,true).some(item=>item.store===row.store))return 'benchmark';
+  if(reviewOrganizationRank(all,3,false).some(item=>item.store===row.store))return 'reminder';
   return 'neutral';
  }
  function reviewHighlightsHtml(ctx){
-  const sets=reviewRankSets(ctx),facts=ctx.facts,november=currentMonth==='2026-11';
-  if(sets.single){
-   const row=sets.single,tone=reviewSingleTone(ctx,row),status=tone==='benchmark'?'本月标杆门店':tone==='reminder'?(november?'全司本周重点预警门店':'本月重点提醒门店'):'本店月度表现',reason=facts?.benchmarkReasons?.[row.store]||facts?.reminderReasons?.[row.store]||reviewRankReason(row,tone);
-   return `<div class="review-report"><div class="review-rank-grid">${reviewRankCard(ctx,row,tone,status+'：'+reason)}</div>${reviewOpportunityHtml(ctx)}</div>`;
-  }
-  const benchTitle=november?'标杆门店｜按面见进展与目标管理表现识别':'标杆门店｜按全盘与TOP房面见表现识别';
-  const remindTitle=november?'重点提醒门店｜每周重点预警本月进展倒数3家':'重点提醒门店｜按全盘与TOP房面见表现识别';
-  const benchEmpty=november?'当前范围暂无本月标杆门店。':'当前范围暂无可识别的标杆门店。';
-  const remindEmpty=november?'当前范围暂无可纳入预警的在售门店。':'当前范围暂无可识别的重点提醒门店。';
-  const reminderFocus=sets.focus?`<div class="review-callout critical"><strong>当前重点</strong><p>${E(sets.focus)}</p></div>`:'';
-  const reminderRule=november?'<p class="review-footnote">识别规则：仍有在售房源的门店，先按本月面见量从低到高排序；并列时依次按目标完成率、全盘面见率从低到高排序，取当前范围倒数3家，作为本周重点预警对象。</p>':'';
-  return `<div class="review-report"><div class="review-rank-section"><h3>${E(benchTitle)}</h3><div class="review-rank-grid">${sets.bench.map(row=>reviewRankCard(ctx,row,'benchmark',facts?.benchmarkReasons?.[row.store]||reviewRankReason(row,'benchmark'))).join('')||`<p class="ops-muted">${E(benchEmpty)}</p>`}</div></div><div class="review-rank-section"><h3>${E(remindTitle)}</h3>${reminderFocus}${reminderRule}<div class="review-rank-grid">${sets.remind.map(row=>reviewRankCard(ctx,row,'reminder',facts?.reminderReasons?.[row.store]||reviewRankReason(row,'reminder'))).join('')||`<p class="ops-muted">${E(remindEmpty)}</p>`}</div></div>${reviewOpportunityHtml(ctx)}</div>`;
+  const sets=reviewRankSets(ctx),groups=reviewGroupAnalysisHtml(ctx);
+  if(sets.single){const row=sets.single,tone=reviewSingleTone(ctx,row),status=tone==='benchmark'?'本月面见率标杆门店':tone==='reminder'?'本月面见率进展偏慢门店':'本店月度表现';return `<div class="review-report"><div class="review-rank-grid">${reviewRankCard(ctx,row,tone,status+'：'+reviewRankReason(row,tone))}</div>${groups}${reviewOpportunityHtml(ctx)}</div>`;}
+  const limit=ctx.view.scope==='region'?1:3,rule='统一依据：月度全盘面见率优先；同率依次按面见套数、面见次数排序；相同保留并列。目标完成率与双TOP覆盖单独呈现，不改变排名。';
+  return `<div class="review-report"><div class="review-rank-section"><h3>标杆门店｜月度全盘面见率${limit===1?'第一名':'TOP3'}</h3><p class="review-footnote">${E(rule)}</p><div class="review-rank-grid">${sets.bench.map(row=>reviewRankCard(ctx,row,'benchmark',reviewRankReason(row,'benchmark'))).join('')||'<p class="ops-muted">当前范围暂无已有面见的标杆门店。</p>'}</div></div><div class="review-rank-section"><h3>进展偏慢门店｜月度全盘面见率${limit===1?'最后一名':'倒数3家'}</h3><div class="review-rank-grid">${sets.remind.map(row=>reviewRankCard(ctx,row,'reminder',reviewRankReason(row,'reminder'))).join('')||'<p class="ops-muted">当前范围暂无可独立列出的进展偏慢门店。</p>'}</div></div>${groups}${reviewOpportunityHtml(ctx)}</div>`;
  }
  function reviewOpportunityScope(ctx){const op=ctx.facts?.opportunity;if(!op)return null;const storeRegion=new Map(reviewStoreRows(ctx).map(x=>[x.store,x.region]));if(ctx.view.scope==='company')return {summary:op,regions:op.regions,stores:op.stores.map(x=>[storeRegion.get(x[0])||'',...x])};if(ctx.view.scope==='region'){const region=op.regions.find(x=>x[0]===ctx.view.region),stores=op.stores.filter(x=>storeRegion.get(x[0])===ctx.view.region).map(x=>[ctx.view.region,...x]);return {summary:region?{unmet:region[1],anyTop:region[2],storeTop:region[3],unitTop:region[4]}:null,regions:[],stores};}const store=op.stores.find(x=>x[0]===(ctx.view.store||ctx.view.name));return {summary:store?{unmet:store[1],anyTop:store[2],storeTop:store[3],unitTop:store[4]}:null,regions:[],stores:store?[[ctx.view.region,...store]]:[]};}
  function reviewOpportunityHtml(ctx){const scoped=reviewOpportunityScope(ctx),op=ctx.facts?.opportunity;if(!scoped?.summary)return '';
@@ -283,21 +302,12 @@ ${r.gift.conclusion}`;
  function reviewDetailTable(title,headers,rows){if(!rows.length)return '';return `<div class="review-table-card"><h3>${E(title)}</h3><div class="review-table-scroll"><table class="review-tier-table" aria-label="${E(title)}"><thead><tr>${headers.map(x=>`<th scope="col">${E(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((value,i)=>`<td class="${i<2?'review-org-name':''}">${E(value)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;}
  function reviewNovemberMetricRow(ctx,level,name){if(level==='company')return ctx.root;return ctx.progress.rows.find(row=>row._level===level&&(level==='region'?row.region===name:row.store===name));}
  function reviewNovemberCoverage(row){if(!row)return {whole:'—',storeTop:'—',unitTop:'—'};return {whole:Math.ceil(Number(row.stock||0)*.2),storeTop:Math.ceil(Number(row.store_top_stock||0)*.4),unitTop:Math.ceil(Number(row.unit_top_stock||0)*.4)};}
- function reviewRankText(ctx,row,tone){const facts=ctx.facts,reason=tone==='benchmark'?(facts?.benchmarkReasons?.[row.store]||reviewRankReason(row,'benchmark')):tone==='reminder'?(facts?.reminderReasons?.[row.store]||reviewRankReason(row,'reminder')):reviewRankReason(row,'neutral'),progress=currentMonth==='2026-11'?`目标进度：面见${row.met}套 / 目标${row._target??'待确认'}套，完成率${reviewCompletion(row)}；面见次数${meetingValue(row)}次\n`:'';return `${row.store}\n${progress}${reviewMetricSentence('全盘',row.met,row.stock,row.met_rate)}\n${reviewMetricSentence('门店TOP',row.store_top_met,row.store_top_stock,row.store_top_rate)}\n${reviewMetricSentence('户型TOP',row.unit_top_met,row.unit_top_stock,row.unit_top_rate)}\n分析：${reason}\n店组下钻：${reviewStoreInsight(ctx,row,tone)}`;}
+ function reviewRankText(ctx,row,tone){const progress=`目标进度：面见${row.met}套 / 目标${row._target??'待确认'}套，完成率${reviewCompletion(row)}；面见次数${meetingValue(row)}次\n`;return `${row.store}\n${progress}${reviewMetricSentence('全盘',row.met,row.stock,row.met_rate)}\n${reviewMetricSentence('门店TOP',row.store_top_met,row.store_top_stock,row.store_top_rate)}\n${reviewMetricSentence('户型TOP',row.unit_top_met,row.unit_top_stock,row.unit_top_rate)}\n分析：${reviewRankReason(row,tone)}\n店组下钻：${reviewStoreInsight(ctx,row,tone)}${reviewSavedNotesText(ctx,row)?'\n'+reviewSavedNotesText(ctx,row):''}`;}
  function reviewRankCopySection(ctx,sets,singleTone,bench,remind){
-  const november=currentMonth==='2026-11';
-  const benchmarkLabel=november?'按面见进展与目标管理表现识别':'按全盘与TOP房面见表现识别';
-  const reminderLabel=november?'每周重点预警本月进展倒数3家':'按全盘与TOP房面见表现识别';
-  const rule=november?'识别规则：仍有在售房源的门店先按本月面见量从低到高排序；并列时依次按目标完成率、全盘面见率从低到高排序，取当前范围倒数3家。\n':'';
-  if(sets.single){
-    const body=reviewRankText(ctx,sets.single,singleTone);
-    if(singleTone==='benchmark')return `标杆门店（${benchmarkLabel}）：\n${body}`;
-    if(singleTone==='reminder')return `重点提醒门店（${reminderLabel}）：\n${rule}${body}`;
-    return `本店月度表现：\n${body}`;
-  }
-  const focus=sets.focus?`${sets.focus}\n`:'';
-  return `标杆门店（${benchmarkLabel}）：\n${bench}\n\n重点提醒门店（${reminderLabel}）：\n${focus}${rule}${remind}`;
-}
+  const rule='统一依据：月度全盘面见率优先；同率依次看面见套数、面见次数，相同保留并列。目标完成率与双TOP覆盖作为补充观察。';
+  if(sets.single)return `本店月度表现：\n${reviewRankText(ctx,sets.single,singleTone)}\n\n${reviewGroupAnalysisText(ctx)}`;
+  return `${rule}\n\n标杆门店：\n${bench}\n\n进展偏慢门店：\n${remind}\n\n${reviewGroupAnalysisText(ctx)}`;
+ }
  function reviewText(view=currentView){const ctx=reviewContext(view);if(!ctx)return '';const r=ctx.root,q=ctx.quality?.summary||Q.summary([]),topics=Object.entries(F.labels).map(([key,label])=>({key,label,count:Number(q.topics?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count),sets=reviewRankSets(ctx),opp=reviewOpportunityScope(ctx),singleTone=reviewSingleTone(ctx,sets.single),bench=sets.single?reviewRankText(ctx,sets.single,singleTone):sets.bench.map(x=>reviewRankText(ctx,x,'benchmark')).join('\n\n')||(currentMonth==='2026-11'?'当前范围暂无本月标杆门店':'当前范围暂无可识别的标杆门店'),remind=sets.single?'':sets.remind.map(x=>reviewRankText(ctx,x,'reminder')).join('\n\n')||(currentMonth==='2026-11'?'当前范围暂无可纳入预警的在售门店':'当前范围暂无可识别的重点提醒门店');
   const rankSection=reviewRankCopySection(ctx,sets,singleTone,bench,remind);
   const oppText=!opp?.summary?'当前月份暂无锁定的跨月机会数据':ctx.view.scope==='company'?`9月面见${ctx.facts.opportunity.septemberMet}套，10月末仍在售${ctx.facts.opportunity.stillListed}套；10月继续面见${ctx.facts.opportunity.continued}套（${ctx.facts.opportunity.continuedRate}），跨月未持续面见${ctx.facts.opportunity.unmet}套（${ctx.facts.opportunity.unmetRate}），其中任一TOP ${ctx.facts.opportunity.anyTop}套（${ctx.facts.opportunity.topRate}）。`:`当前范围跨月未持续面见${opp.summary.unmet}套，其中任一TOP ${opp.summary.anyTop}套，门店TOP ${opp.summary.storeTop}套，户型TOP ${opp.summary.unitTop}套。`;
@@ -453,7 +463,7 @@ ${strategies}`;
   const regionalHost=regional?block('review-regional','大区周／月复盘','<div id="store-review-host"></div>','按大区展开各店报告，直接填写、共享保存，并复制完整复盘图片。')+(root.WBCompanyWeekPlan?block('review-company-week-plan','全司下周目标及核心策略','<div id="company-week-plan-host"></div>','承接月度目标与达成进展，自动测算周目标；项目负责人填写、调整核心策略，保存后共享查看。'):''):'';
   if(!hasData)return hero('周／月复盘 · '+view.name,'目标、数据分析与BP执行复盘在同一工作台完成')+source+regionalHost+(old?.sections||[]).map(x=>block(x.id,x.title,x.blocks.map(renderBlock).join(''))).join('');
   const ctx=reviewContext(view);currentView={...view,sections:[{id:'review-progress',blocks:[ctx.progress]}]};const month=Number(currentMonth.slice(5));
-  return hero(`${month}月面见复盘 · ${view.name}`,`数据截至${d.imports[0]?.as_of||'待导入'} · 按大区查看单店周／月复盘与下一步安排`)+source+block('review-progress','本月目标达成结果',reviewProgressHtml(ctx),'全司视角直接呈现大区与门店完整结果；筛选后同步聚焦当前范围。')+block('review-gifts','面见伴手礼',reviewGiftHtml(ctx))+block('review-quality','面见质量与业务转化',reviewQualityHtml(ctx))+block('review-highlights','标杆门店与重点提醒',reviewHighlightsHtml(ctx))+(regional?regionalHost:block('review-actions',`${month}月关键动作复盘`,reviewActionsHtml(ctx))+block('review-next','11月份目标及核心策略',reviewNextHtmlV2(ctx)));
+  return hero(`${month}月面见复盘 · ${view.name}`,`数据截至${d.imports[0]?.as_of||'待导入'} · 按大区查看单店周／月复盘与下一步安排`)+source+block('review-progress','本月目标达成结果',reviewProgressHtml(ctx),'全司视角直接呈现大区与门店完整结果；筛选后同步聚焦当前范围。')+block('review-gifts','面见伴手礼',reviewGiftHtml(ctx))+block('review-quality','面见质量与业务转化',reviewQualityHtml(ctx))+block('review-highlights','标杆门店与重点提醒','<div id="ops-review-highlights-content">'+reviewHighlightsHtml(ctx)+'</div>')+(regional?regionalHost:block('review-actions',`${month}月关键动作复盘`,reviewActionsHtml(ctx))+block('review-next','11月份目标及核心策略',reviewNextHtmlV2(ctx)));
  }
 
  function emptyData(month){const base=ARCHIVE.months[ARCHIVE.defaultMonth];return {meta:{month,cutoff:'本月日常数据待导入',week:'按实际快照查看'},regions:base.regions,views:Object.fromEntries(Object.entries(base.views).map(([k,v])=>[k,{scope:v.scope,role:v.role,name:v.name,region:v.region,store:v.store,sections:[],kpis:[],title:month+'项目工作台 · '+v.name}]))};}
@@ -733,24 +743,18 @@ async function metHouseImage(preview=false){
   block('daily-progress','面见及礼物进展',renderTable(progress))+
   block('daily-unmet-top','本月未面见TOP房明细',unmetTopTable(view),'仅纳入本月仍在售、属于门店TOP或户型TOP且尚未面见的房源。')+
   block('daily-met-houses','当月面见房源与正反馈',ownerApplicable?metHouseTable(view):'<div class="ops-notice">本店无在售房源，业主面见指标不适用。</div>','房源明细与面见反馈合并展示，复制为一张完整图片。')+
-  block('daily-message','公示话术',`<div class="block ops-panel"><textarea id="ops-message" class="ops-message" aria-label="当前范围推动话术">${E(message)}</textarea><div class="ops-actions"><button class="btn primary" data-ops="copy-message">复制话术</button></div>${currentMonth==='2026-11'?'<details class="ops-secondary"><summary>查看公示口径</summary><p class="ops-muted">公示口径：套数与面见率等权综合排名，门店／店组各自比较，仅展示首末并保留并列。</p></details>':''}</div>`)+
+  block('daily-message','公示话术',`<div class="block ops-panel"><textarea id="ops-message" class="ops-message" aria-label="当前范围推动话术">${E(message)}</textarea><div class="ops-actions"><button class="btn primary" data-ops="copy-message">复制话术</button></div>${currentMonth==='2026-11'?'<details class="ops-secondary"><summary>查看公示口径</summary><p class="ops-muted">公示口径：月度全盘面见率优先；同率依次看面见套数、面见次数。门店／店组各自比较，仅展示首末并保留并列。</p></details>':''}</div>`)+
   block('daily-package','公示资料包',publicationPanel(view))+
   block('daily-benchmark','全司面见标杆榜',companyBenchmarkPanel(),'按全司月度累计计算，门店TOP3、店组TOP5、个人TOP5；筛选大区或单店时榜单保持全司范围。')+parkedRecords(view);
 
  }
  function novemberRankedSelection(rows,level){
-  const name=row=>level==='group'?row.group:row.store;
-  const eligible=(rows||[]).filter(row=>row._level===level&&Number(row.stock)>0&&Number.isFinite(Number(row.met))&&Number(row.met)>=0&&Number.isFinite(Number.parseFloat(row.met_rate)));
-  // Equal weight, scale-free: add descending competition ranks for met homes and displayed meeting rate.
-  const ranked=eligible.map(row=>({row,volumeRank:1+eligible.filter(other=>Number(other.met)>Number(row.met)).length,rateRank:1+eligible.filter(other=>Number.parseFloat(other.met_rate)>Number.parseFloat(row.met_rate)).length})).map(result=>({...result,score:result.volumeRank+result.rateRank}));
-  const first=Math.min(...ranked.map(result=>result.score)),last=Math.max(...ranked.map(result=>result.score));
-  const ordered=list=>list.sort((a,b)=>level==='group'?(M.compareStore(a.store,b.store)||M.compareGroup(name(a),name(b))):M.compareStore(name(a),name(b)));
-  const best=ordered(ranked.filter(result=>result.score===first&&Number(result.row.met)>0).map(result=>result.row)),bestSet=new Set(best);
-  const low=ordered(ranked.filter(result=>result.score===last&&!bestSet.has(result.row)).map(result=>result.row));
+  const name=row=>level==='group'?row.group:row.store,eligible=(rows||[]).filter(row=>row._level===level&&reviewMonthlyRate(row)!==null&&Number(row.met)>=0),best=reviewOrganizationRank(eligible,1,true,true),bestNames=new Set(best.map(name));
+  const low=reviewOrganizationRank(eligible,1,false).filter(row=>!bestNames.has(name(row))),ranked=reviewOrganizationRank(eligible,eligible.length,true).map(row=>({row,rate:reviewMonthlyRate(row),rank:row.reviewRank}));
   return {level,name,best,low,ranked};
  }
  function novemberPraises(view,progress){
-  const level=view.scope==='store'?'group':'store',rows=(progress.rows||[]).filter(r=>r._level===level&&Number(r.stock)>0&&Number(r.met)>0),best=rows.sort((a,b)=>Number.parseFloat(b.met_rate)-Number.parseFloat(a.met_rate)).slice(0,3);
+  const level=view.scope==='store'?'group':'store',rows=(progress.rows||[]).filter(r=>r._level===level&&Number(r.stock)>0&&Number(r.met)>0),best=reviewOrganizationRank(rows,3,true,true);
   return best.map(r=>`👍 ${level==='group'?r.group:r.store}：面见${r.met}套，面见率${r.met_rate}。`);
  }
  function novemberMessage(view,progress,m,goal,cutoff){
@@ -1092,7 +1096,7 @@ TOP重点房源
   document.querySelector('.nav-label').textContent='CONTENTS / '+(archiveMonth?(currentMode==='admin'?'文件管理':'历史复盘'):({daily:'日常推动',review:'结果复盘',expense:'费用核销',admin:'数据管理'}[currentMode]||'项目工作台'));
   document.title=(archiveMonth?(currentMode==='admin'?'历史文件管理':'历史复盘归档'):({daily:'日常推动',review:'周／月复盘',expense:'费用核销',admin:'数据管理'}[currentMode]))+' · '+view.name+'｜面见项目工作台';
   document.getElementById('report').innerHTML=connection()+(archiveMonth&&currentMode==='review'?historyArchive(view):currentMode==='daily'?daily(view):currentMode==='expense'?finance(view):currentMode==='review'?review(view):admin(view));
-  if(!archiveMonth&&currentMode==='review'&&currentMonth>='2026-11'&&root.WBStoreReviews)root.WBStoreReviews.mount({host:document.getElementById('store-review-host'),month:currentMonth,view,goals:goals(),cloud:C,notify,publicData:data()?.companyProgress||data(),privateData:data(),asOf:data()?.imports?.[0]?.as_of||'',sourceVersion:data()?.imports?.[0]?.created_at||''});
+  if(!archiveMonth&&currentMode==='review'&&currentMonth>='2026-11'&&root.WBStoreReviews){root.WBStoreReviews.mount({host:document.getElementById('store-review-host'),month:currentMonth,view,goals:goals(),cloud:reviewCloudForHighlights(),notify,publicData:data()?.companyProgress||data(),privateData:data(),asOf:data()?.imports?.[0]?.as_of||'',sourceVersion:data()?.imports?.[0]?.created_at||''});updateReviewMeetingHighlights();}
   if(!archiveMonth&&currentMode==='review'&&currentMonth>='2026-11'&&root.WBCompanyWeekPlan)root.WBCompanyWeekPlan.mount({host:document.getElementById('company-week-plan-host'),month:currentMonth,cloud:C,notify,businessData:data()?.companyProgress||data()});
   if(C.configured&&!data()&&!state.loading&&!state.error)refresh();
  }
@@ -1188,6 +1192,7 @@ TOP重点房源
  async function qualityImage(){const q=qualityData();if(!q||q.pending)throw Error('质量数据尚未就绪，请稍后再试');const sel=qualitySelection(),blobs=await F.images({rows:q.private?sel.pageRows:[],summary:q.summary,scope:currentView.name,month:currentMonth,range:q.private?`本页${sel.pageRows.length}套 · 第${sel.filter.page+1}/${sel.pages}页`:'当前组织质量概览',topicCounts:q.private?F.counts(sel.pageRows):q.summary.topics});if(blobs.length===1&&navigator.clipboard?.write&&window.ClipboardItem){try{await navigator.clipboard.write([new ClipboardItem({'image/png':blobs[0]})]);notify(q.private?'本页真实反馈图片已复制，包含完整原文':'质量概览图片已复制');return;}catch{}}const urls=blobs.map(b=>URL.createObjectURL(b));dialog(`<h2>业主面见 · 真实反馈图片</h2><p>${blobs.length>1?'原文较长，已自动分成'+blobs.length+'张，保留全部内容。':'图片已生成，可下载后分享。'}</p>${urls.map((url,i)=>`<div class="ops-actions"><a class="btn primary" href="${url}" download="${E(currentMonth+'_'+currentView.name)}_真实反馈_${sel.filter.page+1}_${i+1}.png">下载第${i+1}张</a></div><img alt="真实反馈图片${i+1}" src="${url}" style="max-width:100%">`).join('')}`);setTimeout(()=>urls.forEach(u=>URL.revokeObjectURL(u)),300000);}
  async function ledgerImage(){const text=ledgerText().split('\n'),canvas=document.createElement('canvas');canvas.width=1400;canvas.height=170+text.length*43;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#5b3a6d';ctx.fillRect(0,0,canvas.width,90);ctx.fillStyle='#fff';ctx.font='bold 30px Microsoft YaHei, sans-serif';ctx.fillText('伴手礼费用核账 · '+currentMonth,40,58);ctx.fillStyle='#29222d';ctx.font='23px Microsoft YaHei, sans-serif';text.forEach((line,i)=>ctx.fillText(line,40,145+i*43));const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('图片生成失败');if(navigator.clipboard&&window.ClipboardItem&&isSecureContext){try{await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);notify('核账图片已复制，可粘贴微信');return;}catch{}}const u=URL.createObjectURL(blob);dialog(`<h2>核账图片</h2><a class="btn primary" href="${u}" download="${E(currentMonth)}_核账.png">下载图片</a><img src="${u}" alt="当前门店核账表" style="width:100%;margin-top:15px">`);}
  async function boot(){document.addEventListener('change',event=>{if(event.target.closest('#ops-expense-form')&&event.target.name==='houseLookup')applyExpenseProperty(event.target.closest('form'));if(event.target.closest('#ops-expense-form')&&event.target.name==='managerConfirmed')updateExpensePeople(event.target.closest('form'));if(event.target.closest('#ops-customer-import-form')){state.customerPreview=null;const preview=document.getElementById('ops-customer-import-preview');if(preview)preview.innerHTML='';}if(event.target.id==='quality-sort'){const sel=qualitySelection();sel.filter.sort=event.target.value;sel.filter.page=0;updateQualityPanel();}if(event.target.closest('[data-plan-index]'))readPlanEdits();});document.addEventListener('input',event=>{if(event.target.closest('#ops-goals-form')&&event.target.name)updateGoalRatePreview(event.target);if(event.target.closest('#ops-expense-form')&&['houseLookup','houseId','project','room'].includes(event.target.name))expensePropertyInput(event.target.closest('form'),event.target.name);if(event.target.closest('#ops-expense-form')&&['price','quantity'].includes(event.target.name))updateExpenseTotal(event.target.closest('form'));if(event.target.closest('#ops-expense-form')&&['payer','group','advisor','manager'].includes(event.target.name))updateExpensePeople(event.target.closest('form'),event.target.name);if(event.target.closest('[data-plan-index]'))readPlanEdits();if(event.target.id==='ops-scene'){state.sceneDrafts[sceneKey()]=event.target.value;}if(event.target.id==='ops-scene-analysis'){state.sceneAnalyses[sceneKey()]={...WBScene.analyze(sceneRaw()),text:event.target.value};}});WBProofs.onError=message=>notify(message);WBProofs.boot();document.addEventListener('click',handleClick);document.addEventListener('submit',handleSubmit);if(C.configured&&C.hasSession){try{await C.membership();await refresh();}catch(e){state.error=e.message;if(isMode(currentMode))render(viewFromUrl());}}}
+ document.addEventListener('change',event=>{if(event.target.dataset?.srControl)updateReviewMeetingHighlights();});
  document.addEventListener('change',async event=>{if(event.target.id!=='ops-goals-file')return;const file=event.target.files?.[0];if(!file)return;try{const sheets=await WBFiles.read(file),rows=sheets.flatMap(s=>s.rows||[]);let count=0;for(const row of rows){const store=canonicalStore(row['店面']??row['门店']??row['店面名称']??'');const value=row['10月目标']??row['目标']??row['目标面见套数']??row['月度目标'];if(!store||value==null)continue;const input=[...document.querySelectorAll('#ops-goals-form input[name]')].find(x=>x.name===store);if(input){input.value=String(value).replace(/[^0-9.-]/g,'');updateGoalRatePreview(input);count++;}}const preview=document.getElementById('ops-goals-file-preview');if(preview)preview.innerHTML='<div class="ops-notice">已读取 '+count+' 家门店目标，请核对后点击“保存当月目标”。</div>';notify('目标文件读取完成，请核对后保存');}catch(e){notify(e.message||'目标文件读取失败');}});
  function novemberTargets(){
   const month=currentMonth,d=data(),owners=M.storeCatalog.filter(s=>s.ownerApplicable!==false),loaded=!!d&&d.reader===C.member;
@@ -1199,7 +1204,7 @@ TOP重点房源
   return {month,loaded,total:totalOf(stores),regions,stores,ownerStoreCount:owners.length,missingStores:stores.filter(s=>s.target===null).map(s=>s.store),updatedAt:record?.updated_at||'',error:state.error};
  }
  function ensurePlanningTargets(){if(!C.configured||currentMonth!=='2026-11'||state.loading||state.error)return;const d=data();if(d&&d.reader===C.member)return;return refresh();}
- root.WBOperations={isMode,emptyData,render,boot,refresh,ensurePlanningTargets,saveMonthlyGoals,goalRatePreview,updateGoalRatePreview,ledgerText,financePersonRows,expensePayerLabel,updateExpensePeople,reviewText:reviewTextWithNovember,qualityText,novemberTargets,buildSendPackage,buildPublicationPackage,saveSendConfig,projectSendConfig,novemberMessage,novemberRankedSelection,metHouseData,metHouseTable,metHouseImage,copyMetHousePreview,companyBenchmarkData,companyBenchmarkPanel,companyBenchmarkImage,copyBenchmarkPreview,state};
+ root.WBOperations={isMode,emptyData,render,boot,refresh,ensurePlanningTargets,saveMonthlyGoals,goalRatePreview,updateGoalRatePreview,ledgerText,reviewMonthlyRate,reviewOrganizationRank,reviewRegionAnalysis,reviewRankSets,reviewSingleTone,reviewGroupSets,reviewGroupAnalysisText,reviewHighlightsHtml,reviewContext,reviewSavedMeetingRecord,reviewSavedNotesText,reviewCloudForHighlights,financePersonRows,expensePayerLabel,updateExpensePeople,reviewText:reviewTextWithNovember,qualityText,novemberTargets,buildSendPackage,buildPublicationPackage,saveSendConfig,projectSendConfig,novemberMessage,novemberRankedSelection,metHouseData,metHouseTable,metHouseImage,copyMetHousePreview,companyBenchmarkData,companyBenchmarkPanel,companyBenchmarkImage,copyBenchmarkPreview,state};
 })(window);
 
 
