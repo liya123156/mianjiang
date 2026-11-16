@@ -149,7 +149,7 @@
  function reviewGiftHtml(ctx){const r=ctx.root,rows=reviewGiftRows(ctx);return `<div class="review-report"><div class="review-summary-grid compact">${[['送礼登记',reviewNumber(r.gift)+'套'],['已见覆盖',r.gift_rate],['未送礼面见',reviewNumber(Math.max(0,r.met-r.gift))+'套']].map(([label,value])=>`<article class="review-summary-card"><span>${E(label)}</span><strong class="${String(value).includes('%')?'review-percent':''}">${E(value)}</strong></article>`).join('')}</div><div class="review-callout warm"><strong>从数据看伴手礼覆盖</strong><p>${E(reviewGiftAnalysis(ctx))}</p></div>${reviewMetricTable('各组织面见伴手礼覆盖',rows,'gift')}</div>`;}
  function reviewQualityGroup(ctx,row){const groups=ctx.quality?.groups||[];if(row._level===ctx.view.scope&&reviewRowName(row)===ctx.view.name)return ctx.quality?.summary;return groups.find(x=>x.scope===row._level&&(!row.region||x.region===row.region)&&(!row.store||row.store==='/'||x.store===row.store)&&(!row.group||row.group==='/'||x.group===row.group));}
  function reviewThemeAnalysis(topics,t){if(!t.total)return '当前范围暂无已面见房源，暂不能形成业务主题判断。';const byKey=Object.fromEntries(topics.map(x=>[x.key,x])),metric=key=>byKey[key]?`${byKey[key].label}${byKey[key].count}套（${M.pct(byKey[key].count,t.total)}）`:'' ,core=['P','M'].map(metric).filter(Boolean),forward=['R','V','E'].map(metric).filter(Boolean),corePeak=Math.max(Number(byKey.P?.count||0),Number(byKey.M?.count||0)),forwardPeak=Math.max(Number(byKey.R?.count||0),Number(byKey.V?.count||0),Number(byKey.E?.count||0)),feedbackRate=t.total?t.feedback/t.total:0,coverageNote=feedbackRate>=.8?'已能较完整地反映本月面见后的业务进展。':feedbackRate>=.5?'可以观察当前面见的主要业务倾向，仍需结合未录入反馈的房源判断。':'当前反馈样本仍有限，以下结论仅反映已录入房源。';let text=`当前已面见${t.total}套，其中${t.feedback}套录入反馈原文，覆盖率${M.pct(t.feedback,t.total)}，${coverageNote}`;if(core.length)text+=`${core.join('、')}，说明较多面见已经触及价格预期、出售意愿等业主核心决策信息。`;if(forward.length)text+=`${forward.join('、')}。`;if(corePeak>forwardPeak)text+='整体看，“了解业主信息”的动作明显多于连接具体客户、推动看房及形成委托的结果；从信息获取进一步转为可执行的业务机会，仍是下一阶段需要打开的空间。';else text+='当前反馈已经同时覆盖业主核心信息与具体客户、看房或委托进展，可继续沿逐套房源沉淀可复制做法。';return text;}
- function reviewQualityPanel(view){return qualityPanel(view).replace(/<details class="quality-classification">[\s\S]*?<\/details>/,'');}
+ function reviewQualityPanel(view){return '<details class="review-feedback-source"><summary>查看逐房面见反馈原文</summary>'+qualityPanel(view).replace(/<details class="quality-classification">[\s\S]*?<\/details>/,'')+'</details>';}
  function reviewQualityHtml(ctx){const q=ctx.quality,t=q?.summary||Q.summary([]),topics=Object.entries(F.labels).map(([key,label])=>({key,label,count:Number(t.topics?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count),c=reviewChildren(ctx.progress,ctx.view),orgRows=[...c.primary,...c.secondary].map(row=>({row,q:reviewQualityGroup(ctx,row)})).filter(x=>x.q);
 
   return `<div class="review-report"><div class="review-summary-grid compact">${[['已面见',t.total+'套'],['有反馈原文',t.feedback+'套'],['反馈覆盖率',M.pct(t.feedback,t.total)],['原文待补',t.missing+'套']].map(([label,value])=>`<article class="review-summary-card"><span>${E(label)}</span><strong class="${String(value).includes('%')?'review-percent':''}">${E(value)}</strong></article>`).join('')}</div><div class="review-analysis-grid single"><article class="review-analysis-card"><h3>业务经营主题</h3><p>同一套房可同时涉及多个主题，按房源去重后从高到低呈现。</p>${topics.map(x=>`<div class="review-analysis-row"><span>${E(x.label)}</span><b>${x.count}套</b><em class="review-percent">${M.pct(x.count,t.total)}</em></div>`).join('')||'<p>暂无主题数据</p>'}</article></div><div class="review-callout"><strong>从主题数据看业务转化</strong><p>${E(reviewThemeAnalysis(topics,t))}</p></div>${ctx.view.scope==='store'?`<div class="review-source-detail"><h3>本店逐套面见反馈</h3>${reviewQualityPanel(ctx.view)}</div>`:''}</div>`;
@@ -711,44 +711,6 @@ async function metHouseImage(preview=false){
   }finally{state.benchmarkBusy=false;}
  }
  async function copyBenchmarkPreview(){const p=state.benchmarkPreview;if(!p)throw Error('请重新生成全司标杆榜');p.assertCurrent();try{await navigator.clipboard.write([new root.ClipboardItem({'image/png':p.blob})]);notify('整张全司标杆榜已复制。');}catch{notify('浏览器未允许复制，请下载这张榜单。');}}
- function interviewShortlist(view){
-  const d=data(),asOf=d?.imports?.[0]?.as_of||'';
-  const filter={region:view.region||'',store:view.scope==='store'?(view.store||view.name):''};
-  const progress=M.table(d?.housing||[],filter,{},currentMonth,d?.meetings||[],{includeAllLevels:true});
-  const quality=qualityData({scope:'company'});
-  const currentQuality=quality?.asOf===asOf?quality:null;
-  const feedbackByHouse=new Map((currentQuality?.records||[]).map(record=>[record.houseId,record]));
-  const identityLabels={store:'店面',group:'店组',manager:'经理',name:'姓名'};
-  const tiers=[
-   {level:'store',title:'店面TOP3',limit:3,fields:['store']},
-   {level:'group',title:'店组TOP5',limit:5,fields:['store','group','manager']},
-   {level:'advisor',title:'个人TOP5',limit:5,fields:['store','group','manager','name']}
-  ];
-  const compare=(a,b)=>b.met-a.met||b.met_count-a.met_count||a.store.localeCompare(b.store,'zh-CN')
-   ||a.group.localeCompare(b.group,'zh-CN')||M.text(a.name).localeCompare(M.text(b.name),'zh-CN');
-  function feedback(row){
-   const summary=currentQuality?.records
-    ?Q.summary(row.metIds.map(id=>feedbackByHouse.get(id)).filter(Boolean))
-    :currentQuality?.groups?.find(item=>item.scope===row._level&&item.region===row.region
-      &&canonicalStore(item.store)===row.store&&(row._level==='store'||item.group===row.group));
-   if(!summary||summary.total!==row.met)return '反馈数据待同步';
-   const themes=Object.entries(F.labels)
-    .filter(([key])=>key!=='N'&&Number(summary.topics?.[key])>0)
-    .sort(([a],[b])=>summary.topics[b]-summary.topics[a])
-    .slice(0,3).map(([key,label])=>`${label}${summary.topics[key]}套`);
-   return [`有反馈${summary.feedback}套（${M.pct(summary.feedback,row.met)}）`,...themes].join(' · ');
-  }
-  const tables=tiers.map(({level,title,limit,fields})=>{
-   if(level==='advisor'&&!C.member)return `<div class="review-table-card"><h3>${title}</h3><div class="ops-notice">已授权成员可登录查看个人名单和反馈。 <button class="btn" type="button" data-ops="login">BP／管理入口</button></div></div>`;
-   const ranked=progress.rows.filter(row=>row._level===level&&row.met>0
-    &&(level!=='advisor'||!['','—','-','/','未填写'].includes(M.text(row.name))))
-    .sort(compare).slice(0,limit);
-   if(!ranked.length)return `<div class="review-table-card"><h3>${title}</h3><p class="ops-notice">当前范围暂无符合条件的候选。</p></div>`;
-   const rows=ranked.map((row,index)=>[index+1,...fields.map(field=>row[field]),row.met+'套',row.met_count+'次',feedback(row)]);
-   return reviewDetailTable(title,['排名',...fields.map(field=>identityLabels[field]),'月度面见量','面见次数','面见反馈'],rows);
-  }).join('');
-  return `<div class="review-report interview-shortlist"><div class="review-subhead"><h3>本周标杆采访名单</h3><p>${E(view.name)} · ${Number(currentMonth.slice(5))}月累计 · ${asOf?'数据截至 '+E(asOf):'底表待同步'}</p><p>按月度面见套数排序，同套数再按面见次数排序。个人按房源维护人统计，反馈主题按房源去重。</p></div>${tables}</div>`;
- }
  function daily(view){
   const d=data(),s={region:view.region||'',store:view.scope==='store'?view.name:''};let progress,asOf,metric,goal,delta={known:false};
   if(d&&(d.housing?.length||currentMonth==='2026-11')){progress=M.table(d.housing||[],s,goals(),currentMonth,d.meetings||[],customerOptions(d));const rootRow=progress.rows.find(r=>r._level===view.scope);metric={...M.metrics(M.inScope(d.housing||[],s),d.meetings||[]),...rootRow};asOf=d.imports?.[0]?.as_of||'';goal=metric._target;
@@ -771,9 +733,10 @@ async function metHouseImage(preview=false){
   block('daily-progress','面见及礼物进展',renderTable(progress))+
   block('daily-unmet-top','本月未面见TOP房明细',unmetTopTable(view),'仅纳入本月仍在售、属于门店TOP或户型TOP且尚未面见的房源。')+
   block('daily-met-houses','当月面见房源与正反馈',ownerApplicable?metHouseTable(view):'<div class="ops-notice">本店无在售房源，业主面见指标不适用。</div>','房源明细与面见反馈合并展示，复制为一张完整图片。')+
-  block('daily-message','今日重点与推动话术',`<div class="block ops-panel"><div class="ops-columns"><div><h3>优先推动</h3><ul>${risks.filter(t=>!String(t).includes('结合实际')).slice(0,3).map(t=>`<li>${E(t)}</li>`).join('')||(ownerApplicable?'<li>请优先推进目标未完成门店及TOP重点房源。</li>':'<li>本店当前无在售业主面见任务。</li>')}</ul></div><div><h3>进展与鼓励</h3>${praises.map(t=>`<p>${E(t)}</p>`).join('')||'<p>让每次面见带回具体信息，帮助下一步服务。</p>'}</div></div><p class="ops-muted">提示依据目标、登记与已保存动作形成；原因与优先级由BP和销售管理者核实。</p><label class="ops-field">补充单店现场信息<textarea id="ops-scene" placeholder="可输入经理已做动作、业主原话、邀约卡点及需要的支持">${E(sceneRaw(view))}</textarea></label><div class="ops-actions"><button class="btn" data-ops="voice">语音转文字</button><button class="btn primary" data-ops="voice-stop" hidden>结束语音</button><button class="btn" data-ops="generate-message">整理并预览</button><button class="btn primary" data-ops="save-scene" ${!C.member||!s.store?'disabled':''}>确认并同步</button><button class="btn" data-ops="copy-message">复制话术</button></div>${WBVoice.field()}${analysisPanel(view)}<div id="ops-plan-preview">${planPanel(view)}</div>${currentMonth==='2026-11'?'<p class="ops-muted">公示口径：套数与面见率等权综合排名，门店／店组各自比较，仅展示首末并保留并列。</p>':''}<textarea id="ops-message" class="ops-message" aria-label="当前范围推动话术">${E(message)}</textarea></div>`)+
-  block('daily-benchmark','全司面见标杆榜',companyBenchmarkPanel(),'按全司月度累计计算，门店TOP3、店组TOP5、个人TOP5；筛选大区或单店时榜单保持全司范围。')+
-  block('daily-actions','动作追踪与结果','<details><summary>查看当前范围的标杆采访候选</summary>'+interviewShortlist(view)+'</details>'+actions(view),C.member?'记录保存到共享服务，下一次导入底表时继续保留。':'登录后可在负责范围内记录动作。');
+  block('daily-message','公示话术',`<div class="block ops-panel"><textarea id="ops-message" class="ops-message" aria-label="当前范围推动话术">${E(message)}</textarea><div class="ops-actions"><button class="btn primary" data-ops="copy-message">复制话术</button></div>${currentMonth==='2026-11'?'<details class="ops-secondary"><summary>查看公示口径</summary><p class="ops-muted">公示口径：套数与面见率等权综合排名，门店／店组各自比较，仅展示首末并保留并列。</p></details>':''}</div>`)+
+  block('daily-package','公示资料包',publicationPanel(view))+
+  block('daily-benchmark','全司面见标杆榜',companyBenchmarkPanel(),'按全司月度累计计算，门店TOP3、店组TOP5、个人TOP5；筛选大区或单店时榜单保持全司范围。')+parkedRecords(view);
+
  }
  function novemberRankedSelection(rows,level){
   const name=row=>level==='group'?row.group:row.store;
@@ -934,7 +897,18 @@ TOP重点房源
   try{const exportView=C.project?{scope:'company',name:'全司'}:currentView,result=await buildSendPackage(exportView,{pilot,allScopes}),url=URL.createObjectURL(result.blob),link=document.createElement('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);notify('已生成'+(result.manifest.scopeCount?result.manifest.scopeCount+'个范围':result.manifest.stores.length+'家门店')+'公示资料，尚未发送到微信');}
   finally{if(button.isConnected){button.disabled=false;button.textContent=label;}}
  }
- function actions(view){const s=scope();return `<div class="block ops-panel">${C.member?sendConfigPanel()+'<div class="ops-actions"><button class="btn primary" data-ops="'+(C.project?'all-publication-package':'send-package')+'">'+(C.project?'下载全部公示资料包（全司＋5大区＋18门店）':'生成当前范围微信资料包')+'</button>'+(['company','region'].includes(view.scope)&&(C.project||C.member.role==='region'&&view.region===C.member.region)?'<button class="btn" data-ops="publication-package">下载'+E(view.name)+'公示图文</button>':'')+'</div><p class="ops-muted">项目负责人统一生成的门店资料含四个图片模块，大区资料附同一张全司标杆榜。当前范围授权版本的全司榜由项目负责人统一提供。长明细自动分页。仅下载，不会发送到微信。</p>'+taskCards(view):'<p>日常进展与质量概览可直接查看；已授权成员进入后，可保存现场反馈和跟进结果。</p>'}${s.store&&C.member?`<details><summary>补充未包含在现场反馈中的事项</summary><form id="ops-task-form" class="ops-form"><label>推进事项<input name="title" required></label><label>项目／房间号<input name="house"></label><label>负责人<input name="owner" required></label><label>计划时间<input name="due" type="date" required></label><label class="wide">动作与卡点<textarea name="action" required></textarea></label><button class="btn primary" type="submit">保存补充事项</button></form></details>`:''}</div>`;}
+ function publicationPanel(view){
+  if(!C.member)return `<div class="block ops-panel"><p>项目负责人登录后，可统一下载全司、5个大区和18家门店的公示资料。</p><button class="btn" data-ops="login">BP／管理入口</button></div>`;
+  const buttons='<button class="btn primary" data-ops="'+(C.project?'all-publication-package':'send-package')+'">'+(C.project?'下载全部公示资料包（全司＋5大区＋18门店）':'生成当前范围微信资料包')+'</button>'+(['company','region'].includes(view.scope)&&(C.project||C.member.role==='region'&&view.region===C.member.region)?'<button class="btn" data-ops="publication-package">下载'+E(view.name)+'公示图文</button>':'');
+  return '<div class="block ops-panel"><div class="ops-actions">'+buttons+'</div><p class="ops-muted">包含对应公示话术与图片；仅下载，不会发送微信。'+(C.project?'大区、门店资料附同一张全司标杆榜。':'全司标杆榜由项目负责人统一提供。')+'长明细自动分页。</p>'+sendConfigPanel()+'</div>';
+ }
+ function parkedRecords(view){
+  const d=data();if(!C.member||d?.reader!==C.member)return '';
+  const store=view.scope==='store'?(view.store||view.name):null,record=payload('scene','daily',store),tasks=taskList(view);
+  if(!record.text&&!tasks.length)return '';
+  return `<details class="block ops-panel ops-parked-records"><summary>查看已有推动记录</summary>${record.text?`<h3>现场原文</h3><p class="ops-pre">${E(record.text)}</p>`:''}${record.analysisText?`<h3>已整理内容</h3><p class="ops-pre">${E(record.analysisText)}</p>`:''}${tasks.map(t=>`<article class="ops-task"><h3>${E(t.title||t.action)}</h3><p>${E(t.store)} · ${E(t.owner||'负责人待明确')} · ${E(t.due||'时间待明确')}</p><p class="ops-pre">${E(t.action)}</p><p>执行结果：${E(t.result||'待反馈')}</p></article>`).join('')}</details>`;
+ }
+
  function loginPanel(){const disabled=C.configured?'':'disabled';return `<div class="block ops-panel"><h3>成员登录</h3><p class="ops-muted">日常进展无需登录。BP补充、核账及管理使用已授权工号后4位进入，无需密码；开头的0需要保留。</p><form id="ops-login-form" class="ops-login"><label>工号后4位<input name="loginId" type="text" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="username" placeholder="请输入4位工号" ${disabled} required></label><button class="btn primary" type="submit" ${disabled}>登录工作台</button></form>${C.configured?'':'<p class="ops-muted">共享服务尚未连接，账号开通后即可使用工号登录。</p>'}</div>`;}
  const archiveType=file=>/\.pdf$/i.test(file.original_name||'')?'PDF':'Word';
  const archiveSize=bytes=>{const n=Number(bytes||0);return n>=1024*1024?(n/1024/1024).toFixed(n>=10*1024*1024?0:1)+' MB':Math.max(1,Math.round(n/1024))+' KB';};
@@ -1075,7 +1049,7 @@ TOP重点房源
   const reviewButton=document.querySelector('[data-view-mode="review"]');if(reviewButton)reviewButton.textContent=archiveMonth?'历史复盘':'周/月复盘';
   document.getElementById('report').hidden=false;document.getElementById('status').hidden=true;document.getElementById('scope-panel').hidden=archiveMonth||currentMode==='admin';document.getElementById('toolbar').hidden=false;document.getElementById('word-download').hidden=true;
   document.getElementById('copy-progress-image').hidden=archiveMonth||!['daily','review'].includes(currentMode);document.getElementById('copy-progress-image').disabled=archiveMonth;document.getElementById('copy-report').hidden=archiveMonth;document.getElementById('copy-report').disabled=archiveMonth||!['daily','review'].includes(currentMode);document.getElementById('print-report').disabled=false;
-  let nav=archiveMonth?(currentMode==='admin'?[['admin-archive','上传复盘文件'],['admin-archive-list','已归档文件']]:[['history-files','复盘文件']]):currentMode==='daily'?[['daily-progress','面见及礼物进展'],['daily-unmet-top','本月未面见TOP房'],['daily-met-houses','当月面见与正反馈'],['daily-message','今日重点与话术'],['daily-benchmark','全司面见标杆榜'],['daily-actions','动作追踪与结果']]:currentMode==='review'?[['review-progress','本月目标达成结果'],['review-gifts','面见伴手礼'],['review-quality','面见质量与业务转化'],['review-highlights','标杆门店与重点提醒'],['review-actions',currentMonth==='2026-11'?'上周策略复盘与本周承接':Number(currentMonth.slice(5))+'月关键动作复盘'],['review-next',currentMonth==='2026-11'?'11月第二周目标及核心策略':'11月份目标及核心策略']]:currentMode==='expense'?[['expense-todo','BP核账待办'],['expense-head','账本与当月规则'],['expense-records','送礼明细与凭证'],['expense-settlement','分摊与收付款'],['expense-cash','实际收付款登记']]:[['admin-import','导入基础数据'],['admin-goals','本月门店目标'],['admin-history','更新与备份']];
+  let nav=archiveMonth?(currentMode==='admin'?[['admin-archive','上传复盘文件'],['admin-archive-list','已归档文件']]:[['history-files','复盘文件']]):currentMode==='daily'?[['daily-progress','面见及礼物进展'],['daily-unmet-top','本月未面见TOP房'],['daily-met-houses','当月面见与正反馈'],['daily-message','公示话术'],['daily-package','公示资料包'],['daily-benchmark','全司面见标杆榜']]:currentMode==='review'?[['review-progress','本月目标达成结果'],['review-gifts','面见伴手礼'],['review-quality','面见质量与业务转化'],['review-highlights','标杆门店与重点提醒'],['review-actions',currentMonth==='2026-11'?'上周策略复盘与本周承接':Number(currentMonth.slice(5))+'月关键动作复盘'],['review-next',currentMonth==='2026-11'?'11月第二周目标及核心策略':'11月份目标及核心策略']]:currentMode==='expense'?[['expense-todo','BP核账待办'],['expense-head','账本与当月规则'],['expense-records','送礼明细与凭证'],['expense-settlement','分摊与收付款'],['expense-cash','实际收付款登记']]:[['admin-import','导入基础数据'],['admin-goals','本月门店目标'],['admin-history','更新与备份']];
   if(!archiveMonth&&currentMode==='review'&&currentMonth>='2026-11'&&root.WBStoreReviews)nav=nav.filter(([id])=>!['review-actions','review-next'].includes(id)).concat([['review-regional','大区周／月复盘']],root.WBCompanyWeekPlan?[['review-company-week-plan','全司下周目标及核心策略']]:[]);
   document.getElementById('nav').innerHTML=nav.map(([id,label],i)=>`<a href="#${id}"><span class="nav-no">0${i+1}</span><span>${E(label)}</span></a>`).join('');
   document.querySelector('.nav-label').textContent='CONTENTS / '+(archiveMonth?(currentMode==='admin'?'文件管理':'历史复盘'):({daily:'日常推动',review:'结果复盘',expense:'费用核销',admin:'数据管理'}[currentMode]||'项目工作台'));
