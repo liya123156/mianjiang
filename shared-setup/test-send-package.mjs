@@ -15,16 +15,17 @@ const document = {
   createElement(type) {
     assert.equal(type,'canvas');
     const drawn=[],native=realCanvas?.createCanvas(1,1),ctx=native?.getContext('2d');
-    const context=ctx?new Proxy(ctx,{get(target,key){if(key==='fillText')return (value,...args)=>{drawn.push(String(value));target.fillText(String(value),...args);};const value=target[key];return typeof value==='function'?value.bind(target):value;},set(target,key,value){target[key]=value;return true;}}):{scale(){},fillRect(){},strokeRect(){},createLinearGradient(){return {addColorStop(){}};},beginPath(){},roundRect(){},moveTo(){},lineTo(){},closePath(){},arc(){},fill(){},stroke(){},measureText(t){return {width:[...String(t)].length*18};},fillText(t){drawn.push(String(t));}};
-    const canvas={width:1,height:1,getContext(){if(native){native.width=canvas.width;native.height=canvas.height;}return context;},toBlob(callback){onImage?.();if(native)native.encode('png').then(buffer=>{callback(new Blob([buffer],{type:'image/png'}));native.width=1;native.height=1;});else queueMicrotask(()=>callback(new Blob([JSON.stringify(drawn)],{type:'image/png'})));}};
+    const context=ctx?new Proxy(ctx,{get(target,key){if(key==='fillText')return (value,...args)=>{drawn.push(String(value));target.fillText(String(value),...args);};const value=target[key];return typeof value==='function'?value.bind(target):value;},set(target,key,value){target[key]=value;return true;}}):{scale(){},fillRect(){},strokeRect(){},createLinearGradient(){return {addColorStop(){}};},beginPath(){},roundRect(){},moveTo(){},lineTo(){},closePath(){},arc(){},fill(){},stroke(){},measureText(t){return {width:[...String(t)].length*18};},drawImage(image){drawn.push(...(image.drawn||[]));},save(){},restore(){},fillText(t){drawn.push(String(t));}};
+    const canvas={width:1,height:1,getContext(){if(native){native.width=canvas.width;native.height=canvas.height;}return context;},toBlob(callback){onImage?.();if(native)native.encode('png').then(buffer=>{callback(new Blob([buffer],{type:'image/png'}));native.width=1;native.height=1;});else queueMicrotask(()=>callback(Object.assign(new Blob([JSON.stringify(drawn)],{type:'image/png'}),{_width:canvas.width,_height:canvas.height})));}};
     canvases.push({canvas,drawn});return canvas;
   }
 };
 const x={document,currentMonth:month,currentMode:'daily',currentView:company,DATA:{meta:{},regions:[],views:{}},ARCHIVE:{months:{}},Intl,URL,Date,console,TextEncoder,Blob,Uint8Array,Uint32Array,DataView,queueMicrotask,setTimeout,crypto:globalThis.crypto,WBVoice:{reset(){},field:()=>''},isHistoryArchiveMonth:()=>false,renderTable:()=>'',viewKey:v=>v.scope+':'+v.name,viewFromUrl:()=>company,updateUrl(){},resolveView:(region,store)=>store?{scope:'store',name:store,region,store}:region?{scope:'region',name:region,region}:company,WBCloud:{configured:false,member:null,project:false}};
 const storage=new Map();x.localStorage={getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)};
 Object.defineProperty(x.WBCloud,'project',{get:()=>x.WBCloud.member?.role==='project'});
+x.createImageBitmap=async blob=>realCanvas?realCanvas.loadImage(Buffer.from(await blob.arrayBuffer())):{width:blob._width||3000,height:blob._height||1000,drawn:JSON.parse(await blob.text()),close(){}};
 x.window=x;vm.createContext(x);
-for(const file of ['manager-directory','core','quality-feed','quality-rules','quality','workflow','scene','send-package','benchmark-board','ui'])vm.runInContext(fs.readFileSync(new URL('../operations/'+file+'.js',import.meta.url),'utf8'),x,{filename:file+'.js'});
+for(const file of ['manager-directory','core','quality-feed','quality-rules','quality','workflow','scene','send-package','store-publication-image','benchmark-board','ui'])vm.runInContext(fs.readFileSync(new URL('../operations/'+file+'.js',import.meta.url),'utf8'),x,{filename:file+'.js'});
 vm.runInContext('const esc=v=>String(v??""); const arr=x=>Array.isArray(x)?x:[]; const monthLabel=()=>"11月";',x);
 const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 vm.runInContext(html.slice(html.indexOf('const progressRankLegend ='),html.indexOf('\nfunction showProgressImage')),x);
@@ -62,12 +63,12 @@ install(null);await assert.rejects(api.buildSendPackage(company),/登录/);
 const project={role:'project'};install(project);
 const all=await api.buildSendPackage(company),entries=unzip(await all.blob.arrayBuffer()),manifest=JSON.parse(read(entries,'manifest.json'));
 assert.equal(manifest.stores.length,18);assert.equal(manifest.asOf,'2026-11-09');assert.equal(manifest.status,'prepared');
-assert.equal(manifest.stores[0].modules.details.length,2,'25 unmet TOP homes must retain the second page');
+assert.equal(manifest.schemaVersion,2);assert.equal(manifest.stores[0].modules.details.length,0,'unmet TOP is no longer a separate image');assert.equal(manifest.stores[0].unmetTopPages,2,'both TOP pages must be merged into the overview');assert.equal(manifest.stores[0].progressIncludesUnmetTop,true);assert.equal(manifest.stores[0].metrics.unmetTopCount,25);
 assert.ok(manifest.stores[0].modules.quality.length>1,'complete long feedback must paginate');
-assert.deepEqual(manifest.stores[0].moduleLabels,{progress:'面见及礼物进展',details:'未面见TOP房明细',quality:'业主面见真实反馈',benchmark:'全司面见标杆榜'});
+assert.deepEqual(manifest.stores[0].moduleLabels,{progress:'面见及礼物进展＋未面见TOP房明细',details:'已合并至进展图',quality:'业主面见真实反馈',benchmark:'全司面见标杆榜'});
 assert.equal(manifest.stores[0].metrics.met,25);assert.equal(manifest.stores[0].metrics.meetingCount,26);
 assert.match(read(entries,manifest.stores[0].message),/全盘面见：25套（50\.00%）/,'current announcement template uses owner coverage; the manifest retains meeting counts');
-assert.equal(manifest.stores[1].metrics.met,0);assert.equal(manifest.stores[1].images.length,4,'zero meetings still yields the original three modules plus the global benchmark');
+assert.equal(manifest.stores[1].metrics.met,0);assert.equal(manifest.stores[1].images.length,3,'zero meetings yields merged overview, feedback state and global benchmark');
 assert.equal(read(entries,'门店群配置.csv').split('\r\n').length,19);
 assert.ok(manifest.stores.every(s=>s.groupName===''),'never infer or prefill a WeChat recipient');
 assert.ok(manifest.stores.every(s=>s.images.every(name=>entries.has(name))));
@@ -79,7 +80,7 @@ if(!realCanvas){
   for(const other of catalog.filter(s=>s.store!==store.store))assert.ok(!imageText.includes(other.store),'cross-store image: '+other.store);
   assert.ok(imageText.includes(store.store));
  }
- const first=manifest.stores[0].modules.details.map(name=>read(entries,name)).join('');
+ const first=read(entries,manifest.stores[0].modules.progress[0]);
  for(let i=25;i<50;i++)assert.ok(first.includes('0-'+i),'all unmet TOP pages retained');
  assert.ok(first.includes('未面见TOP房明细'));assert.ok(!first.includes('楼盘哨兵1'));
  const feedback=manifest.stores[0].modules.quality.map(name=>read(entries,name)).join('');
@@ -172,8 +173,8 @@ assert.equal(read(completeFiles,'全部群名配置.csv').split('\r\n').length,2
 for(const row of completeManifest.stores){assert.ok(read(completeFiles,row.message).startsWith('各位战友，大家好☀️\n'));}
 for(const publication of completeManifest.publications){assert.ok(read(completeFiles,publication.message).startsWith((publication.scope==='company'?'各位梦想合伙人':'各位战友')+'，大家好☀️\n'));assert.equal(publication.images.length,publication.scope==='company'?1:2);assert.ok(completeFiles.has(publication.message));assert.ok(completeFiles.has(publication.images[0]));assert.equal(publication.asOf,completeManifest.asOf);assert.equal(publication.sourceVersion,completeManifest.sourceVersion);}
 assert.equal(completeManifest.publications.filter(row=>row.scope==='company').length,1);assert.equal(completeManifest.publications.filter(row=>row.scope==='region').length,5);
-for(const row of completeManifest.stores){assert.ok(row.message.startsWith('03_门店/'));assert.equal(row.modules.progress.length,1);assert.ok(row.modules.details.length>=1);assert.ok(row.modules.quality.length>=1);assert.ok(row.images.every(name=>completeFiles.has(name)));}
-assert.ok(completeManifest.stores[0].modules.details.length>1);assert.ok(completeManifest.stores[0].modules.quality.length>1);
+for(const row of completeManifest.stores){assert.ok(row.message.startsWith('03_门店/'));assert.equal(row.modules.progress.length,1);assert.equal(row.modules.details.length,0);assert.equal(row.progressIncludesUnmetTop,true);assert.equal(new Set(row.images).size,row.images.length);assert.ok(row.modules.quality.length>=1);assert.ok(row.images.every(name=>completeFiles.has(name)));}
+assert.ok(completeManifest.stores[0].unmetTopPages>1);assert.ok(completeManifest.stores[0].modules.quality.length>1);
 assert.equal(completeManifest.publications[0].groupName,'全司☀️店总群');assert.equal(completeManifest.publications[1].groupName,'花木💜店总群');
 if(!realCanvas){const image=read(completeFiles,completeManifest.publications[0].images[0]);assert.ok(!image.includes('伙伴0'));assert.ok(!image.includes(catalog[0].store+'A组'));}
 if(process.env.FULL_ZIP_PATH){assert.ok(realCanvas);fs.writeFileSync(process.env.FULL_ZIP_PATH,Buffer.from(await complete.blob.arrayBuffer()));}
@@ -210,7 +211,7 @@ console.log('PASS company/region public packages: one image, exact levels, conci
 console.log('PASS gift reminders: below 20% only, no warning at 20% or zero meetings, registration wording avoids assuming unprepared gifts.');
 console.log('PASS shared project configuration: one operator, 18-store directory, 2 ready/16 pending, automatic loading, private scope and changed-recipient abort.');
 console.log('PASS two-store pilot: only configured stores, exact emoji names and CSV, both stores required, scope checks, local persistence and changed-group abort.');
-console.log('PASS '+(realCanvas?'real PNG + ':'')+'18-store ZIP: CRC, Chinese filenames, all three modules, pagination, counts, isolated recipients, role scopes, and interrupted export.');
+console.log('PASS '+(realCanvas?'real PNG + ':'')+'18-store ZIP: CRC, Chinese filenames, combined overview, complete feedback pagination, counts, isolated recipients, role scopes, and interrupted export.');
 
 
 // The same exact company board accompanies all 18 store and five regional project packages.
@@ -218,7 +219,7 @@ const sharedBoard=completeFiles.get(completeManifest.stores[0].modules.benchmark
 for(const store of completeManifest.stores){assert.equal(store.modules.benchmark.length,1);assert.deepEqual(completeFiles.get(store.modules.benchmark[0]),sharedBoard);}
 for(const publication of completeManifest.publications.filter(p=>p.scope==='region')){assert.deepEqual(completeFiles.get(publication.images[1]),sharedBoard);}
 if(!realCanvas){const board=new TextDecoder().decode(sharedBoard);assert.match(board,/面见后正反馈/);assert.match(board,/多面见 多沟通 多服务/);assert.match(board,/面见打造看得见信任 提供温度和专业服务/);assert.ok(!board.includes('%'));const regionalProgress=read(completeFiles,completeManifest.publications.find(p=>p.scope==='region').images[0]);assert.ok(regionalProgress.includes('经理'));assert.ok(regionalProgress.includes('卢海威'));}
-// Previously authorized scoped exports keep their original three modules; they cannot fabricate a global board.
+// Previously authorized scoped exports keep their merged overview and feedback modules; they cannot fabricate a global board.
 const scoped=install({role:'region',region:catalog[0].region});scoped.housing=housing.filter(h=>h['大区']===catalog[0].region);scoped.meetings=meetings.filter(m=>scoped.housing.some(h=>h['房源编号']===m['房源编号']));
 const scopedPackage=await api.buildSendPackage(regionView);assert.ok(scopedPackage.manifest.stores.every(s=>!s.modules.benchmark&&s.benchmarkStatus==='由项目负责人统一提供'));
 assert.throws(()=>api.companyBenchmarkData(),/项目负责人/);

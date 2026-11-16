@@ -798,20 +798,23 @@ TOP重点房源
   state.exporting=true;
   try{
    const benchmark=C.project?companyBenchmarkData():null,benchmarkImage=benchmark?await root.WBCompanyBenchmark.image(benchmark):null;assertCurrent();
-   const preparedAt=new Date().toISOString(),asOf=source.as_of,allQuality=Q.records(d.housing,d.meetings,d.items,month,asOf),byId=new Map(allQuality.map(r=>[r.houseId,r])),files=[],manifest={schemaVersion:1,month,asOf,sourceVersion:source.created_at,preparedAt,status:'prepared',pilot,stores:[]},monthlyGoals=goals();
+   const preparedAt=new Date().toISOString(),asOf=source.as_of,allQuality=Q.records(d.housing,d.meetings,d.items,month,asOf),byId=new Map(allQuality.map(r=>[r.houseId,r])),files=[],manifest={schemaVersion:2,month,asOf,sourceVersion:source.created_at,preparedAt,status:'prepared',pilot,stores:[]},monthlyGoals=goals();
    for(const [index,store] of stores.entries()){
     assertCurrent();
-    const storeView={scope:'store',name:store.store,region:store.region,store:store.store},progress=rankProgress(M.table(d.housing,storeView,monthlyGoals,month,d.meetings||[],customerOptions(d)),d),metric=progress.rows.find(r=>r._level==='store'),metRows=metHouseRows(storeView);
+    const storeView={scope:'store',name:store.store,region:store.region,store:store.store},progress=rankProgress(M.table(d.housing,storeView,monthlyGoals,month,d.meetings||[],customerOptions(d)),d),metric=progress.rows.find(r=>r._level==='store'),metRows=metHouseRows(storeView),unmetRows=unmetTopRows(storeView);
     if(!metric)throw Error(store.store+'进展数据不完整，请刷新后重试');
     const feedbackRows=F.select(metric.metIds.map(id=>byId.get(id)).filter(Boolean)),quality=Q.summary(feedbackRows);
     if(metRows.length!==metric.met||quality.total!==metric.met)throw Error(store.store+'面见量与明细不一致，请核对后再生成');
     const cutoff='业主数据截至'+asOf,message=makeMessage(storeView,progress,metric,metric._target,cutoff,priorityFacts(storeView,progress.rows.filter(r=>r._level==='group')),novemberPraises(storeView,progress));
     storeView.kpis=publicationKpis(metric);
-    const [progressImage,detailImages,qualityImages]=await Promise.all([createProgressImage(storeView,progress,month,{cutoff}),unmetTopImageBlobs(unmetTopRows(storeView),storeView),feedbackRows.length?F.images({rows:feedbackRows,summary:quality,month,scope:store.store,range:'本店共'+feedbackRows.length+'套',topicCounts:F.counts(feedbackRows)}):P.emptyFeedbackImage({store:store.store,month,asOf}).then(blob=>[blob])]);
+    const [progressImage,detailImages,qualityImages]=await Promise.all([createProgressImage(storeView,progress,month,{cutoff}),unmetTopImageBlobs(unmetRows,storeView),feedbackRows.length?F.images({rows:feedbackRows,summary:quality,month,scope:store.store,range:'本店共'+feedbackRows.length+'套',topicCounts:F.counts(feedbackRows)}):P.emptyFeedbackImage({store:store.store,month,asOf}).then(blob=>[blob])]);
     assertCurrent();
-    const folder=(allScopes?'03_门店/':'')+String(index+1).padStart(2,'0')+'_'+store.store,messageFile=folder+'/话术.txt',progressFile=folder+'/01_面见及礼物进展.png',benchmarkFile=folder+'/04_全司面见标杆榜.png',qualityFiles=qualityImages.map((_,page)=>folder+'/03_业主面见真实反馈_'+String(page+1).padStart(2,'0')+'.png'),detailFiles=detailImages.map((_,page)=>folder+'/02_未面见TOP房明细_'+String(page+1).padStart(2,'0')+'.png');
-    files.push({name:messageFile,data:message},{name:progressFile,data:progressImage},...(benchmarkImage?[{name:benchmarkFile,data:benchmarkImage}]:[]),...detailImages.map((blob,page)=>({name:detailFiles[page],data:blob})),...qualityImages.map((blob,page)=>({name:qualityFiles[page],data:blob})));
-    manifest.stores.push({...store,groupName:configured.get(store.store)||'',deliveryKey:[month,asOf,source.created_at,store.store].join('|'),message:messageFile,images:[progressFile,...detailFiles,...qualityFiles,...(benchmarkImage?[benchmarkFile]:[])],modules:{progress:[progressFile],details:detailFiles,quality:qualityFiles,...(benchmarkImage?{benchmark:[benchmarkFile]}:{})},moduleLabels:{...P.moduleLabels,...(benchmarkImage?{benchmark:'全司面见标杆榜'}:{})},benchmarkStatus:benchmarkImage?'included':'由项目负责人统一提供',metrics:{met:metric.met,meetingCount:meetingValue(metric),gift:metric.gift,feedback:quality.feedback}});
+    if(!root.WBStorePublicationImage?.combine)throw Error('单店合并图片组件未加载，请刷新工作台后重试');
+    const combinedImage=await root.WBStorePublicationImage.combine({progress:progressImage,unmet:detailImages});assertCurrent();
+    const folder=(allScopes?'03_门店/':'')+String(index+1).padStart(2,'0')+'_'+store.store,messageFile=folder+'/话术.txt',progressFile=folder+'/01_面见进展及未面见TOP房明细.png',benchmarkFile=folder+'/03_全司面见标杆榜.png',qualityFiles=qualityImages.map((_,page)=>folder+'/02_业主面见真实反馈_'+String(page+1).padStart(2,'0')+'.png');
+    files.push({name:messageFile,data:message},{name:progressFile,data:combinedImage},...qualityImages.map((blob,page)=>({name:qualityFiles[page],data:blob})),...(benchmarkImage?[{name:benchmarkFile,data:benchmarkImage}]:[]));
+    manifest.stores.push({...store,groupName:configured.get(store.store)||'',deliveryKey:[month,asOf,source.created_at,store.store].join('|'),message:messageFile,images:[progressFile,...qualityFiles,...(benchmarkImage?[benchmarkFile]:[])],modules:{progress:[progressFile],details:[],quality:qualityFiles,...(benchmarkImage?{benchmark:[benchmarkFile]}:{})},moduleLabels:{...P.moduleLabels,progress:'面见及礼物进展＋未面见TOP房明细',details:'已合并至进展图',...(benchmarkImage?{benchmark:'全司面见标杆榜'}:{})},progressIncludesUnmetTop:true,unmetTopPages:detailImages.length,benchmarkStatus:benchmarkImage?'included':'由项目负责人统一提供',metrics:{met:metric.met,meetingCount:meetingValue(metric),gift:metric.gift,feedback:quality.feedback,unmetTopCount:unmetRows.length}});
+
    }
    if(allScopes){
     const allConfig=config?.version===2?config:P.projectConfigDefaults(config),regions=[...new Set(M.storeCatalog.filter(row=>row.ownerApplicable!==false).map(row=>row.region))];
@@ -834,7 +837,7 @@ TOP重点房源
     files.push({name:'全部群名配置.csv',data:P.allGroupTemplate(allConfig)});
    }else manifest.recipientsComplete=manifest.stores.every(s=>s.groupName);
    manifest.operatorRole=reader.role;
-   files.push({name:'manifest.json',data:JSON.stringify(manifest,null,2)},{name:'门店群配置.csv',data:P.groupTemplate(manifest.stores)},{name:'使用说明.txt',data:'本包已生成，尚未发送到微信。\n'+(allScopes?'包含全司1份、5个大区及18家门店，共24个范围。全司包含一段话术和一张进展图；每个大区另附全司面见标杆榜。\n':'')+'每店包含一段话术及面见礼物进展、未面见TOP房明细、业主面见真实反馈三个基础图片模块。项目负责人生成的版本另附同一张全司面见标杆榜；当前范围授权版本的全司榜由项目负责人统一提供。明细及原文较长时自动分页，保留全部房源与原文。\n真实反馈按同一房源的面见时间连续呈现，分类为规则建议，仍需结合原文核对。manifest中的details、quality为旧发送程序兼容键，实际内容以moduleLabels为准。\n'+(pilot?'本包仅含试行名单中的门店，完整群名已写入门店群配置.csv。\n':'已知群名已写入配置CSV；空白群名标为待配置，可下载但不能发送到未知群。\n')+'下载资料包不会发送消息。\n数据截至：'+asOf+'\n源数据版本：'+source.created_at+'\n生成时间：'+preparedAt});
+   files.push({name:'manifest.json',data:JSON.stringify(manifest,null,2)},{name:'门店群配置.csv',data:P.groupTemplate(manifest.stores)},{name:'使用说明.txt',data:'本包已生成，尚未发送到微信。\n'+(allScopes?'包含全司1份、5个大区及18家门店，共24个范围。全司包含一段话术和一张进展图；每个大区另附全司面见标杆榜。\n':'')+'每店的面见礼物进展与全部未面见TOP房明细合为一张完整图片；真实反馈另列，项目负责人生成的版本再附同一张全司标杆海报。通常每店三张图；真实反馈原文较长时分页，保留全部内容。当前范围授权版本的全司榜由项目负责人统一提供。\n真实反馈按同一房源的面见时间连续呈现，分类为规则建议，仍需结合原文核对。请按清单中的images顺序取图；未面见TOP明细已在第一张合并图中，无需重复发送。\n'+(pilot?'本包仅含试行名单中的门店，完整群名已写入门店群配置.csv。\n':'已知群名已写入配置CSV；空白群名标为待配置，可下载但不能发送到未知群。\n')+'下载资料包不会发送消息。\n数据截至：'+asOf+'\n源数据版本：'+source.created_at+'\n生成时间：'+preparedAt});
    const blob=await P.zip(files);assertCurrent();
    return {blob,manifest,filename:month+'_'+asOf+'_'+(allScopes?'全司_5大区_18门店_24范围公示资料包':stores.length+'店'+(pilot?'试行':'微信')+'资料包')+'.zip'};
   }finally{state.exporting=false;}
@@ -900,7 +903,7 @@ TOP重点房源
  function publicationPanel(view){
   if(!C.member)return `<div class="block ops-panel"><p>项目负责人登录后，可统一下载全司、5个大区和18家门店的公示资料。</p><button class="btn" data-ops="login">BP／管理入口</button></div>`;
   const buttons='<button class="btn primary" data-ops="'+(C.project?'all-publication-package':'send-package')+'">'+(C.project?'下载全部公示资料包（全司＋5大区＋18门店）':'生成当前范围微信资料包')+'</button>'+(['company','region'].includes(view.scope)&&(C.project||C.member.role==='region'&&view.region===C.member.region)?'<button class="btn" data-ops="publication-package">下载'+E(view.name)+'公示图文</button>':'');
-  return '<div class="block ops-panel"><div class="ops-actions">'+buttons+'</div><p class="ops-muted">包含对应公示话术与图片；仅下载，不会发送微信。'+(C.project?'大区、门店资料附同一张全司标杆榜。':'全司标杆榜由项目负责人统一提供。')+'长明细自动分页。</p>'+sendConfigPanel()+'</div>';
+  return '<div class="block ops-panel"><div class="ops-actions">'+buttons+'</div><p class="ops-muted">包含对应公示话术与图片；仅下载，不会发送微信。'+(C.project?'单店进展与未面见TOP明细合为一张；真实反馈和全司标杆海报分别保留。':'单店进展与未面见TOP明细合为一张；全司标杆榜由项目负责人统一提供。')+'真实反馈较长时自动分页。</p>'+sendConfigPanel()+'</div>';
  }
  function parkedRecords(view){
   const d=data();if(!C.member||d?.reader!==C.member)return '';
