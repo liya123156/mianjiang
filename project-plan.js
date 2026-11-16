@@ -860,7 +860,7 @@ function renderProject(view) {
     document.getElementById('status').hidden=true;document.getElementById('word-download').hidden=true;
     document.getElementById('copy-report').disabled=false;document.getElementById('print-report').disabled=false;
     document.querySelector('.scope-note').textContent='总目标与四项策略全司共用；在日常推动中按大区、门店查看任务、更新实际结果并完成验收。';
-    highlight();return;
+    highlight();window.WBOperations?.ensurePlanningTargets?.();return;
   }
   document.title=(nov?NOVEMBER_PLAN.title:'10月在售业主面见计划')+'｜'+view.name;
   const nav=nov?['背景、定位与目标支撑','对象分层与量化目标','职责与全月落地计划','运营规则与交付验收']:['10月目标与口径','10月落地安排','职责与资料说明'];
@@ -928,5 +928,6 @@ function attachProjectEvents() {
     }
   });
 }
+
 
 

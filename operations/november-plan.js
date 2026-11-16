@@ -540,7 +540,7 @@
     "owner": "主责：项目负责人",
     "collaborators": "结果承接：店总；数据协助：大区BP、店面BP",
     "when": "本周完成逐店确认\n建议11月6日前",
-    "acceptance": "沿用工作台现有11月目标口径：全司面见300套、全盘面见率≥20%、门店TOP与户型TOP面见率≥40%、有效客户和业主名单线上表达覆盖100%。逐店确认目标、分母、截至日期、当前完成和差距；店面目标以数据管理中已确认版本为准。",
+    "acceptance": "沿用工作台现有11月目标口径：全司面见量按数据管理中最新确认的18家业主门店目标汇总、全盘面见率≥20%、门店TOP与户型TOP面见率≥40%、有效客户和业主名单线上表达覆盖100%。逐店确认目标、分母、截至日期、当前完成和差距；店面目标以数据管理中已确认版本为准。",
     "businessLink": "建立可衡量的共同目标，使资源和管理动作对准差距。",
     "scope": "store",
     "frequency": "once",
@@ -1077,9 +1077,9 @@
   }
 ];
   const metrics = [
-    {value:'21家',label:'项目覆盖门店',note:'按现有组织名册承接，按大区与门店查看目标和业务进展。'},
+    {id:'owner-stores',value:'18家',label:'业主面见覆盖门店',note:'按业主面见范围统计，目标与公示资料包统一覆盖18家门店。'},
     {value:'100%',label:'线上感恩表达',note:'以有效客户和业主名单为分母；服务协作群体单列。'},
-    {id:'meeting-total',value:'300套',label:'11月全司面见目标',note:'已拆解至大区和门店，展开下方查看各组织目标。'},
+    {id:'meeting-total',value:'待同步',label:'11月全司面见目标',note:'与数据管理中保存的月度目标同步，展开下方查看大区和门店明细。'},
     {value:'≥20%',label:'全盘在售面见率',note:'去重面见房源 ÷ 当月在售房源；重复面见次数另列。'},
     {value:'≥40%',label:'门店TOP / 户型TOP',note:'两类分别按本类在售基数核算，不直接相加。'}
   ];
@@ -1232,14 +1232,19 @@
   const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const lines=s=>E(s).replace(/\n/g,'<br>');
   function targetPlan(){return root.WBOperations?.novemberTargets?.()||null;}
-  function goalMetrics(){const p=targetPlan();return metrics.map(m=>m.id==='meeting-total'&&Number.isFinite(p?.total)?{...m,value:p.total+'套'}:m);}
-  const targetCoverageNote='项目执行覆盖21家店；现有面见量目标拆解表列明18家店。徐汇一店、Hmall中心店和Hmall旗舰店无在售房源，不涉及业主面见套数目标，单独跟进客户面见累计次数。';
+  function goalMetrics(){
+    const p=targetPlan();return metrics.map(m=>m.id==='meeting-total'?{...m,value:Number.isFinite(p?.total)?p.total+'套':p?.loaded?'待确认':'待同步'}:m.id==='owner-stores'?{...m,value:(p?.ownerStoreCount||18)+'家'}:m);
+  }
+  const targetCoverageNote='感恩服务与文化活动覆盖21家店；其中18家有在售业主的门店纳入业主面见目标。徐汇一店、Hmall中心店和Hmall旗舰店不纳入业主面见套数目标。';
+  const targetLabel=value=>Number.isFinite(value)?value+'套':'待确认';
   function targetBreakdownHtml(){
     const p=targetPlan();
-    if(!p)return '<details class="np-support"><summary>展开大区与单店面见目标</summary><div class="np-support-body"><p>目标明细暂未加载，请刷新页面后查看。</p></div></details>';
-    return `<details class="np-support np-target-breakdown" id="nov-target-breakdown"><summary>展开大区与单店面见目标｜${p.regions.length}个大区 · ${p.total}套</summary><div class="np-support-body"><p class="np-target-summary">全司目标 <strong>${p.total}套</strong>，已拆解至${p.regions.length}个大区、${p.stores.length}家门店；大区与门店目标合计均为${p.total}套。</p><div class="np-target-regions">${p.regions.map(region=>`<article class="np-target-region"><header><h3>${E(region.name)}</h3><strong>${region.target}<small>套</small></strong></header><table class="np-target-table"><caption>${E(region.name)}单店面见目标</caption><thead><tr><th scope="col">门店</th><th scope="col">11月目标</th></tr></thead><tbody>${p.stores.filter(store=>store.region===region.name).map(store=>`<tr><th scope="row">${E(store.store)}</th><td>${store.target}套</td></tr>`).join('')}</tbody></table></article>`).join('')}</div><p class="np-note">${E(targetCoverageNote)}</p></div></details>`;
+    if(!p?.loaded)return '<details class="np-support np-target-breakdown" id="nov-target-breakdown"><summary>展开大区与单店面见目标｜待同步</summary><div class="np-support-body"><p>'+E(p?.error?'目标同步暂未完成，请刷新页面重试。':'正在同步已保存的月度目标…')+'</p></div></details>';
+    const confirmed=p.stores.filter(s=>Number.isFinite(s.target)).length;
+    const summary=Number.isFinite(p.total)?`全司目标 <strong>${p.total}套</strong>，已拆解至${p.regions.length}个大区、${p.stores.length}家门店；大区与门店目标合计均为${p.total}套。`:`已确认${confirmed}/${p.stores.length}家门店目标；未填门店显示待确认，全司总目标待补齐后汇总。`;
+    return `<details class="np-support np-target-breakdown" id="nov-target-breakdown"><summary>展开大区与单店面见目标｜${p.regions.length}个大区 · ${targetLabel(p.total)}</summary><div class="np-support-body"><p class="np-target-summary">${summary}</p><div class="np-target-regions">${p.regions.map(region=>`<article class="np-target-region"><header><h3>${E(region.name)}</h3><strong>${targetLabel(region.target)}</strong></header><table class="np-target-table"><caption>${E(region.name)}单店面见目标</caption><thead><tr><th scope="col">门店</th><th scope="col">11月目标</th></tr></thead><tbody>${p.stores.filter(store=>store.region===region.name).map(store=>`<tr><th scope="row">${E(store.store)}</th><td>${targetLabel(store.target)}</td></tr>`).join('')}</tbody></table></article>`).join('')}</div><p class="np-note">${E(targetCoverageNote)}</p></div></details>`;
   }
-  function targetBreakdownText(){const p=targetPlan();return p?['','大区与单店面见目标','全司目标：'+p.total+'套（'+p.regions.length+'个大区、'+p.stores.length+'家门店已拆解）',...p.regions.flatMap(region=>['',region.name+'：'+region.target+'套',...p.stores.filter(store=>store.region===region.name).map(store=>'  '+store.store+'：'+store.target+'套')]),targetCoverageNote]:['','大区与单店面见目标：明细暂未加载'];}
+  function targetBreakdownText(){const p=targetPlan();return p?.loaded?['','大区与单店面见目标','全司目标：'+targetLabel(p.total)+'（'+p.regions.length+'个大区、'+p.stores.length+'家业主门店）',...p.regions.flatMap(region=>['',region.name+'：'+targetLabel(region.target),...p.stores.filter(store=>store.region===region.name).map(store=>'  '+store.store+'：'+targetLabel(store.target))]),targetCoverageNote]:['','大区与单店面见目标：待同步'];}
   function section(id,no,title,subtitle,html){return `<section id="${id}" class="section np-section" aria-labelledby="${id}-title"><div class="section-head"><span class="section-no">${no}</span><h2 id="${id}-title">${E(title)}</h2></div><p class="section-summary">${E(subtitle)}</p>${html}</section>`;}
   function actionRow(a){
     return `<article class="np-action" id="nov-action-${E(a.id.replace('.','-'))}"><div class="np-action-main"><span class="np-action-id">行动 ${E(a.id)}</span><h4>${E(a.title)}</h4><p>${E(a.how)}</p>${a.knownFact?`<p class="np-fact"><strong>已知事实</strong>${E(a.knownFact)}</p>`:''}${a.trigger?`<p class="np-trigger"><strong>触发时跟进</strong>${E(a.trigger)}</p>`:''}<p class="np-business"><strong>连接业务</strong>${E(a.businessLink)}</p></div><dl class="np-action-meta"><div><dt>谁来干 · Who</dt><dd>${E(a.owner)}${a.collaborators?`<span>${E(a.collaborators)}</span>`:''}</dd></div><div><dt>什么时间 · When</dt><dd>${lines(a.when)}<small>${E(a.scheduleBasis)}</small></dd></div><div><dt>如何验收</dt><dd>${E(a.acceptance)}</dd></div></dl></article>`;
@@ -1254,7 +1259,7 @@
     const changes=detail('nov-goal-changes','进而改变什么｜六类问题与预期变化',goalNarrative.problems.map((problem,i)=>`<article class="np-goal-explanation"><h3>${i+1}. ${E(problem.title)}</h3><p>${E(problem.situation)}</p><p class="np-goal-result"><strong>希望带来的变化</strong>${E(problem.resolve)}</p></article>`).join(''));
     const effects=detail('nov-goal-effects','最终实现什么｜顾客、伙伴、平台与协作效果',goalNarrative.outcomes.map(outcome=>`<article class="np-goal-explanation"><h3>${E(outcome.title)}</h3><p>${E(outcome.text)}</p><p class="np-goal-result"><strong>观察与复盘依据</strong>${E(outcome.evidence)}</p></article>`).join(''));
     const goalCards=`<div class="np-subgoals">${goals.map((g,i)=>`<article><span class="np-overline">子目标 0${i+1}</span><h3>${E(g.title)}</h3><p>${E(g.what)}</p><p class="np-evidence"><strong>看什么结果</strong>${E(g.evidence)}</p></article>`).join('')}</div>`;
-    const targetCards=`<div class="np-metrics">${goalMetrics().map(m=>`<article><span>${E(m.label)}</span><strong>${E(m.value)}</strong><p>${E(m.note)}</p></article>`).join('')}</div><p class="np-note">全司面见量目标已完成大区与门店拆解，明细在下方展开查看。面见率按对应在售基数核算；此处展示计划目标，实际达成以导入业务数据为准，礼品送出与面见分别记录。</p>`;
+    const targetCards=`<div class="np-metrics">${goalMetrics().map(m=>`<article${m.id?` data-plan-metric="${E(m.id)}"`:''}><span>${E(m.label)}</span><strong>${E(m.value)}</strong><p>${E(m.note)}</p></article>`).join('')}</div><p class="np-note">目标取自数据管理中最新保存的月度目标，修改后同步更新本页及复制文本。面见率按对应在售基数核算，实际达成以导入业务数据为准。</p>`;
     const background=detail('nov-goal-background','背景与定位｜感恩月的完整说明与衡量原则',`<article class="np-goal-explanation"><h3>为什么开展感恩月</h3>${paragraphs(goalNarrative.background)}</article><article class="np-goal-explanation"><h3>项目定位与服务对象</h3>${paragraphs(goalNarrative.positioning)}</article><article class="np-goal-explanation"><h3>怎样衡量项目价值</h3>${paragraphs(goalNarrative.measurement)}</article>`);
     const planGoals=section('plan-goals','01','Part 1｜项目目标','总目标与量化目标直接展示；目标拆解、实现路径和背景说明可展开查看。',total+targetCards+targetBreakdownHtml()+goalCards+paths+changes+effects+background);
     const strategyOverview=`<div class="np-strategy-map">${strategies.map(s=>`<a href="#nov-strategy-${s.id}" data-np-open="${s.id}"><span>策略 ${s.id}</span><strong>${E(s.title)}</strong><small>${E(s.tagline)}</small></a>`).join('')}</div><p class="np-note"><strong>从策略到动作：</strong>展开下方任一策略，查看具体做法、负责人、时间与验收标准。${actions.length}项动作保留完整明细，日常检核按角色和日期承接。</p>`;
@@ -1263,7 +1268,7 @@
     const roles=`<details class="np-support"><summary>展开项目负责人、店总与BP的分工边界</summary><div class="np-role-list">${roleRows.map(r=>`<article><h3>${E(r[0])}</h3><p>${E(r[1])}</p><p><strong>交付与责任</strong>${E(r[2])}</p></article>`).join('')}</div></details>`;
     const planTargets=section('plan-targets','03','执行节奏与角色承接','排期与实际状态分开：已知交付包括启动、行动包发布、方案输出及店总会物料与落地规划共识；单店承接、培训和执行结果逐项核实。',schedule+(root.WBNovemberSchedule?.render?.(view)||'')+roles);
     const daily=`<details class="np-support np-workbench-guide"><summary>查看规划、日常推动与复盘如何衔接</summary><div class="np-support-body"><div class="np-handoff"><article><span>01</span><h3>规划明确动作</h3><p>在同一份规划中讲清目标、关键动作、时间与复查标准，作为日常推动的共同依据。</p></article><article><span>02</span><h3>日常推动</h3><p>通过数据公示与店面沟通，了解实际动作、店组进展、卡点及下一步，及时提供物料和资源支持。</p></article><article><span>03</span><h3>结果复查</h3><p>结合业务底表和沟通情况核对执行结果；计划、邀约、实际面见和后续收获分别确认，未解决问题持续跟进。</p></article><article><span>04</span><h3>周月复盘</h3><p>沿用业务数据和已核实的推动情况，回看目标差距与支持效果，明确后续重点、责任人和复查时间。</p></article></div></div></details><div class="np-bottom-note"><div><strong>当前查看：${E(scopeName||'全司')}</strong><p>规划共享查看；日常推动统一生成公示话术和资料包，周月复盘结合业务结果与实际情况作出判断。历史费用继续在费用核销中查看。</p></div><div class="np-buttons"><button type="button" class="btn primary" data-plan-mode="daily">进入日常推动</button><button type="button" class="btn" data-plan-mode="expense">查看费用核销</button><a class="btn" href="https://liya123156.github.io/gan-en-yue/" target="_blank" rel="noopener">打开感恩月行动包</a></div></div>`;
-    const hero=`<header class="hero plan-hero np-hero"><div class="eyebrow">LANDZ · NOVEMBER 2026</div><div class="plan-title-line"><h1>11月感恩月｜项目规划与执行</h1><span class="plan-badge">11月5日共创更新</span></div><p class="plan-theme">感恩相连，服务有光</p><div class="meta-row"><span>${E(scopeName||'全司')} · 共享规划</span><span>2026年11月1日—11月30日</span><span>21家店 · 四项策略 · ${actions.length}项行动</span></div><p class="np-hero-note">规划明确目标和动作，日常推动结合数据公示与实际沟通核对进展。</p></header>`;
+    const hero=`<header class="hero plan-hero np-hero"><div class="eyebrow">LANDZ · NOVEMBER 2026</div><div class="plan-title-line"><h1>11月感恩月｜项目规划与执行</h1><span class="plan-badge">11月5日共创更新</span></div><p class="plan-theme">感恩相连，服务有光</p><div class="meta-row"><span>${E(scopeName||'全司')} · 共享规划</span><span>2026年11月1日—11月30日</span><span>感恩服务21店 · 业主面见18店 · 四项策略 · ${actions.length}项行动</span></div><p class="np-hero-note">规划明确目标和动作，日常推动结合数据公示与实际沟通核对进展。</p></header>`;
     return `<div class="november-plan">${hero}${planGoals}${planActions}${planTargets}${section('plan-delivery','04','工作入口与使用说明','常用工作入口直接呈现，流程说明按需展开。',daily)}<footer class="footer"><span>上海丽兹行 · 11月感恩月项目</span><span>2026/11/05 共创更新</span></footer></div>`;
   }
   function exportText(){return [
