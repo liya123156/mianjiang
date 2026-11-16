@@ -9,7 +9,8 @@
  function counts(rows){const out=Object.fromEntries(Object.keys(labels).map(k=>[k,0]));for(const r of rows){const tags=r.topics||decorate(r).topics;for(const tag of new Set(tags))out[tag]++;}return out;}
  function select(rows,topic='all',sort='latest'){return rows.map(decorate).filter(r=>topic==='all'||r.topics.includes(topic)).sort((a,b)=>sort==='project'?String(a.project).localeCompare(String(b.project),'zh-CN')||String(a.room).localeCompare(String(b.room),'zh-CN'):String(b.latest).localeCompare(String(a.latest))||String(a.houseId).localeCompare(String(b.houseId)));}
  const stamp=e=>e['面见时间']?String(e['面见时间']).replace('T',' ').slice(5,16):'时间待补';
- const meta=r=>`面见人：${r.people.join('、')||'待补'} · ${r.eventCount?'本月已登记面见 '+r.eventCount+' 次':'本月面见次数待补'}`;
+ const manager=r=>{const name=String(root.WBManagerDirectory?.nameFor?.({region:r.region,store:r.store,group:r.group})||'').trim();return !name||['—','-','/'].includes(name)?'待补充':name;};
+ const meta=r=>`面见人：${r.people.join('、')||'待补'} · ${r.eventCount?'本月已登记面见 '+r.eventCount+' 次':'本月面见次数待补'} · 经理：${manager(r)}`;
  const result=r=>`主要结果：${root.WBQuality?.labels?.[r.category]||(r.category==='R'?'关系维护／客户反馈沟通':labels[r.category])||'反馈结果待明确'}`;
  function card(row){const r=row.topics?row:decorate(row);return `<article class="quality-story"><div class="quality-story-head"><h3>${esc(r.project||'楼盘待补')}${r.room?`<span class="quality-room"> · ${esc(r.room)}</span>`:''}</h3><span class="quality-store">${esc(r.store)} · ${esc(r.group)}</span></div><p class="quality-person">${esc(meta(r))}</p><p class="quality-story-tags">涉及主题：${r.topics.map(k=>esc(labels[k])).join(' / ')}</p><p class="quality-followup"><strong>${esc(result(r))}</strong>${r.basis?`<br>识别依据：${esc(r.basis)}`:''}</p><div class="quality-timeline">${r.events.map(e=>`<div class="quality-event"><time>${esc(stamp(e))}</time><p><span class="quality-speaker">${esc(e['面见人姓名']||'面见人待补')}：</span>${esc(e['面见反馈']||'本次未补反馈原文')}</p></div>`).join('')||'<p class="quality-no-source">底表已登记面见，本月详细记录待补充。</p>'}</div>${r.nextAction?`<p class="quality-followup">后续安排：${esc(r.nextAction)}</p>`:''}<div class="quality-card-actions">${r.feedbacks.length?`<button class="btn" data-ops="quality-edit" data-house="${esc(r.houseId)}">核对结果与后续安排</button>`:''}</div></article>`;}
  function text(rows){return rows.map(r=>{r=decorate(r);return `${r.project||'楼盘待补'}${r.room?' · '+r.room:''}\n${r.store} · ${r.group}\n${meta(r)}\n涉及主题：${r.topics.map(k=>labels[k]).join(' / ')}\n${result(r)}${r.basis?'\n识别依据：'+r.basis:''}\n${r.events.map(e=>`${stamp(e)} ${e['面见人姓名']||'面见人待补'}：${e['面见反馈']||'本次未补反馈原文'}`).join('\n')||'本月详细记录待补充'}${r.nextAction?'\n后续安排：'+r.nextAction:''}`;}).join('\n\n');}
@@ -34,4 +35,5 @@
  }
  root.WBFeedback={labels,topics,decorate,counts,select,stamp,meta,card,text,images};if(typeof module==='object')module.exports=root.WBFeedback;
 })(typeof window==='object'?window:globalThis);
+
 

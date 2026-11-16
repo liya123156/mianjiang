@@ -22,7 +22,8 @@
   const groupOf=h=>text(h['店组'])||'未分组',personOf=h=>text(h['维护人姓名'])||'未填写';
   function aggregate(rows,level,group,name){
    const rowIds=new Set(rows.map(x=>houseKey(x['房源编号']))),m=M.metrics(rows,monthlyEvents),met=s.periodType==='monthly'?m.met:rows.filter(x=>periodIds.has(houseKey(x['房源编号']))).length,count=s.periodType==='monthly'?m.met_count:periodEvents.filter(x=>rowIds.has(houseKey(x['房源编号']))).length;
-   return {level,levelLabel:level==='store'?'本店':level==='group'?'店组':'个人',region:known.region,store:known.store,group,name,stock:m.stock,periodMet:met,periodMeetingCount:count,periodRate:pct(met,m.stock),monthlyMet:m.met,monthlyMeetingCount:m.met_count,monthlyRate:m.met_rate,storeTopStock:m.store_top_stock,storeTopMet:m.store_top_met,storeTop:m.store_top_met+'/'+m.store_top_stock,storeTopRate:m.store_top_rate,unitTopStock:m.unit_top_stock,unitTopMet:m.unit_top_met,unitTop:m.unit_top_met+'/'+m.unit_top_stock,unitTopRate:m.unit_top_rate,gift:m.gift,giftRate:m.gift_rate};
+   const directoryName=level==='store'?'':text(root.WBManagerDirectory?.nameFor?.({region:known.region,store:known.store,group})),manager=level==='store'?'—':directoryName&&directoryName!=='—'?directoryName:'待补充';
+   return {level,levelLabel:level==='store'?'本店':level==='group'?'店组':'个人',region:known.region,store:known.store,group,manager,name,stock:m.stock,periodMet:met,periodMeetingCount:count,periodRate:pct(met,m.stock),monthlyMet:m.met,monthlyMeetingCount:m.met_count,monthlyRate:m.met_rate,storeTopStock:m.store_top_stock,storeTopMet:m.store_top_met,storeTop:m.store_top_met+'/'+m.store_top_stock,storeTopRate:m.store_top_rate,unitTopStock:m.unit_top_stock,unitTopMet:m.unit_top_met,unitTop:m.unit_top_met+'/'+m.unit_top_stock,unitTopRate:m.unit_top_rate,gift:m.gift,giftRate:m.gift_rate};
   }
   const rows=[aggregate(homes,'store','全店汇总','—')];
   for(const group of M.unique(homes.map(groupOf)).sort(M.compareGroup)){
@@ -42,7 +43,7 @@
   return {title:'六、面见数据明细',store:known.store,region:known.region,month:s.month,periodType:s.periodType,periodStart:s.periodStart,periodEnd:s.periodEnd,asOf,sourceVersion:version,periodGoal:goal(periodGoal),periodLabel:s.periodType==='monthly'?'本月':'本周',rows,notes};
  }
  const columns=[
-  ['levelLabel','层级',76],['group','店组',230],['name','维护人',125],['stock','在售套数',90],
+  ['levelLabel','层级',76],['group','店组',210],['manager','经理',110],['name','维护人',125],['stock','在售套数',90],
   ['periodMet','面见量',98],['periodMeetingCount','面见次数',98],['periodRate','面见率',110],
   ['monthlyMet','面见量',98],['monthlyMeetingCount','面见次数',98],['monthlyRate','面见率',110],
   ['storeTop','已见／在售',136],['storeTopRate','面见率',110],['unitTop','已见／在售',136],['unitTopRate','面见率',110],['gift','送礼登记',100],['giftRate','覆盖率',110]
@@ -63,8 +64,8 @@
   write('下表完整保留本店、各店组及每位维护人的数据；各组、个人未另行分配目标。',pad,202,18,'#8d7798');
   const x=[pad];for(const col of cols)x.push(x.at(-1)+col.width);
   function cell(lines,left,top,w,h,fill,bold=false,size=19){ctx.fillStyle=fill;ctx.fillRect(left,top,w,h);ctx.strokeStyle='#ded3e5';ctx.lineWidth=.8;ctx.strokeRect(left,top,w,h);ctx.font=`${bold?'600 ':''}${size}px ${font}`;ctx.fillStyle='#4e4159';ctx.textAlign='center';ctx.textBaseline='middle';const lineHeight=size*1.3;lines.forEach((line,i)=>ctx.fillText(line,left+w/2,top+h/2+(i-(lines.length-1)/2)*lineHeight));}
-  for(let i=0;i<4;i++)cell(wrapped(ctx,cols[i].label,cols[i].width-12,20,true),x[i],header,cols[i].width,headHeight,'#eae1f0',true,20);
-  const groups=[{start:4,end:7,label:evidence.periodLabel+'（所选周期）',fill:'#ece1fa'},{start:7,end:10,label:'月累计面见',fill:'#dce8f8'},{start:10,end:12,label:'门店TOP（月累计）',fill:'#dcefe5'},{start:12,end:14,label:'户型TOP（月累计）',fill:'#edf3dc'},{start:14,end:16,label:'月度伴手礼',fill:'#f6e5ed'}];
+  for(let i=0;i<5;i++)cell(wrapped(ctx,cols[i].label,cols[i].width-12,20,true),x[i],header,cols[i].width,headHeight,'#eae1f0',true,20);
+  const groups=[{start:5,end:8,label:evidence.periodLabel+'（所选周期）',fill:'#ece1fa'},{start:8,end:11,label:'月累计面见',fill:'#dce8f8'},{start:11,end:13,label:'门店TOP（月累计）',fill:'#dcefe5'},{start:13,end:15,label:'户型TOP（月累计）',fill:'#edf3dc'},{start:15,end:17,label:'月度伴手礼',fill:'#f6e5ed'}];
   for(const g of groups){const w=x[g.end]-x[g.start];cell(wrapped(ctx,g.label,w-12,20,true),x[g.start],header,w,50,g.fill,true,20);for(let i=g.start;i<g.end;i++)cell(wrapped(ctx,cols[i].label,cols[i].width-12,19,true),x[i],header+50,cols[i].width,headHeight-50,g.fill,true,19);}
   let y=header+headHeight;for(const item of layout.rows){const fill=item.row.level==='store'?'#eee4f6':item.row.level==='group'?'#eef5e8':'#ffffff';item.cells.forEach((lines,i)=>cell(lines,x[i],y,cols[i].width,item.height,fill,item.row.level!=='advisor'));y+=item.height;}
   y+=24;for(const line of layout.notes){write(line,pad,y,18,'#8d7798');y+=27;}

@@ -1,0 +1,23 @@
+.company-benchmark{border:1px solid #e9ddf2;border-radius:20px;background:#fcf9ff;padding:24px;overflow:hidden;color:#554161}
+.cb-hero{background:linear-gradient(110deg,#eee0fa,#fcf6ff);margin:-24px -24px 24px;padding:24px 28px}
+.cb-hero p{margin:4px 0;color:#8e60aa;line-height:1.7;font-size:13px}
+.cb-hero h3{margin:4px 0 10px;font-size:29px;color:#723591}
+.cb-tier{margin:20px 0 26px;border:1px solid #e7dbee;border-radius:16px;background:#fff;overflow:hidden}
+.cb-tier h4{margin:0;padding:15px 20px;background:#f0e7f8;color:#774292;font-size:20px}
+.cb-scroll{overflow:auto}
+.cb-tier table{width:100%;min-width:1050px;table-layout:auto;border-collapse:collapse}
+.cb-tier th{padding:13px 14px;background:#f4edf9;color:#715180;text-align:left;white-space:nowrap}
+.cb-tier td{padding:15px 14px;border-top:1px solid #ede5f3;vertical-align:top;line-height:1.9;font-size:14px;white-space:normal}
+.cb-tier tr.cb-first{background:#fff4d7}
+.cb-tier tr:nth-child(even):not(.cb-first){background:#fbf8fe}
+.cb-tier .cb-met{white-space:nowrap;color:#893db0;font-size:23px}
+.cb-tier .cb-meetingCount,.cb-tier .cb-manager,.cb-tier .cb-name{white-space:nowrap}
+.cb-feedbackText{min-width:350px}
+.cb-feedback-line{margin:0 0 4px;overflow-wrap:anywhere}
+.cb-rank{display:inline-block;min-width:28px;text-align:center;font-size:20px;font-weight:650;color:#7f479d}
+.cb-rank-1,.cb-rank-2,.cb-rank-3{border-radius:50%;padding:3px;background:#f3df9e;color:#765322}
+.cb-rank-2{background:#eae6f0;color:#6c6079}.cb-rank-3{background:#f2d7bf;color:#8d5939}
+.cb-footer{text-align:center;padding:10px 0 18px;color:#823bb0;font-size:21px;font-weight:650;line-height:1.9}
+.cb-footer p{margin:4px 0}.cb-notes{font-size:12px;color:#9a87a5;line-height:1.75}.cb-notes p{margin:4px 0}
+@media(max-width:760px){.company-benchmark{padding:16px}.cb-hero{margin:-16px -16px 18px;padding:20px}.cb-hero h3{font-size:25px}.cb-footer{font-size:17px}}
+@media print{.cb-scroll{overflow:visible}.cb-tier table{min-width:0}.cb-tier td,.cb-tier th{font-size:9px;padding:7px}.cb-tier .cb-met{font-size:14px}.cb-feedbackText{min-width:0}}

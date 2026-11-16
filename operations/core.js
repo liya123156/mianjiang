@@ -78,6 +78,7 @@
     function add(g,c,level,name,identity){
       const m=metrics(g,meetings),t=target(g,level,name,goals),applicable=!(customerEnabled&&identity.store!=='/'&&catalogByStore.get(identity.store)?.ownerApplicable===false);
       const row={...identity,...m,target:t??'—',target_rate:t==null?'—':pct(t,m.stock),_level:level,_target:t,_ownerApplicable:applicable,_tone:level==='company'||level==='region'?'purple':''};
+      if(level==='group'||level==='advisor')row.manager=root.WBManagerDirectory?.lookup(identity)||'待补充';
       if(!applicable){for(const column of columns.slice(4))row[column.key]='/';row._target=null;for(const key of ['met_count','store_top_met_count','unit_top_met_count']){row[key+'_confirmed']=0;row[key+'_pending']=0;}}
       if(customerEnabled){
         const hasAggregate=aggregateRows.some(r=>level==='company'||(level==='region'?r.region===identity.region:r.store===identity.store));
@@ -100,7 +101,8 @@
         }
       }
     }
-    const tableColumns=customerEnabled?[...columns,{key:'customer_count',label:'本月累计次数'}]:columns;
+    const baseColumns=customerEnabled?[...columns,{key:'customer_count',label:'本月累计次数'}]:columns;
+    const tableColumns=output.some(row=>row._level==='group'||row._level==='advisor')?[...baseColumns.slice(0,3),{key:'manager',label:'经理'},...baseColumns.slice(3)]:baseColumns;
     const columnGroups=groups(month);if(customerEnabled)columnGroups.push({label:'客户面见',keys:['customer_count'],tone:'customer'});
     return {type:'table',variant:'progress',title:`${scope.store||scope.region||'全司'}面见及礼物进展`,columns:tableColumns,columnGroups,rows:output};
   }
@@ -263,3 +265,4 @@
   root.WBModel={text,number,flag,pct,unique,canonicalStore,storeCatalog,compareText,compareRegion,compareStore,compareGroup,sortRegions,orderProgress,active,inScope,metrics,meetingCountValue,meetingCountLabel,table,withRateRanks,rateRankSymbol,rateRankLabel,snapshot,delta,validateImport,validateCustomerImport,split,ledger,expenseId,expenseQuantity,expenseAmount,findExpenseDuplicates,expenseCandidates,expenseRecords,cashSettlement,uuid};
   if(typeof module==='object')module.exports=root.WBModel;
 })(typeof window==='object'?window:globalThis);
+

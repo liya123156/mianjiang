@@ -1,17 +1,18 @@
 .met-house-box .table-top { align-items:flex-start; gap:20px; flex-wrap:wrap; }
 .met-feedback-note { padding:0 20px 14px; margin:0; color:#897b93; font-size:12px; line-height:1.7; }
 .met-feedback-scroll { max-height:780px; overflow:auto; }
-.met-feedback-scroll table { width:100%; min-width:1500px; table-layout:fixed; }
+.met-feedback-scroll table { width:100%; min-width:1620px; table-layout:fixed; }
 .met-feedback-scroll th { white-space:normal; }
 .met-feedback-scroll td { vertical-align:top; white-space:normal; overflow-wrap:anywhere; text-align:left; padding:16px 12px; }
 .met-feedback-scroll th:nth-child(1),.met-feedback-scroll td:nth-child(1) { width:8%; }
 .met-feedback-scroll th:nth-child(2),.met-feedback-scroll td:nth-child(2) { width:9%; }
-.met-feedback-scroll th:nth-child(3),.met-feedback-scroll td:nth-child(3) { width:6%; }
-.met-feedback-scroll th:nth-child(4),.met-feedback-scroll td:nth-child(4) { width:9%; }
-.met-feedback-scroll th:nth-child(5),.met-feedback-scroll td:nth-child(5) { width:11%; }
-.met-feedback-scroll th:nth-child(6),.met-feedback-scroll td:nth-child(6) { width:8%; }
-.met-feedback-scroll th:nth-child(7),.met-feedback-scroll td:nth-child(7) { width:13%; }
-.met-feedback-scroll th:nth-child(8),.met-feedback-scroll td:nth-child(8) { width:36%; }
+.met-feedback-scroll th:nth-child(3),.met-feedback-scroll td:nth-child(3) { width:5%; }
+.met-feedback-scroll th:nth-child(4),.met-feedback-scroll td:nth-child(4) { width:6%; }
+.met-feedback-scroll th:nth-child(5),.met-feedback-scroll td:nth-child(5) { width:8%; }
+.met-feedback-scroll th:nth-child(6),.met-feedback-scroll td:nth-child(6) { width:10%; }
+.met-feedback-scroll th:nth-child(7),.met-feedback-scroll td:nth-child(7) { width:8%; }
+.met-feedback-scroll th:nth-child(8),.met-feedback-scroll td:nth-child(8) { width:13%; }
+.met-feedback-scroll th:nth-child(9),.met-feedback-scroll td:nth-child(9) { width:33%; }
 .met-feedback-scroll .met-top-star { color:#d89b22; font-weight:700; }
 .met-feedback-scroll .met-feedback-event { display:block; white-space:pre-wrap; margin:0 0 14px; line-height:1.8; }
 .met-feedback-scroll .met-feedback-event:last-child { margin-bottom:0; }
