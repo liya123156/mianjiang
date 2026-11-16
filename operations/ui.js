@@ -189,25 +189,53 @@
  }
  // Reuse only records already returned by the signed-in store-review API. The
  // selected review period stays separate from the monthly organization ranking.
- function reviewSavedMeetingRecord(ctx,row){
+ function reviewSavedMeetingRecord(ctx,row,group=row?._level==='group'){
   const reviews=root.WBStoreReviews,rs=reviews?.state,member=C.member,binding=state.reviewNotesReaders.get(currentMonth),cache=rs?.cache?.get(currentMonth),context=rs?.context;
   if(!member||binding!==member||!context||context.month!==currentMonth||rs.actor!==(member.login_id||member.display_name||'guest')||cache?.loading||cache?.error)return null;
   if(context.privateData&&context.privateData.reader!==member)return null;
   const period=reviews.selectedPeriod?.(context);if(!period)return null;
   const catalog=M.storeCatalog.find(entry=>entry.ownerApplicable!==false&&entry.store===row.store&&entry.region===row.region);if(!catalog)return null;
-  const record=(cache?.items||[]).find(item=>item.kind==='review'&&item.month===currentMonth&&item.store===row.store&&item.region===row.region&&item.payload?.recordType==='store-period-review'&&item.payload.periodType===period.periodType&&item.payload.periodStart===period.periodStart&&item.payload.periodEnd===period.periodEnd);
+  const sameGroup=value=>String(value||'').normalize('NFKC').replace(/\s+/g,'').toUpperCase(),groupName=item=>item.group||item.payload?.group||'',records=(cache?.items||[]).filter(item=>item.kind==='review'&&item.month===currentMonth&&item.store===row.store&&item.region===row.region&&item.payload?.recordType==='store-period-review'&&item.payload.periodType===period.periodType&&item.payload.periodStart===period.periodStart&&item.payload.periodEnd===period.periodEnd);
+  const record=group?(records.find(item=>groupName(item)&&sameGroup(groupName(item))===sameGroup(row.group))||records.find(item=>!groupName(item))):records.find(item=>!groupName(item));
   const fields=record?.payload?.fields;if(!fields||!['highlights','blockers','nextActions'].some(key=>String(fields[key]||'').trim()))return null;
   return {record,fields,period};
  }
- function reviewSavedNotesText(ctx,row,group=false){
-  const saved=reviewSavedMeetingRecord(ctx,row);if(!saved)return '';
-  const {record,fields,period}=saved,compact=value=>{const text=String(value||'').trim().replace(/\s+/g,' ');return text.length>160?text.slice(0,160)+'…':text;},status=record.payload.status==='confirmed'?'已确认复盘':'已保存草稿，待BP确认',heading=period.periodType==='monthly'?'月度复盘与下期安排':'周会复盘与本周安排',lines=[`${group?'所属门店'+row.store+'｜':''}${heading}（${period.periodStart}—${period.periodEnd}；${status}）`];
-  if(fields.highlights?.trim())lines.push('有效做法：'+compact(fields.highlights));
-  if(fields.blockers?.trim())lines.push('提升与卡点：'+compact(fields.blockers));
-  if(fields.nextActions?.trim())lines.push((group?'门店本周安排：':'本周安排：')+compact(fields.nextActions));
-  return lines.join('\n');
+ function reviewReportParagraphs(value){
+  return String(value||'').split(/\r?\n/).map(line=>line.trim()).filter(line=>line&&!/^(?:已保存草稿|待BP确认|访谈待核实|周会复盘与本周安排|已确认复盘)(?:[，。；：:\s]|$)/.test(line.replace(/^[•●-]\s*/,''))).map(line=>line.replace(/(?:[（(]\s*)?(?:已保存草稿(?:[，,\s]+待BP确认)?|待BP确认|访谈待核实)(?:\s*[）)])?/g,'').trim()).filter(Boolean);
  }
- function reviewSavedNotesHtml(ctx,row,group=false){const text=reviewSavedNotesText(ctx,row,group);if(!text)return '';const [heading,...lines]=text.split('\n');return `<div class="review-meeting-notes"><p><b>${E(heading)}</b></p>${lines.map(line=>`<p>${E(line)}</p>`).join('')}</div>`;}
+ function reviewScopedReportField(saved,field,row,group){
+  if(!saved)return [];const raw=String(saved.fields[field]||''),recordGroup=saved.record.group||saved.record.payload?.group||'',normalize=value=>String(value||'').normalize('NFKC').replace(/\s+/g,'').toUpperCase();
+  if(recordGroup&&(!group||normalize(recordGroup)!==normalize(row.group)))return [];
+  const ownStore=normalize(M.canonicalStore(row.store)),stores=new Set(M.storeCatalog.map(entry=>normalize(M.canonicalStore(entry.store)))),aliases=new Set(['门店','全店','本店','店面']),expected=group?normalize(row.group):ownStore,result=[];
+  // A group-specific record permits its unlabelled prose, but every subsequent
+  // store/group heading still changes scope and is checked before text is used.
+  let section=recordGroup?expected:group?'':ownStore;
+  for(const line of raw.split(/\r?\n/)){
+   const match=line.match(/^\s*(?:【([^】]+)】|\[([^\]]+)\]|([^：:]+)\s*[：:])\s*(.*)$/),label=match&&normalize(match[1]||match[2]||match[3]),storeLabel=label&&(aliases.has(label)?ownStore:normalize(M.canonicalStore(label))),isStore=label&&(aliases.has(label)||stores.has(storeLabel)),isGroup=label&&/组$/.test(label);
+   if(isStore||isGroup){section=isStore?storeLabel:label;if(section===expected&&match[4]?.trim())result.push(match[4].trim());continue;}
+   if(section===expected)result.push(line);
+  }
+  // Store-wide text and other organizations' sections never become group results.
+  return reviewReportParagraphs(result.join('\n'));
+ }
+ function reviewOrganizationRoles(row,group){
+  const manager=root.WBManagerDirectory?.lookup(row),lead=group?`${manager?manager+'经理':'本组经理'}牵头本组承接与分工，组织全员逐套落实邀约；`:'';
+  return lead+'店总牵头门店TOP并亲自邀约、面见关键业主，关键户型TOP也可亲自参与；经理负责户型TOP与七必卖，顾问负责非七必卖。逐套明确承接伙伴、邀约时间与复查节点。';
+ }
+ function reviewReportSections(ctx,row,tone='benchmark',group=false){
+  const saved=reviewSavedMeetingRecord(ctx,row,group),field=name=>reviewScopedReportField(saved,name,row,group),coverage=`${group?'本组':'本店'}在售${row.stock}套，已面见${row.met}套，全盘面见率${row.met_rate}。`,unique=lines=>[...new Set(lines.filter(Boolean))];
+  if(tone==='benchmark'){const highlights=field('highlights');return highlights.length?[{title:'有效做法与可借鉴之处',paragraphs:highlights}]:[];}
+  if(tone==='reminder'){
+   let analysis=coverage;
+   if(group&&Number(row.met)===0&&row.storeStock>0&&row.stock*4>=row.storeStock)analysis=`本组在售${row.stock}套，占本店${M.pct(row.stock,row.storeStock)}（${row.stock}/${row.storeStock}套），本月0面见。门店四分之一以上的在售资源尚未形成面见覆盖，组织突破点是经理承接、组内分工与全员邀约。`;
+   else if(!group){const zero=reviewStoreDetail(ctx,row).filter(item=>item._level==='group'&&Number(item.stock)>0&&Number(item.met)===0&&Number(item.stock)*4>=Number(row.stock));if(zero.length)analysis+=zero.map(item=>`${item.group}在售${item.stock}套，占本店${M.pct(item.stock,row.stock)}，本月0面见`).join('；')+'。需将门店推动进一步落实到经理承接、组内分工与全员邀约。';}
+   const focus=field('nextActions'),joined=focus.join(''),hasRoles=['店总牵头门店TOP','经理负责户型TOP与七必卖','顾问负责非七必卖'].every(term=>joined.includes(term));
+   return [{title:'组织卡点分析',paragraphs:unique([analysis,...field('blockers')])},{title:'推动重点',paragraphs:unique([...focus,...(!hasRoles?[reviewOrganizationRoles(row,group)]:[])])}];
+  }
+  const sections=[];if(field('highlights').length)sections.push({title:'有效做法与可借鉴之处',paragraphs:field('highlights')});if(field('blockers').length)sections.push({title:'组织卡点分析',paragraphs:[coverage,...field('blockers')]});if(field('nextActions').length)sections.push({title:'推动重点',paragraphs:field('nextActions')});return sections;
+ }
+ function reviewSavedNotesText(ctx,row,group=false,tone='benchmark'){return reviewReportSections(ctx,row,tone,group).map(section=>section.title+'\n'+section.paragraphs.join('\n')).join('\n\n');}
+ function reviewSavedNotesHtml(ctx,row,group=false,tone='benchmark'){return reviewReportSections(ctx,row,tone,group).map(section=>`<div class="review-meeting-notes"><p><b>${E(section.title)}</b></p>${section.paragraphs.map(line=>`<p>${E(line)}</p>`).join('')}</div>`).join('');}
  function updateReviewMeetingHighlights(){
   if(currentMode!=='review'||currentMonth<'2026-11')return;const host=document.getElementById('ops-review-highlights-content');if(!host)return;const ctx=reviewContext(currentView);if(ctx)host.innerHTML=reviewHighlightsHtml(ctx);
  }
@@ -216,14 +244,14 @@
  }
  function reviewGroupAnalysisText(ctx){
   const sets=reviewGroupSets(ctx),describe=row=>`${row.group}｜经理${managerName(row)}：面见${row.met}/${row.stock}套，面见率${row.met_rate}；在售占本店${M.pct(row.stock,row.storeStock)}（${row.stock}/${row.storeStock}套）`;
-  return `标杆店组｜全司店组排名TOP5（按月度全盘面见率）：\n${sets.benchmarkReady?sets.benchmark.map(row=>`第${row.reviewRank}名 ${describe(row)}${reviewSavedNotesText(ctx,row,true)?'\n'+reviewSavedNotesText(ctx,row,true):''}`).join('\n')||'当前暂无已有面见的上榜店组。':'全司18家门店数据未完整，暂不生成全司排名。'}\n\n进展偏慢店组｜在售占本店≥25%且本月0面见：\n${sets.slow.map(row=>describe(row)+(reviewSavedNotesText(ctx,row,true)?'\n'+reviewSavedNotesText(ctx,row,true):'')).join('\n')||'当前范围暂无符合条件的店组。'}`;
+  return `标杆店组｜全司店组排名TOP5（按月度全盘面见率）：\n${sets.benchmarkReady?sets.benchmark.map(row=>`第${row.reviewRank}名 ${describe(row)}${reviewSavedNotesText(ctx,row,true,'benchmark')?'\n'+reviewSavedNotesText(ctx,row,true,'benchmark'):''}`).join('\n')||'当前暂无已有面见的上榜店组。':'全司18家门店数据未完整，暂不生成全司排名。'}\n\n进展偏慢店组｜在售占本店≥25%且本月0面见：\n${sets.slow.map(row=>describe(row)+(reviewSavedNotesText(ctx,row,true,'reminder')?'\n'+reviewSavedNotesText(ctx,row,true,'reminder'):'')).join('\n')||'当前范围暂无符合条件的店组。'}`;
  }
  function reviewGroupAnalysisHtml(ctx){
   const sets=reviewGroupSets(ctx),table=(title,rows,benchmark)=>`<div class="review-table-card"><h3>${E(title)}</h3><div class="review-table-scroll"><table class="review-tier-table" aria-label="${E(title)}"><thead><tr>${benchmark?'<th>排名</th>':''}<th>大区</th><th>门店</th><th>店组</th><th>经理</th><th>面见量／在售</th><th>全盘面见率</th><th>在售占本店</th></tr></thead><tbody>${rows.map(row=>`<tr>${benchmark?`<td>${row.reviewRank}</td>`:''}<td>${E(row.region)}</td><td>${E(row.store)}</td><td>${E(row.group)}</td><td>${E(managerName(row))}</td><td>${row.met}/${row.stock}套</td><td>${E(row.met_rate)}</td><td>${E(M.pct(row.stock,row.storeStock))}（${row.stock}/${row.storeStock}套）</td></tr>`).join('')}</tbody></table></div></div>`;
   const benchmark=sets.benchmarkReady?sets.benchmark.length?table('标杆店组｜全司店组排名TOP5',sets.benchmark,true):'<p class="ops-muted">当前暂无已有面见的上榜店组。</p>':'<p class="ops-notice">全司18家门店数据未完整，暂不生成全司店组排名。</p>';
   const slow=sets.slow.length?table('进展偏慢店组',sets.slow,false):'<p class="ops-muted">当前范围暂无符合“在售占本店≥25%且本月0面见”的店组。</p>';
-  const notes=rows=>rows.map(row=>{const note=reviewSavedNotesHtml(ctx,row,true);return note?`<article class="review-rank-card neutral"><span>${E(row.group)}</span>${note}</article>`:'';}).join('');
-  return `<div class="review-group-analysis"><div class="review-subhead"><h3>店组表现分析</h3><p>标杆店组按全司月度全盘面见率排序；同率依次看面见套数、面见次数，相同保留并列。进展偏慢店组须同时满足“店组在售套数÷本店在售套数≥25%”与“本月累计0面见”。</p></div>${benchmark}<div class="review-rank-grid">${notes(sets.benchmark)}</div>${slow}<div class="review-rank-grid">${notes(sets.slow)}</div></div>`;
+  const notes=(rows,tone)=>rows.map(row=>{const note=reviewSavedNotesHtml(ctx,row,true,tone);return note?`<article class="review-rank-card ${tone}"><span>${E(row.group)}</span>${note}</article>`:'';}).join('');
+  return `<div class="review-group-analysis"><div class="review-subhead"><h3>店组表现分析</h3><p>标杆店组按全司月度全盘面见率排序；同率依次看面见套数、面见次数，相同保留并列。进展偏慢店组须同时满足“店组在售套数÷本店在售套数≥25%”与“本月累计0面见”。</p></div>${benchmark}<div class="review-rank-grid">${notes(sets.benchmark,'benchmark')}</div>${slow}<div class="review-rank-grid">${notes(sets.slow,'reminder')}</div></div>`;
  }
  function reviewStoreDetail(ctx,row){if(!ctx.reviewStoreDetails)ctx.reviewStoreDetails=new Map();if(!ctx.reviewStoreDetails.has(row.store))ctx.reviewStoreDetails.set(row.store,M.table(ctx.d.housing,{region:row.region,store:row.store},goals(),currentMonth,ctx.d.meetings||[],customerOptions(ctx.d)).rows);return ctx.reviewStoreDetails.get(row.store);}
  function reviewTopTopics(ctx,row,limit=2){const q=reviewQualityGroup(ctx,row);return Object.entries(F.labels).map(([key,label])=>({label,count:Number(q?.topics?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count).slice(0,limit).map(x=>`${x.label}${x.count}套`);}
@@ -235,9 +263,8 @@
   return `月度全盘面见${row.met}套/在售${row.stock}套，面见率${row.met_rate}，在当前比较范围内覆盖${direction}；目标完成率${reviewCompletion(row)}。门店TOP和户型TOP覆盖作为补充观察，不替代全盘面见率排序。`;
  }
  function reviewRankCard(ctx,row,tone,reason){
-  const analysisLabel=tone==='benchmark'?'突出表现':tone==='reminder'?'主要表现':'本店表现';
   const progress=currentMonth==='2026-11'?`<p>${E(`目标进度：面见${row.met}套 / 目标${row._target??'待确认'}套，完成率${reviewCompletion(row)}；面见次数${meetingValue(row)}次`)}</p>`:'';
-  return `<article class="review-rank-card ${tone}"><span>${E(reviewRowName(row))}</span><div class="review-rank-metrics">${progress}<p>${E(reviewMetricSentence('全盘',row.met,row.stock,row.met_rate))}</p><p>${E(reviewMetricSentence('门店TOP',row.store_top_met,row.store_top_stock,row.store_top_rate))}</p><p>${E(reviewMetricSentence('户型TOP',row.unit_top_met,row.unit_top_stock,row.unit_top_rate))}</p></div><p class="review-rank-reason"><b>${analysisLabel}：</b>${E(reason)}</p><small>${E(reviewStoreInsight(ctx,row,tone))}</small>${reviewSavedNotesHtml(ctx,row)}</article>`;
+  return `<article class="review-rank-card ${tone}"><span>${E(reviewRowName(row))}</span><div class="review-rank-metrics">${progress}<p>${E(reviewMetricSentence('全盘',row.met,row.stock,row.met_rate))}</p><p>${E(reviewMetricSentence('门店TOP',row.store_top_met,row.store_top_stock,row.store_top_rate))}</p><p>${E(reviewMetricSentence('户型TOP',row.unit_top_met,row.unit_top_stock,row.unit_top_rate))}</p></div>${reviewSavedNotesHtml(ctx,row,false,tone)}</article>`;
  }
  function reviewSingleTone(ctx,row){
   if(!row)return 'neutral';const all=reviewCompanyStoreRows(ctx);if(!all.length)return 'neutral';
@@ -302,7 +329,7 @@ ${r.gift.conclusion}`;
  function reviewDetailTable(title,headers,rows){if(!rows.length)return '';return `<div class="review-table-card"><h3>${E(title)}</h3><div class="review-table-scroll"><table class="review-tier-table" aria-label="${E(title)}"><thead><tr>${headers.map(x=>`<th scope="col">${E(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((value,i)=>`<td class="${i<2?'review-org-name':''}">${E(value)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;}
  function reviewNovemberMetricRow(ctx,level,name){if(level==='company')return ctx.root;return ctx.progress.rows.find(row=>row._level===level&&(level==='region'?row.region===name:row.store===name));}
  function reviewNovemberCoverage(row){if(!row)return {whole:'—',storeTop:'—',unitTop:'—'};return {whole:Math.ceil(Number(row.stock||0)*.2),storeTop:Math.ceil(Number(row.store_top_stock||0)*.4),unitTop:Math.ceil(Number(row.unit_top_stock||0)*.4)};}
- function reviewRankText(ctx,row,tone){const progress=`目标进度：面见${row.met}套 / 目标${row._target??'待确认'}套，完成率${reviewCompletion(row)}；面见次数${meetingValue(row)}次\n`;return `${row.store}\n${progress}${reviewMetricSentence('全盘',row.met,row.stock,row.met_rate)}\n${reviewMetricSentence('门店TOP',row.store_top_met,row.store_top_stock,row.store_top_rate)}\n${reviewMetricSentence('户型TOP',row.unit_top_met,row.unit_top_stock,row.unit_top_rate)}\n分析：${reviewRankReason(row,tone)}\n店组下钻：${reviewStoreInsight(ctx,row,tone)}${reviewSavedNotesText(ctx,row)?'\n'+reviewSavedNotesText(ctx,row):''}`;}
+ function reviewRankText(ctx,row,tone){const progress=`目标进度：面见${row.met}套 / 目标${row._target??'待确认'}套，完成率${reviewCompletion(row)}；面见次数${meetingValue(row)}次\n`;return `${row.store}\n${progress}${reviewMetricSentence('全盘',row.met,row.stock,row.met_rate)}\n${reviewMetricSentence('门店TOP',row.store_top_met,row.store_top_stock,row.store_top_rate)}\n${reviewMetricSentence('户型TOP',row.unit_top_met,row.unit_top_stock,row.unit_top_rate)}\n${reviewSavedNotesText(ctx,row,false,tone)}`;}
  function reviewRankCopySection(ctx,sets,singleTone,bench,remind){
   const rule='统一依据：月度全盘面见率优先；同率依次看面见套数、面见次数，相同保留并列。目标完成率与双TOP覆盖作为补充观察。';
   if(sets.single)return `本店月度表现：\n${reviewRankText(ctx,sets.single,singleTone)}\n\n${reviewGroupAnalysisText(ctx)}`;
@@ -1204,7 +1231,7 @@ TOP重点房源
   return {month,loaded,total:totalOf(stores),regions,stores,ownerStoreCount:owners.length,missingStores:stores.filter(s=>s.target===null).map(s=>s.store),updatedAt:record?.updated_at||'',error:state.error};
  }
  function ensurePlanningTargets(){if(!C.configured||currentMonth!=='2026-11'||state.loading||state.error)return;const d=data();if(d&&d.reader===C.member)return;return refresh();}
- root.WBOperations={isMode,emptyData,render,boot,refresh,ensurePlanningTargets,saveMonthlyGoals,goalRatePreview,updateGoalRatePreview,ledgerText,reviewMonthlyRate,reviewOrganizationRank,reviewRegionAnalysis,reviewRankSets,reviewSingleTone,reviewGroupSets,reviewGroupAnalysisText,reviewHighlightsHtml,reviewContext,reviewSavedMeetingRecord,reviewSavedNotesText,reviewCloudForHighlights,financePersonRows,expensePayerLabel,updateExpensePeople,reviewText:reviewTextWithNovember,qualityText,novemberTargets,buildSendPackage,buildPublicationPackage,saveSendConfig,projectSendConfig,novemberMessage,novemberRankedSelection,metHouseData,metHouseTable,metHouseImage,copyMetHousePreview,companyBenchmarkData,companyBenchmarkPanel,companyBenchmarkImage,copyBenchmarkPreview,state};
+ root.WBOperations={isMode,emptyData,render,boot,refresh,ensurePlanningTargets,saveMonthlyGoals,goalRatePreview,updateGoalRatePreview,ledgerText,reviewMonthlyRate,reviewOrganizationRank,reviewRegionAnalysis,reviewRankSets,reviewSingleTone,reviewGroupSets,reviewGroupAnalysisText,reviewHighlightsHtml,reviewContext,reviewSavedMeetingRecord,reviewSavedNotesText,reviewReportSections,reviewScopedReportField,reviewCloudForHighlights,financePersonRows,expensePayerLabel,updateExpensePeople,reviewText:reviewTextWithNovember,qualityText,novemberTargets,buildSendPackage,buildPublicationPackage,saveSendConfig,projectSendConfig,novemberMessage,novemberRankedSelection,metHouseData,metHouseTable,metHouseImage,copyMetHousePreview,companyBenchmarkData,companyBenchmarkPanel,companyBenchmarkImage,copyBenchmarkPreview,state};
 })(window);
 
 

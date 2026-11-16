@@ -292,5 +292,7 @@ let coverageHtml=U.synthesis(ctx,period,[orgA,orgB]);
 assert.match(coverageHtml,/月度面见率标杆门店<\/span><h4>御翠园店/);
 assert.match(coverageHtml,/月度面见率进展偏慢门店<\/span><h4>仁恒河滨城店/);
 assert.ok(!coverageHtml.includes('等权综合'));
-U.paint(ctx);assert.match(ctx.host.innerHTML,/大区复盘与本周承接/);assert.match(ctx.host.innerHTML,/草稿供BP核实和共识/);
+U.paint(ctx);assert.match(ctx.host.innerHTML,/大区复盘与本周承接/);assert.match(ctx.host.innerHTML,/目标与进展按同一底表口径汇总/);
+assert.ok(!coverageHtml.includes('已保存草稿'));
+const benchmarkPart=coverageHtml.split('月度面见率标杆门店')[1].split('</article>')[0];assert.ok(!benchmarkPart.includes('推动重点'),'benchmark summary keeps only effective practices');
 console.log('PASS: rate-first review synthesis and saved regional overview');

@@ -75,33 +75,68 @@ assert.match(rendered,/标杆店组｜全司店组排名TOP5/);assert.match(rend
 assert.ok(rendered.indexOf('进展偏慢门店')<rendered.indexOf('店组表现分析'));
 assert.doesNotMatch(rendered,/每周重点预警本月进展倒数3家|先按本月面见量从低到高排序/);
 
-// Benchmark prose reuses only saved records from the existing authorized review API.
+// Report bodies split benchmark learning from slow-progress organizational analysis.
 member.login_id='0921';let period={periodType:'weekly',periodStart:'2026-11-09',periodEnd:'2026-11-15'};
-const saved=(store,fields,status='draft')=>{const region=catalog.find(row=>row.store===store).region;return {month:'2026-11',kind:'review',region,store,key:'2026-11|review|'+store+'|store-period-review:weekly:2026-11-09:2026-11-15',payload:{recordType:'store-period-review',...period,status,fields}};};
-const noteRows=[saved('仁恒河滨城店',{highlights:'店面有效做法哨兵',blockers:'<script>门店卡点</script>',nextActions:'核实邀约并准备服务资料'}),saved('星河湾店',{highlights:'跨大区门店已核实做法',nextActions:'跨大区门店本周安排'},'confirmed')];
+const saved=(store,fields,status='draft',group='')=>{const region=catalog.find(row=>row.store===store).region;return {month:'2026-11',kind:'review',region,store,...(group?{group}:{}),key:'2026-11|review|'+store+'|store-period-review:weekly:2026-11-09:2026-11-15'+group,payload:{recordType:'store-period-review',...period,status,fields}};};
+const longHighlight='伙伴围绕顾客关心的问题主动服务，详细沟通最新价格与出售安排，形成可借鉴的专业服务方法。'.repeat(6)+'完整段落结尾。';
+const slowStore=U.reviewRankSets(reportCtx).remind[0];
+const noteRows=[saved('仁恒河滨城店',{
+ highlights:'【门店】店面有效做法哨兵\n【仁恒河滨城店E组】E组专属有效做法：围绕业主需求开展专业沟通。（待BP确认）\n已保存草稿，待BP确认',
+ blockers:'【门店】<script>门店卡点</script>\n【仁恒河滨城店A组】A组专属卡点：尚未把资源清单落实到组内承接和邀约分工。\n【仁恒河滨城店D组】D组问题不能复制给A组。',
+ nextActions:'【门店】门店通用推动文字不能复制给A组。\n【仁恒河滨城店A组】A组专属推动：经理组织全员逐套明确邀约安排。'
+}),saved('星河湾店',{highlights:longHighlight+'\n访谈待核实',blockers:'标杆店卡点绝不展示',nextActions:'标杆店下一步绝不展示'},'confirmed'),saved(slowStore.store,{highlights:'偏慢店有效做法绝不展示',blockers:'慢店组织卡点哨兵',nextActions:'慢店专属推动重点哨兵'})];
 const rs={actor:'0921',context:{month:'2026-11',privateData:d},cache:new Map(),drafts:new Map([['unsaved',{fields:{highlights:'未保存输入绝不展示'}}]])};
 x.WBStoreReviews={state:rs,selectedPeriod:()=>period};
-assert.equal(U.reviewSavedNotesText(ctx(store),local.slow[0]),'','unbound or prior-account caches cannot provide meeting prose');
+assert.equal(U.reviewSavedMeetingRecord(ctx(store),local.slow[0]),null,'unbound or prior-account caches cannot provide saved prose');
 const notesHost={innerHTML:''};document.getElementById=id=>id==='ops-review-highlights-content'?notesHost:null;
 const timers=[];x.setTimeout=callback=>{timers.push(callback);return timers.length;};let calls=0;
 x.WBCloud.storeReview=async()=>{calls++;return {items:noteRows,businessData:d};};
 const reviewCloud=U.reviewCloudForHighlights(),loaded=await reviewCloud.storeReview('load',{month:'2026-11'});
 rs.cache.set('2026-11',loaded);while(timers.length)timers.shift()();
 assert.equal(calls,1,'the bridge reuses the review request rather than issuing an extra fetch');
-assert.match(notesHost.innerHTML,/跨大区门店本周安排/,'the completed load refreshes only the existing benchmark content host');
-const noteText=U.reviewSavedNotesText(ctx(store),local.slow[0]);
-assert.match(noteText,/周会复盘与本周安排（2026-11-09—2026-11-15；已保存草稿，待BP确认）/);
-assert.match(noteText,/有效做法：店面有效做法哨兵/);assert.match(noteText,/提升与卡点：<script>门店卡点<\/script>/);assert.match(noteText,/本周安排：核实邀约并准备服务资料/);
-const withNotes=U.reviewHighlightsHtml(ctx(store));
-assert.ok(withNotes.includes('&lt;script&gt;门店卡点&lt;/script&gt;'));assert.ok(!withNotes.includes('<script>'));
-assert.match(withNotes,/所属门店星河湾店｜周会复盘与本周安排/);assert.match(withNotes,/门店本周安排：跨大区门店本周安排/);
-assert.doesNotMatch(withNotes,/未保存输入绝不展示|星河湾店A组已完成/);
-const savedBefore=JSON.stringify(loaded);U.reviewSavedNotesText(ctx(store),local.slow[0]);assert.equal(JSON.stringify(loaded),savedBefore);
-period={periodType:'weekly',periodStart:'2026-11-16',periodEnd:'2026-11-22'};assert.equal(U.reviewSavedNotesText(ctx(store),local.slow[0]),'','no silent fallback to a different period');period={periodType:'weekly',periodStart:'2026-11-09',periodEnd:'2026-11-15'};
-for(const flag of ['loading','error']){loaded[flag]=flag==='loading'?true:'load failed';assert.equal(U.reviewSavedNotesText(ctx(store),local.slow[0]),'');delete loaded[flag];}
-loaded.items=noteRows.slice(0,1);assert.doesNotMatch(U.reviewHighlightsHtml(ctx(store)),/跨大区门店已核实做法|跨大区门店本周安排/,'global rate rankings do not grant access to other stores\' saved prose');loaded.items=noteRows;
-for(const actor of [null,{...member}]){x.WBCloud.member=actor;assert.equal(U.reviewSavedNotesText(ctx(store),local.slow[0]),'','anonymous and newly selected accounts cannot read prior-account prose');}x.WBCloud.member=member;
-rs.context.privateData={...d,reader:{...member}};assert.equal(U.reviewSavedNotesText(ctx(store),local.slow[0]),'');rs.context.privateData=d;
+assert.ok(notesHost.innerHTML.includes(longHighlight),'complete paragraphs beyond 160 characters are retained after the existing load');
+const star=global.benchmark.find(row=>row.store==='星河湾店'),groupE=global.benchmark.find(row=>row.group==='仁恒河滨城店E组');
+let sections=U.reviewReportSections(reportCtx,metric('星河湾店',5,6,5,{region:'陆家嘴大区'}),'benchmark');
+assert.deepEqual(plain(sections.map(section=>section.title)),['有效做法与可借鉴之处']);
+assert.ok(sections[0].paragraphs.includes(longHighlight));assert.doesNotMatch(JSON.stringify(sections),/绝不展示|访谈待核实|已保存草稿|待BP确认|周会复盘与本周安排/);
+const groupBenchmark=U.reviewSavedNotesText(ctx(store),groupE,true,'benchmark');
+assert.match(groupBenchmark,/E组专属有效做法/);assert.doesNotMatch(groupBenchmark,/店面有效做法哨兵|A组专属|D组问题|已保存草稿|待BP确认|访谈待核实/);
+const unrelatedGroup=U.reviewSavedNotesText(ctx(store),star,true,'benchmark');
+assert.equal(unrelatedGroup,'','without a verified method or exact group paragraph, retain metrics rather than label coverage data an effective method');
+assert.doesNotMatch(unrelatedGroup,/伙伴围绕顾客|标杆店卡点|标杆店下一步/,'a store-level success is not assigned to an unconfirmed group');
+const groupSlow=U.reviewSavedNotesText(ctx(store),local.slow[0],true,'reminder');
+assert.match(groupSlow,/组织卡点分析/);assert.match(groupSlow,/推动重点/);assert.match(groupSlow,/占本店25.00%（2\/8套），本月0面见/);
+assert.match(groupSlow,/A组专属卡点/);assert.match(groupSlow,/A组专属推动/);assert.match(groupSlow,/卢海威经理牵头本组承接与分工，组织全员逐套落实邀约/);
+assert.match(groupSlow,/店总牵头门店TOP并亲自邀约、面见关键业主/);assert.match(groupSlow,/经理负责户型TOP与七必卖，顾问负责非七必卖/);
+assert.doesNotMatch(groupSlow,/门店卡点|门店通用推动|店面有效做法|E组专属|D组问题|有效做法与可借鉴之处|待BP确认|访谈待核实/);
+sections=U.reviewReportSections(reportCtx,slowStore,'reminder');
+assert.deepEqual(plain(sections.map(section=>section.title)),['组织卡点分析','推动重点']);assert.match(JSON.stringify(sections),/慢店组织卡点哨兵/);assert.match(JSON.stringify(sections),/慢店专属推动重点哨兵/);assert.doesNotMatch(JSON.stringify(sections),/偏慢店有效做法绝不展示/);
+const withNotes=U.reviewHighlightsHtml(reportCtx);
+assert.ok(withNotes.includes(longHighlight));assert.doesNotMatch(withNotes,/标杆店卡点绝不展示|标杆店下一步绝不展示|偏慢店有效做法绝不展示|未保存输入绝不展示|已保存草稿|待BP确认|访谈待核实|周会复盘与本周安排/);
+const storeRecord=U.reviewSavedMeetingRecord(ctx(store),{...local.slow[0],_level:'store'},false);
+assert.deepEqual(plain(U.reviewScopedReportField(storeRecord,'blockers',local.slow[0],false)),['<script>门店卡点</script>']);
+const neutralCtx={...ctx(store),root:ctx(store).progress.rows.find(row=>row._level==='store')};assert.ok(U.reviewHighlightsHtml(neutralCtx).includes('&lt;script&gt;门店卡点&lt;/script&gt;'));assert.ok(!U.reviewHighlightsHtml(neutralCtx).includes('<script>'));
+const direct=saved(store.store,{highlights:'A组独立有效做法',blockers:'A组独立组织卡点',nextActions:'A组独立推动重点'},'draft',local.slow[0].group);loaded.items=[...noteRows,direct];
+assert.match(U.reviewSavedNotesText(ctx(store),local.slow[0],true,'reminder'),/A组独立组织卡点/);assert.doesNotMatch(U.reviewSavedNotesText(ctx(store),groupE,true,'benchmark'),/A组独立/);loaded.items=noteRows;
+// Explicit store headings are scope boundaries, including real catalog names and local aliases.
+const boundaryField={record:{payload:{}},fields:{highlights:'本店前置内容\n【碧云店】外店经验绝不归入本店\n外店补充也应排除\n【本店】本店恢复内容\n【店面】店面别名内容\n【仁恒河滨城店】完整本店名内容\n【星河湾店】另一外店经验'}};
+assert.deepEqual(plain(U.reviewScopedReportField(boundaryField,'highlights',local.slow[0],false)),['本店前置内容','本店恢复内容','店面别名内容','完整本店名内容']);
+for(const foreign of catalog.filter(entry=>entry.store!==store.store)){
+ boundaryField.fields.highlights=`【门店】本店内容\n【${foreign.store}】外店隔离哨兵\n【全店】本店后续`;
+ assert.deepEqual(plain(U.reviewScopedReportField(boundaryField,'highlights',local.slow[0],false)),['本店内容','本店后续'],foreign.store+' heading isolates its prose');
+}
+// Even record.group does not bypass later headings for another group or store.
+for(const container of ['row','payload']){
+ const groupRecord={record:{...(container==='row'?{group:local.slow[0].group}:{}),payload:container==='payload'?{group:local.slow[0].group}:{}},fields:{highlights:'A组未标头的专属正文\n【仁恒河滨城店B组】B组内容不能整段直出\n【碧云店】外店内容不能整段直出\n【本店】门店通用内容不能归入A组\n【仁恒河滨城店A组】A组重新明确的专属正文'}};
+ assert.deepEqual(plain(U.reviewScopedReportField(groupRecord,'highlights',local.slow[0],true)),['A组未标头的专属正文','A组重新明确的专属正文']);
+ assert.deepEqual(plain(U.reviewScopedReportField(groupRecord,'highlights',groupE,true)),[],'a group-specific record never belongs to another group');
+}
+const savedBefore=JSON.stringify(loaded);U.reviewSavedNotesText(ctx(store),local.slow[0],true,'reminder');assert.equal(JSON.stringify(loaded),savedBefore);
+period={periodType:'weekly',periodStart:'2026-11-16',periodEnd:'2026-11-22'};assert.equal(U.reviewSavedMeetingRecord(ctx(store),local.slow[0]),null,'no silent fallback to a different period');period={periodType:'weekly',periodStart:'2026-11-09',periodEnd:'2026-11-15'};
+for(const flag of ['loading','error']){loaded[flag]=flag==='loading'?true:'load failed';assert.equal(U.reviewSavedMeetingRecord(ctx(store),local.slow[0]),null);delete loaded[flag];}
+loaded.items=noteRows.slice(0,1);assert.ok(!U.reviewHighlightsHtml(reportCtx).includes(longHighlight),'global rate rankings do not grant access to other stores saved prose');loaded.items=noteRows;
+for(const actor of [null,{...member}]){x.WBCloud.member=actor;assert.equal(U.reviewSavedMeetingRecord(ctx(store),local.slow[0]),null,'anonymous and newly selected accounts cannot read prior-account prose');assert.doesNotMatch(U.reviewSavedNotesText(ctx(store),local.slow[0],true,'reminder'),/A组专属/);}x.WBCloud.member=member;
+rs.context.privateData={...d,reader:{...member}};assert.equal(U.reviewSavedMeetingRecord(ctx(store),local.slow[0]),null);rs.context.privateData=d;
 U.state.reviewNotesReaders.delete('2026-11');await reviewCloud.storeReview('load',{month:'2026-11'});x.WBCloud.member={...member};while(timers.length)timers.shift()();assert.equal(U.state.reviewNotesReaders.has('2026-11'),false,'an account switch before deferred refresh cannot bind old results');x.WBCloud.member=member;
 console.log('PASS rate-first review: exact ratios, consistent daily first/last, stable numeric ties, company TOP3/bottom3 and regional first/last, global group TOP5, manager mapping, >=25% zero-met warnings, active inventory and source immutability.');
-console.log('PASS saved meeting prose: signed API cache reuse, selected-period binding, saved draft/confirmed labels, remote global-group store context, no unsaved/group-specific claims, HTML escaping and account/source/loading guards.');
+console.log('PASS report prose: benchmark-only learning, slow-only organizational blockers/focus, exact group sections and records, complete paragraphs, explicit store-manager-advisor roles, no workflow metadata or group generalization, selected-period API binding, HTML escaping and account/loading guards.');

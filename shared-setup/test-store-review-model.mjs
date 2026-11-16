@@ -79,10 +79,11 @@ const malicious='<img src=x onerror=alert(1)> & "';
 assert.equal(R.escapeHtml(malicious),'&lt;img src=x onerror=alert(1)&gt; &amp; &quot;');
 const r=R.report({snapshot:unknown,fields:{periodGoal:4,actions:malicious,execution:'已完成经理沟通',highlights:'真实场景',blockers:'业主时间待约',nextGoal:8,nextActions:'针对B组确认邀约',owner:'待确认',due:'2026-11-22'}});
 assert.equal(r.sections.length,5);assert.ok(r.sections[1].lines.some(t=>t.includes(malicious)),'report is plaintext; HTML consumers must escape');
-assert.ok(r.sections[0].lines.some(t=>t.includes('请BP结合实际反馈补充')));
-assert.ok(r.sections.at(-1).lines.some(t=>t.includes('8套（BP填入／调整）')));
-assert.ok(R.report({snapshot:s}).meta.includes('待BP确认'));
-assert.ok(R.report({snapshot:s,status:'confirmed'}).meta.includes('已确认复盘'));
+assert.ok(!r.sections[0].lines.some(t=>t.includes('请BP结合实际反馈补充')),'presentation omits editing workflow prompts');
+assert.ok(r.sections.at(-1).lines.some(t=>t.includes('8套')));
+assert.ok(!r.sections.at(-1).lines.some(t=>t.includes('BP填入／调整')));
+assert.equal(R.report({snapshot:s}).meta,'业主数据截至'+s.asOf);
+assert.equal(R.report({snapshot:s,status:'confirmed',updatedBy:'不出现在汇报的编辑人',updatedAt:'2026-11-16'}).meta,'业主数据截至'+s.asOf);
 // A canvas recorder verifies all long body text and a footer on every page without depending on pixel hashes.
 const canvases=[];globalThis.document={createElement(){const draw=[];const canvas={width:0,height:0,draw,getContext(){return {font:'',measureText:t=>({width:Array.from(t).length*24}),createLinearGradient:()=>({addColorStop(){}}),fillRect(){},beginPath(){},roundRect(){},fill(){},stroke(){},fillText(t){draw.push(t);}};},toBlob(fn){fn(new Blob(['png'],{type:'image/png'}));}};canvases.push(canvas);return canvas;}};
 const long='长内容逐字保留。'.repeat(1800)+'结尾确认标记';
@@ -94,3 +95,4 @@ assert.equal((drawn.match(/长/g)||[]).length,1800,'no repeated body segment is 
 for(const ch of Array.from('长内容逐字保留。'))assert.equal((drawn.match(new RegExp(ch,'g'))||[]).length>=1800,true,'all repeated body characters survive line/page breaks');
 for(const [i,c] of canvases.slice(1).entries()){assert.ok(c.height<=5600,'page stays within bounded canvas height');assert.ok(c.draw.some(t=>t.includes(`第${i+1}/${exported.length}页`)));assert.ok(c.draw.includes(r.title));}
 console.log('PASS: calendar boundaries, per-week date deduplication, pending evidence, privacy, safe quality availability, editable target recommendations, group order and complete paginated images');
+

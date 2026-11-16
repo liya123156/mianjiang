@@ -88,13 +88,13 @@
  }
  function report({snapshot:s,fields={},status='draft',updatedBy='',updatedAt=''}={}){
   if(!s)throw Error('缺少本店复盘数据');const m=s.monthly,p=s.period,monthly=s.periodType==='monthly',periodLabel=monthly?'月':'周',goal=numberOrNull(fields.periodGoal),next=numberOrNull(fields.nextGoal),value=(v,placeholder)=>text(v)||placeholder,quality=Object.entries(p.qualityCounts||{}).filter(([,n])=>n>0).sort((a,b)=>b[1]-a[1]).map(([code,count])=>`${Q.labels[code]||code}：${count}套（${pct(count,p.met)}）`);
-  const nextPeriod=suggestNext(s),statusLabel=status==='confirmed'?'已确认复盘':'待BP确认';
-  return {title:`${s.store} · 面见${periodLabel}复盘`,subtitle:`${s.region}｜${s.periodStart}—${s.periodEnd}`,meta:[statusLabel,`业主数据截至${s.asOf||'待核实'}`,updatedBy?'更新人：'+text(updatedBy):'',updatedAt?'更新：'+text(updatedAt).replace('T',' ').slice(0,16):''].filter(Boolean).join(' · '),sections:[
-   {title:'一、目标与达成／数据分析',lines:[...analyze(s,goal),...(quality.length?['本期面见收获：',...quality]:[])]},
+  const nextPeriod=suggestNext(s);
+  return {title:`${s.store} · 面见${periodLabel}复盘`,subtitle:`${s.region}｜${s.periodStart}—${s.periodEnd}`,meta:`业主数据截至${s.asOf||'待核实'}`,sections:[
+   {title:'一、目标与达成／数据分析',lines:[...analyze({...s,notes:(s.notes||[]).filter(n=>!n.startsWith('本期收获分类未提供'))},goal),...(quality.length?['本期面见收获：',...quality]:[])]},
    {title:'二、核心动作与执行情况',lines:[[text(fields.actions),text(fields.execution)?'实际执行结果：'+text(fields.execution):''].filter(Boolean).join('\n')||'待BP补充核心动作与实际执行结果；未填写不代表未执行']},
    {title:'三、有效做法与标杆分享',lines:[value(fields.highlights,'待BP补充具体场景、关键动作、实际变化和可借鉴做法')]},
    {title:'四、需要提升与卡点问题分析',lines:[value(fields.blockers,'待BP补充已核实的卡点、原因、尝试及所需支持')]},
-   {title:`五、下${periodLabel}目标与核心举措`,lines:[`下一周期：${nextPeriod.periodStart}—${nextPeriod.periodEnd}`,`下${periodLabel}目标：${next===null?'待BP调整确认':next+'套（BP填入／调整）'}`,value(fields.nextActions,'待BP补充核心举措'),`责任人：${value(fields.owner,'待明确')}｜完成／复查日期：${value(fields.due,'待明确')}`]}
+   {title:`五、下${periodLabel}目标与核心举措`,lines:[`下一周期：${nextPeriod.periodStart}—${nextPeriod.periodEnd}`,`下${periodLabel}目标：${next===null?'待BP调整确认':next+'套'}`,value(fields.nextActions,'待BP补充核心举措'),`责任人：${value(fields.owner,'待明确')}｜完成／复查日期：${value(fields.due,'待明确')}`]}
   ]};
  }
  async function images(value){
@@ -110,7 +110,7 @@
    function draw(t,x,y,size,color,bold=false){ctx.font=`${bold?'600 ':''}${size}px ${font}`;ctx.fillStyle=color;ctx.textBaseline='top';ctx.fillText(t,x,y);}
    const titleLines=wrap(value.title,38,contentWidth);titleLines.forEach((line,i)=>draw(line,pad,30+i*46,38,'#fff',true));draw(value.subtitle,pad,88+Math.max(0,titleLines.length-1)*46,23,'#fff');const meta=wrap(value.meta,18,contentWidth);meta.slice(0,2).forEach((line,i)=>draw(line,pad,132+i*27+Math.max(0,titleLines.length-1)*46,18,'#fff'));
    let y=header;for(const block of blocks){ctx.fillStyle='#fff';ctx.strokeStyle='#e6d9ed';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(pad-15,y,contentWidth+30,block.height,14);ctx.fill();ctx.stroke();let cy=y+23;for(const line of block.titles){draw(line,pad+10,cy,28,'#71408b',true);cy+=42;}for(const line of block.lines){draw(line,pad+10,cy,24,'#4e4159');cy+=38;}y+=block.height+20;}
-   draw(`${value.title}｜第${pi+1}/${pages.length}页 · 原始执行情况由BP核实`,pad,y+12,18,'#8d7798');
+   draw(`${value.title}｜第${pi+1}/${pages.length}页`,pad,y+12,18,'#8d7798');
    const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('复盘图片生成失败')),'image/png'));blobs.push(blob);
   }
   return blobs;
