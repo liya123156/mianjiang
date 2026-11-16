@@ -81,7 +81,10 @@
  }
  function allocationHtml(ctx,d,report=false){
   const frozenPlan=report?validateAllocation(d.allocation,d.target,d.calculation):null,prepared=report?(frozenPlan?{plan:frozenPlan,frozen:true}:null):allocationForDraft(ctx,d);if(!prepared)return '<p class="cwp-source">'+(report?'该计划未保存门店目标分解。':'周目标或门店数据尚未完整，暂不展示目标分解。')+'</p>';const {plan,frozen}=prepared;
-  const table=(rows,field,label)=>'<div class="table-wrap"><table aria-label="'+label+'"><thead><tr><th>'+field+'</th><th>月度目标</th><th>累计面见</th><th>月度剩余差距</th><th>本周目标</th></tr></thead><tbody>'+rows.map(r=>'<tr><th scope="row">'+esc(field==='大区'?r.region:r.store)+'</th><td>'+r.monthlyTarget+'套</td><td>'+r.monthlyMet+'套</td><td>'+r.remainingGap+'套</td><td><strong>'+r.weeklyTarget+'套</strong></td></tr>').join('')+'<tr><th scope="row">全司合计</th><td>'+rows.reduce((n,r)=>n+r.monthlyTarget,0)+'套</td><td>'+rows.reduce((n,r)=>n+r.monthlyMet,0)+'套</td><td>'+plan.totalRemainingGap+'套</td><td><strong>'+plan.allocatedTarget+'套</strong></td></tr></tbody></table></div>';
+  const table=(rows,field,label)=>{
+   const total='<tr><th scope="row">全司合计</th><td>'+rows.reduce((n,r)=>n+r.monthlyTarget,0)+'套</td><td>'+rows.reduce((n,r)=>n+r.monthlyMet,0)+'套</td><td>'+plan.totalRemainingGap+'套</td><td><strong>'+plan.allocatedTarget+'套</strong></td></tr>';
+   return '<div class="table-wrap"><table aria-label="'+label+'"><thead><tr><th>'+field+'</th><th>月度目标</th><th>累计面见</th><th>月度剩余差距</th><th>本周目标</th></tr></thead><tbody>'+total+rows.map(r=>'<tr><th scope="row">'+esc(field==='大区'?r.region:r.store)+'</th><td>'+r.monthlyTarget+'套</td><td>'+r.monthlyMet+'套</td><td>'+r.remainingGap+'套</td><td><strong>'+r.weeklyTarget+'套</strong></td></tr>').join('')+'</tbody></table></div>';
+  };
   return '<h4>本周目标分解 · 全司'+plan.allocatedTarget+'套</h4><p class="cwp-source">'+(frozen?'分解依据：本周计划固定分解。':'分解依据：最新底表建议，按月度剩余差距比例以最大余数法取整。')+(report?'大区目标由门店汇总，按本周已保存目标呈现。':'大区目标由门店汇总。单店复盘目标仍由BP调整确认。')+'</p>'+(plan.unallocatedTarget?'<p class="cwp-warning">本周计划目标高于门店剩余差距，最多可分配'+plan.allocatedTarget+'套，另有'+plan.unallocatedTarget+'套待项目负责人调整确认。</p>':'')+table(plan.regions,'大区','五大区周目标分解')+'<details'+(report?' open':'')+'><summary>查看18家门店周目标分解</summary>'+table(plan.stores,'门店','18家门店周目标分解')+'</details>';
  }
  function calculate(business,p){
