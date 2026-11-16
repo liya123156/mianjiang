@@ -193,21 +193,47 @@
     const id=expenseId(candidate),house=text(candidate.houseId),address=expenseAddress(candidate);
     return records.filter(e=>!e.voided&&(!id||expenseId(e)!==id)&&sameExpenseScope(candidate,e)&&((house&&text(e.houseId)===house)||((!house||!text(e.houseId))&&address&&expenseAddress(e)===address)));
   }
+  const companyAccount='公司（待财务报销）';
+  // Canonical keys only affect calculation; original payer / advisor text stays on each row.
+  function expensePersonName(value){
+    const name=text(value).normalize('NFKC').replace(/[\s\u00a0]/g,'');
+    if(!name||['—','-','/','待补充','待核对','未填写','未分配','未知'].includes(name))return '';
+    return name==='公司(待财务报销)'?companyAccount:name;
+  }
+  function expenseManagerKey(expense={}){
+    const month=text(expense.month),region=orderText(expense.region??expense['大区']),store=canonicalStore(expense.store??expense['门店']),group=orderText(canonicalGroup(expense.group??expense['店组'])),manager=expensePersonName(expense.manager);
+    if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month)||!region||!store||!group||!manager)return '';
+    return JSON.stringify(['expense-manager-v1',month,region,store,group,manager]);
+  }
+  function expensePeople(expense={}){
+    const e={...expense},directory=root.WBManagerDirectory,scope={region:text(e.region??e['大区']),store:canonicalStore(e.store??e['门店']),group:text(e.group??e['店组'])};
+    const unknown=name=>({name:text(name),role:'待核对',status:expensePersonName(name)?'unknown':'missing',groups:[],matches:[],note:'付款身份待核对'});
+    const payerIdentity=directory?.recognize?directory.recognize(e.payer,scope):unknown(e.payer);
+    const priorAuto=e.managerSource==='directory'&&expensePersonName(e.manager)===expensePersonName(e.managerDirectoryName);
+    const explicitManager=priorAuto?'':expensePersonName(e.manager),managerDirectoryName=directory?.lookup?.(scope)||'';
+    const manager=explicitManager?e.manager:managerDirectoryName||'',managerSource=explicitManager?'explicit':managerDirectoryName?'directory':'missing';
+    const managerConflict=!!(explicitManager&&managerDirectoryName&&explicitManager!==expensePersonName(managerDirectoryName));
+    const confirmationKey=expenseManagerKey({...e,...scope,manager}),managerConflictConfirmed=!!(managerConflict&&confirmationKey&&e.managerConfirmation===confirmationKey);
+    const identityIssues=managerConflict&&!managerConflictConfirmed?['已填负责经理与店组名册不一致，请核实当期负责经理后确认']:[];
+    return {...e,manager,managerSource,managerDirectoryName,managerConflict,managerConflictConfirmed,identityIssues,payerIdentity,payerRole:payerIdentity.role,payerRoleStatus:payerIdentity.status};
+  }
   function ledger(expenses,rules,head={}){
     const r={cap:3000,advisor:300,manager:500,storeContribution:30000,regionContribution:0,extraWeights:[1,1,1],...rules};
     for(const key of ['cap','advisor','manager','storeContribution','regionContribution'])if(!Number.isSafeInteger(r[key])||r[key]<0)throw Error('费用规则须为非负分币整数');
     if(!Array.isArray(r.extraWeights)||r.extraWeights.length!==3||r.extraWeights.some(w=>!Number.isFinite(w)||w<0)||!Number.isFinite(sum(r.extraWeights,w=>w))||sum(r.extraWeights,w=>w)<=0)throw Error('超额承担比例须为非负数且合计大于0');
-    const result={actual:0,quantity:0,advisor:0,manager:0,store:0,region:0,company:0,storeConsumed:0,regionConsumed:0,extraStore:0,missing:0,lines:[],balances:[]};
+    const result={actual:0,quantity:0,advisor:0,manager:0,store:0,region:0,company:0,storeConsumed:0,regionConsumed:0,extraStore:0,missing:0,lines:[],balances:[],alerts:[],unassigned:{payer:0,advisor:0,manager:0,storeHead:0,regionHead:0,total:0,balance:0,entries:[]}};
     let remainder=0;
-    for(const e of expenses){
-      if(e.voided)continue;
+    for(const sourceExpense of expenses){
+      if(sourceExpense.voided)continue;
+      const e=expensePeople(sourceExpense);
       const price=typeof e.priceCents==='boolean'?NaN:Number(e.priceCents),quantity=expenseQuantity(e),amount=expenseAmount(e);
       if(!Number.isSafeInteger(amount)||amount<=0){result.missing++;continue;}
       const base=Math.min(price,r.cap),a=Math.min(base,r.advisor),m=Math.min(base-a,r.manager),extra=split(Math.max(0,price-r.cap),r.extraWeights);
       const advisorShare=(a+extra[0])*quantity,managerShare=(m+extra[1])*quantity,extraStoreShare=extra[2]*quantity;
       result.actual+=amount;result.quantity+=quantity;result.advisor+=advisorShare;result.manager+=managerShare;result.extraStore+=extraStoreShare;remainder+=(base-a-m)*quantity;
       if([result.actual,result.quantity,result.advisor,result.manager,result.extraStore,remainder].some(n=>!Number.isSafeInteger(n)))throw Error('费用金额或数量超出有效范围，请核对明细');
-      if(!e.payer||!e.manager||!e.advisor||!e.proofPath)result.missing++;
+      if(!expensePersonName(e.payer)||!expensePersonName(e.manager)||!expensePersonName(e.advisor)||!e.proofPath||e.identityIssues.length)result.missing++;
+      for(const issue of e.identityIssues)result.alerts.push((e.project||e.houseId||e.expenseId||'送礼明细')+'：'+issue);
       if(e.duplicateWarning)result.missing++;
       result.lines.push({...e,expenseId:expenseId(e),priceCents:price,quantity,amountCents:amount,advisorShare,managerShare,extraStoreShare});
     }
@@ -218,15 +244,20 @@
     result.company=remainder-result.storeConsumed-result.regionConsumed;
     result.store=result.storeConsumed+result.extraStore;result.region=result.regionConsumed;
     result.closingStore=openingStore+r.storeContribution-result.storeConsumed;result.closingRegion=openingRegion+r.regionContribution-result.regionConsumed;
-    const balances=new Map(),change=(name,v)=>{if(name){const next=(balances.get(name)||0)+v;if(!Number.isSafeInteger(next))throw Error('收付款金额超出有效范围，请核对明细');balances.set(name,next);}};
-    result.lines.forEach(e=>{change(e.payer,e.amountCents);change(e.advisor,-e.advisorShare);change(e.manager,-e.managerShare);});
-    change(head.storeHead,-r.storeContribution-result.extraStore);change(head.regionHead,-r.regionContribution);change('公司（待财务报销）',-result.company);
+    const balances=new Map(),change=(rawName,v,role,expenseId='')=>{
+      if(!v)return;const name=expensePersonName(rawName);
+      if(!name){const u=result.unassigned;u[role]+=Math.abs(v);u.total+=Math.abs(v);u.balance+=v;u.entries.push({expenseId,role,amount:v});if([u[role],u.total,u.balance].some(n=>!Number.isSafeInteger(n)))throw Error('待归属金额超出有效范围，请核对明细');return;}
+      const next=(balances.get(name)||0)+v;if(!Number.isSafeInteger(next))throw Error('收付款金额超出有效范围，请核对明细');balances.set(name,next);
+    };
+    result.lines.forEach(e=>{change(e.payer,e.amountCents,'payer',e.expenseId);change(e.advisor,-e.advisorShare,'advisor',e.expenseId);change(e.manager,-e.managerShare,'manager',e.expenseId);});
+    change(head.storeHead,-r.storeContribution-result.extraStore,'storeHead');change(head.regionHead,-r.regionContribution,'regionHead');change(companyAccount,-result.company);
     result.balances=[...balances].filter(([,amount])=>amount!==0).map(([name,amount])=>({name,amount}));
-    if(!head.storeHead||(r.regionContribution&&!head.regionHead))result.missing++;
+    if(!expensePersonName(head.storeHead)||(r.regionContribution&&!expensePersonName(head.regionHead)))result.missing++;
+    if(result.unassigned.total){result.alerts.push('存在尚未归属到具体人员的付款或分摊金额，请补齐人员后再结账');if(!result.missing)result.missing++;}
     if(result.actual!==result.advisor+result.manager+result.store+result.region+result.company)throw Error('费用分摊未对平');
     return result;
   }
-  function expenseCandidates(rows,month){return active(rows).filter(r=>flag(r['本月是否送礼物'])&&text(r['房源编号'])).map(r=>({id:month+'|'+r['房源编号'],expenseId:text(r['房源编号']),month,source:'system',houseId:text(r['房源编号']),region:r['大区'],store:canonicalStore(r['门店']),group:r['店组'],advisor:r['维护人姓名'],project:r['分盘']||r['总盘']||'',room:r['房间号']||''}));}
+  function expenseCandidates(rows,month){return active(rows).filter(r=>flag(r['本月是否送礼物'])&&text(r['房源编号'])).map(r=>({id:month+'|'+r['房源编号'],expenseId:text(r['房源编号']),month,source:'system',houseId:text(r['房源编号']),region:r['大区'],store:canonicalStore(r['门店']),group:r['店组'],advisor:r['维护人姓名'],project:r['分盘']||r['总盘']||'',room:r['房间号']||'',manager:text(r['经理姓名']||r['负责经理']||r['店经理'])})).map(expensePeople);}
   function expenseRecords(rows,items,month,scope={}){
     const saved=(items||[]).filter(x=>x.kind==='expense'&&(!x.month||x.month===month)&&x.payload&&(x.payload.recordType==='gift'||text(x.payload.houseId))).map(x=>({...x.payload,expenseId:expenseId({...x.payload,key:x.key}),month,region:x.region,store:canonicalStore(x.store),key:x.key,updated_at:x.updated_at}));
     const inExpenseScope=e=>(!scope.region||e.region===scope.region)&&(!scope.store||canonicalStore(e.store)===canonicalStore(scope.store));
@@ -237,7 +268,7 @@
     for(const e of local){
       const id=expenseId(e);if(!id)continue;
       const existing=text(e.houseId)?output.get(text(e.houseId)):output.get(id);
-      output.set(id,{...existing,...e,retained:!existing});
+      output.set(id,{...existing,...e,...(Object.prototype.hasOwnProperty.call(e,'manager')?{managerSource:'',managerDirectoryName:''}:{}),retained:!existing});
     }
     // A later import may supply a house ID for an already entered manual gift.
     // Absorb only an unambiguous same-store address candidate; keep the saved ID
@@ -250,19 +281,19 @@
         const c=matches[0];output.delete(c.expenseId);output.set(expenseId(manual),{...c,...manual,matchedHouseId:c.houseId,houseId:'',retained:false});
       }else if(matches.length||peers.length>1){const current=output.get(expenseId(manual));output.set(expenseId(manual),{...current,duplicateWarning:'同一门店存在相似房源费用，请核实是否重复后再结账。'});}
     }
-    return [...output.values()];
+    return [...output.values()].map(expensePeople);
   }
   function cashSettlement(ledger,entries){
-    const balances=new Map(ledger.balances.map(x=>[x.name,x.amount]));let received=0,refunded=0,companyReceived=0;
+    const balances=new Map();for(const entry of ledger.balances){const name=expensePersonName(entry.name);if(name)balances.set(name,(balances.get(name)||0)+entry.amount);}let received=0,refunded=0,companyReceived=0;
     for(const e of entries.filter(x=>!x.voided)){
       if(!['receive','refund','company'].includes(e.type)||!Number.isInteger(e.amount)||e.amount<=0)throw Error('收付款须填写有效的类型与金额');
-      const name=e.type==='company'?'公司（待财务报销）':text(e.name);if(!name)throw Error('收付款须填写姓名');
+      const name=e.type==='company'?companyAccount:expensePersonName(e.name);if(!name)throw Error('收付款须填写姓名');
       const delta=e.type==='refund'?-e.amount:e.amount;balances.set(name,(balances.get(name)||0)+delta);
       if(e.type==='receive')received+=e.amount;else if(e.type==='refund')refunded+=e.amount;else companyReceived+=e.amount;
     }
     return {received,refunded,companyReceived,balances:[...balances].filter(([,amount])=>amount!==0).map(([name,amount])=>({name,amount}))};
   }
-  root.WBModel={text,number,flag,pct,unique,canonicalStore,storeCatalog,compareText,compareRegion,compareStore,compareGroup,sortRegions,orderProgress,active,inScope,metrics,meetingCountValue,meetingCountLabel,table,withRateRanks,rateRankSymbol,rateRankLabel,snapshot,delta,validateImport,validateCustomerImport,split,ledger,expenseId,expenseQuantity,expenseAmount,findExpenseDuplicates,expenseCandidates,expenseRecords,cashSettlement,uuid};
+  root.WBModel={text,number,flag,pct,unique,canonicalStore,storeCatalog,compareText,compareRegion,compareStore,compareGroup,sortRegions,orderProgress,active,inScope,metrics,meetingCountValue,meetingCountLabel,table,withRateRanks,rateRankSymbol,rateRankLabel,snapshot,delta,validateImport,validateCustomerImport,split,ledger,expenseId,expenseQuantity,expenseAmount,expensePersonName,expenseManagerKey,expensePeople,findExpenseDuplicates,expenseCandidates,expenseRecords,cashSettlement,uuid};
   if(typeof module==='object')module.exports=root.WBModel;
 })(typeof window==='object'?window:globalThis);
 

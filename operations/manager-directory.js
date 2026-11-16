@@ -84,5 +84,18 @@
  if(byIdentity.size!==rows.length)throw Error('经理名册存在重复店组，请核对');
  function lookup(row){return byIdentity.get(key(row))||'';}
  function nameFor(row){const group=identity(row).group;return !group||['/','—','-'].includes(group)?'—':lookup(row)||'待补充';}
- root.WBManagerDirectory={rows,lookup,nameFor};if(typeof module==='object')module.exports=root.WBManagerDirectory;
+ // Payment identity is a separate lookup: a manager can advance money for another group.
+ // The supplied roster has no effective dates, so this is a reference match, not
+ // confirmation that the same person held that position in a historical month.
+ function recognize(name,scope={}){
+  const input=String(name??''),normalized=normalize(input),org=identity(scope),note='依据已提供经理名册识别；历史任职请结合当期记录核实';
+  const missing=!normalized||['—','-','/','待补充','待核对','未填写','未分配','未知'].includes(normalized);
+  const base={name:input.trim(),role:'待核对',status:missing?'missing':'unknown',groups:[],matches:[],note};
+  if(missing)return base;
+  if(!org.region||!org.store)return {...base,status:'scope-missing'};
+  const matches=rows.filter(row=>normalize(row.name)===normalized&&normalize(row.region)===org.region&&storeName(row.store)===org.store);
+  if(matches.length!==1)return {...base,status:matches.length?'ambiguous':'unknown',groups:matches.map(row=>row.group),matches:matches.map(row=>({...row}))};
+  return {...base,name:matches[0].name,role:'店经理',status:'matched',groups:[matches[0].group],matches:[{...matches[0]}]};
+ }
+ root.WBManagerDirectory={rows,lookup,nameFor,recognize};if(typeof module==='object')module.exports=root.WBManagerDirectory;
 })(typeof window==='object'?window:globalThis);
