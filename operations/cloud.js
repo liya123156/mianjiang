@@ -44,6 +44,12 @@
   if(!session?.token)throw Error('请先进入BP／管理入口');
   return request('wb_company_week_plan_api',{p_token:session.token,p_action:action,p_args:args});
  }
+ async function publicCompanyWeekPlans(action,args={}){
+  if(action!=='load')throw Error('公开周目标与策略仅支持查看');
+  if(!args||typeof args!=='object'||Array.isArray(args)||Object.keys(args).some(key=>key!=='month')||!/^20\d{2}-(0[1-9]|1[0-2])$/.test(String(args.month||'')))throw Error('周计划月份不正确');
+  try{return await request('wb_public_company_week_plans',{p_month:args.month});}
+  catch{throw Error('周目标与策略暂时未能读取，请稍后刷新。');}
+ }
  async function plan(action,args={}){
   if(!['public'].includes(action)&&!session?.token)throw Error('请先进入BP／管理入口');
   return request('wb_plan_api',{p_token:session?.token||null,p_action:action,p_args:args});
@@ -65,6 +71,7 @@
   if(!response.ok||result.error)throw Error(result.error||result.message||'文件上传失败：'+response.status);
   return {...result.asset,url:archiveUrl(result.asset.object_path),downloadUrl:archiveUrl(result.asset.object_path,result.asset.original_name)};
  }
- root.WBCloud={configured,validateCode,login,membership,logout,load,rpc,storeReview,companyWeekPlan,plan,importCustomerSnapshot,saveItem,uploadProof,proofUrl,uploadArchive,archiveUrl,get member(){return member;},get hasSession(){return !!session;},get project(){return member?.role==='project';}};
+ root.WBCloud={configured,validateCode,login,membership,logout,load,rpc,storeReview,companyWeekPlan,publicCompanyWeekPlans,plan,importCustomerSnapshot,saveItem,uploadProof,proofUrl,uploadArchive,archiveUrl,get member(){return member;},get hasSession(){return !!session;},get project(){return member?.role==='project';}};
 })(window);
+
 
