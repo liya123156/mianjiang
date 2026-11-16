@@ -38,9 +38,24 @@ const tied=B.rank([{store:'甲',group:'A',name:'a',met:8,meetingCount:8},{store:
 assert.throws(()=>B.build({businessData:{...businessData,housing:h},month:'2026-11'}),/18家门店完整底表/);assert.throws(()=>B.build({businessData:{...businessData,imports:[{as_of:'2026-10-31',created_at:'x'}]},month:'2026-11'}),/日期或版本/);
 const blank=home('blank','尚海湾店','A','',1);const blankBoard=B.build({businessData:{...businessData,housing:[...housing,blank]},month:'2026-11'});assert.ok(!blankBoard.sections[2].rows.some(r=>r.name==='未填写'));assert.equal(blankBoard.summary.met,10,'missing identity remains in aggregate facts without a fictitious personal benchmark');
 const manyOutcomes={...board,sections:[{...board.sections[0],rows:[{...board.sections[0].rows[0],outcomes:Object.entries(B.labels).map(([code,label])=>({code,label,count:1})),feedbackLines:Object.values(B.labels).map(label=>label+'：1套'),feedbackText:Object.values(B.labels).map(label=>label+'：1套').join('\n')}]}]};
-const image=await B.image(manyOutcomes);assert.ok(image instanceof Blob);assert.equal(image.type,'image/png');assert.equal(exports,1,'one PNG output, no image pages');assert.ok(canvases.every(c=>c.height<=30000));assert.ok(canvases.at(-1).width*canvases.at(-1).height<=64000000);for(const label of Object.values(B.labels))assert.ok(drawn.some(t=>t.includes(label)),label+' retained');assert.ok(!drawn.some(t=>t.includes('%')));assert.ok(drawn.includes(board.slogans[0]));assert.ok(drawn.includes(board.slogans[1]));
+const image=await B.image(manyOutcomes);assert.ok(image instanceof Blob);assert.equal(image.type,'image/png');assert.equal(exports,1,'one PNG output, no image pages');assert.ok(canvases.every(c=>c.height<=30000));assert.ok(canvases.at(-1).width*canvases.at(-1).height<=64000000);for(const label of Object.values(B.posterFeedbackLabels))assert.ok(drawn.join('').includes(label),label+' retained');assert.ok(!drawn.some(t=>t.includes('%')));assert.ok(drawn.includes(board.slogans[0]));assert.ok(drawn.includes(board.slogans[1]));
 const png=await B.image(board);assert.equal(exports,2);
 const centeredTexts=[board.title,...board.slogans,...board.sections.map(s=>s.title)];for(const label of centeredTexts){const matches=placements.filter(p=>p.text===label);assert.ok(matches.length,label+' is drawn');assert.ok(matches.every(p=>p.x===900&&p.align==='center'),label+' is centered across the poster');}
-assert.ok(placements.some(p=>p.align==='left'&&Object.values(B.labels).some(label=>p.text.includes(label))),'full feedback stays left aligned inside each honor card');
+assert.ok(placements.some(p=>p.align==='left'&&Object.values(B.posterFeedbackLabels).some(label=>p.text.includes(label))),'full feedback stays left aligned inside each honor card');
+// Guard the WeChat use case: all 17 real-scale honors, including ties, stay compact
+// without shrinking body type or dropping a category / pending-data notice.
+const compactRows=[3,6,8].map((n,sectionIndex)=>Array.from({length:n},(_,i)=>{
+ const source=board.sections[sectionIndex].rows[i%board.sections[sectionIndex].rows.length];
+ return {...source,rank:sectionIndex===2&&i>1?3:i+1,store:i===3?'融创滨江壹号院店':source.store,group:i===3?'融创滨江壹号院店A组':source.group,name:sectionIndex===2?'测试伙伴'+i:source.name};
+}));
+const compactBoard={...board,sections:board.sections.map((s,i)=>({...s,rows:compactRows[i]}))};
+const compactPlan=B.posterLayout(compactBoard,createCanvas().getContext('2d'));
+assert.equal(compactPlan.outputWidth,1800);assert.equal(compactPlan.scale,1,'normal data never shrinks to fit');
+assert.ok(compactPlan.outputHeight<=3100,'3 stores, 6 groups and 8 people stay below 3100px: '+compactPlan.outputHeight);
+assert.ok(compactPlan.bodyFontSize>=34,'feedback type remains readable');
+assert.equal(compactPlan.sections.flatMap(s=>s.cards).length,17,'ties remain fully represented');
+const fullPlan=B.posterLayout(manyOutcomes,createCanvas().getContext('2d'));
+assert.ok(fullPlan.sections[0].cards[0].feedbackLines.join('').includes('其他需求'),'the last of all seven categories remains present');
+assert.equal(B.posterTemplate,'compact-honor-rows-v1');
 assert.match(html,/cb-honor/);assert.match(html,/荣誉时刻/);assert.match(fs.readFileSync(new URL('../operations/benchmark-board.css',import.meta.url),'utf8'),/\.cb-hero\{[^}]*text-align:center/);if(real&&process.env.PREVIEW_PATH){fs.writeFileSync(process.env.PREVIEW_PATH,Buffer.from(await png.arrayBuffer()));console.log('RENDER '+process.env.PREVIEW_PATH+' '+canvases.at(-1).width+'x'+canvases.at(-1).height);}
 console.log('PASS company benchmark: complete18 global source, monthly fact deduplication, primary observed outcomes, all categories with counts only, maintainer attribution, missing identity/data, managers, true ties, exact slogans and one bounded PNG.');
