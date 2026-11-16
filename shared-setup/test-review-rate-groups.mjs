@@ -94,7 +94,7 @@ x.WBCloud.storeReview=async()=>{calls++;return {items:noteRows,businessData:d};}
 const reviewCloud=U.reviewCloudForHighlights(),loaded=await reviewCloud.storeReview('load',{month:'2026-11'});
 rs.cache.set('2026-11',loaded);while(timers.length)timers.shift()();
 assert.equal(calls,1,'the bridge reuses the review request rather than issuing an extra fetch');
-assert.ok(notesHost.innerHTML.includes(longHighlight),'complete paragraphs beyond 160 characters are retained after the existing load');
+assert.match(notesHost.innerHTML,/标杆萃取｜目标与房商机咬合/,'the existing load refreshes the approved public case cards');
 const star=global.benchmark.find(row=>row.store==='星河湾店'),groupE=global.benchmark.find(row=>row.group==='仁恒河滨城店E组');
 let sections=U.reviewReportSections(reportCtx,metric('星河湾店',5,6,5,{region:'陆家嘴大区'}),'benchmark');
 assert.deepEqual(plain(sections.map(section=>section.title)),['有效做法与可借鉴之处']);
@@ -112,7 +112,7 @@ assert.doesNotMatch(groupSlow,/门店卡点|门店通用推动|店面有效做�
 sections=U.reviewReportSections(reportCtx,slowStore,'reminder');
 assert.deepEqual(plain(sections.map(section=>section.title)),['组织卡点分析','推动重点']);assert.match(JSON.stringify(sections),/慢店组织卡点哨兵/);assert.match(JSON.stringify(sections),/慢店专属推动重点哨兵/);assert.doesNotMatch(JSON.stringify(sections),/偏慢店有效做法绝不展示/);
 const withNotes=U.reviewHighlightsHtml(reportCtx);
-assert.ok(withNotes.includes(longHighlight));assert.doesNotMatch(withNotes,/标杆店卡点绝不展示|标杆店下一步绝不展示|偏慢店有效做法绝不展示|未保存输入绝不展示|已保存草稿|待BP确认|访谈待核实|周会复盘与本周安排/);
+assert.match(withNotes,/标杆萃取｜目标与房商机咬合/);assert.ok(!withNotes.includes(longHighlight),'unselected store prose is not appended to an approved case');assert.doesNotMatch(withNotes,/标杆店卡点绝不展示|标杆店下一步绝不展示|偏慢店有效做法绝不展示|未保存输入绝不展示|已保存草稿|待BP确认|访谈待核实|周会复盘与本周安排/);
 const storeRecord=U.reviewSavedMeetingRecord(ctx(store),{...local.slow[0],_level:'store'},false);
 assert.deepEqual(plain(U.reviewScopedReportField(storeRecord,'blockers',local.slow[0],false)),['<script>门店卡点</script>']);
 const neutralCtx={...ctx(store),root:ctx(store).progress.rows.find(row=>row._level==='store')};assert.ok(U.reviewHighlightsHtml(neutralCtx).includes('&lt;script&gt;门店卡点&lt;/script&gt;'));assert.ok(!U.reviewHighlightsHtml(neutralCtx).includes('<script>'));

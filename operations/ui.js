@@ -176,6 +176,20 @@
   if(!ctx.warningCompanyRows)ctx.warningCompanyRows=M.table(company.housing,{},goals(),currentMonth,company.meetings||[],customerOptions(company)).rows.filter(row=>row._level==='store');
   return ctx.warningCompanyRows;
  }
+ // Published case studies are an editorial selection for this month's review.
+ // They do not change the numerical rate rankings or expose private BP drafts.
+ const REVIEW_APPROVED_PRACTICES={'2026-11':[
+  {region:'花木大区',store:'御翠园店',title:'目标与房商机咬合，带动面见动作落地',paragraphs:['御翠园店A组面见量有所提升，背后的关键是大区总直接跟进门店的房商机，带动经理从业务目标和房源推进的角度思考，再将房商机落实到具体的面见动作上。经理在认知和行动上的承接，让目标与面见形成了关联。值得借鉴的是，围绕房源要实现的业务目标，思考面见能够解决什么问题、推动什么进展，让经理清楚面见的价值，并主动组织行动。']},
+  {region:'滨江古北大区',store:'融创滨江壹号院店',title:'把用心准备，转化为顾客感受到的服务',paragraphs:['伙伴主动在上海联系果园，开车采摘应季水果，包装后作为伴手礼送给顾客，收获了顾客认可。这一做法的价值，在于将时令、新意和伙伴亲自准备的心意融入服务。其他门店可以借鉴提前联系、按需准备的方式，结合自身顾客特点选择礼品，让伴手礼成为自然连接和沟通的契机。']},
+  {region:'黄浦大区',store:'复兴香园店',title:'店总主动带动，让面见形成店内氛围',paragraphs:['亮点是店内面见氛围较浓、店总带动较好。值得借鉴的是管理者主动关注面见，把伙伴的服务行动和正反馈及时分享出来，让伙伴感受到这件事受到重视，也让主动服务业主的伙伴被看见、被认可。']}
+ ]};
+ function reviewPracticeEdition(ctx){return REVIEW_APPROVED_PRACTICES[currentMonth]||null;}
+ function reviewApprovedPractice(ctx,row){return row&&(reviewPracticeEdition(ctx)||[]).find(entry=>entry.store===row.store&&entry.region===row.region)||null;}
+ function reviewHighlightSets(ctx){
+  const sets=reviewRankSets(ctx),edition=reviewPracticeEdition(ctx);if(!edition)return sets;
+  const inView=entry=>(ctx.view.scope!=='region'||entry.region===ctx.view.region)&&(ctx.view.scope!=='store'||entry.store===(ctx.view.store||ctx.view.name)),rows=reviewStoreRows(ctx),bench=edition.filter(inView).map(entry=>rows.find(row=>row.store===entry.store&&row.region===entry.region)).filter(Boolean);
+  return {...sets,bench:sets.single?[]:bench,practiceEdition:true};
+ }
  function reviewRankSets(ctx){
   const rows=reviewStoreRows(ctx);if(ctx.view.scope==='store')return {bench:[],remind:[],single:ctx.root};
   const limit=ctx.view.scope==='region'?1:3,bench=reviewOrganizationRank(rows,limit,true,true),benchNames=new Set(bench.map(row=>row.store));
@@ -224,7 +238,7 @@
  }
  function reviewReportSections(ctx,row,tone='benchmark',group=false){
   const saved=reviewSavedMeetingRecord(ctx,row,group),field=name=>reviewScopedReportField(saved,name,row,group),coverage=`${group?'本组':'本店'}在售${row.stock}套，已面见${row.met}套，全盘面见率${row.met_rate}。`,unique=lines=>[...new Set(lines.filter(Boolean))];
-  if(tone==='benchmark'){const highlights=field('highlights');return highlights.length?[{title:'有效做法与可借鉴之处',paragraphs:highlights}]:[];}
+  if(tone==='benchmark'){const approved=!group&&reviewApprovedPractice(ctx,row);if(approved)return [{title:'标杆萃取｜'+approved.title,paragraphs:[...approved.paragraphs]}];const highlights=field('highlights');return highlights.length?[{title:'有效做法与可借鉴之处',paragraphs:highlights}]:[];}
   if(tone==='reminder'){
    let analysis=coverage;
    if(group&&Number(row.met)===0&&row.storeStock>0&&row.stock*4>=row.storeStock)analysis=`本组在售${row.stock}套，占本店${M.pct(row.stock,row.storeStock)}（${row.stock}/${row.storeStock}套），本月0面见。门店四分之一以上的在售资源尚未形成面见覆盖，组织突破点是经理承接、组内分工与全员邀约。`;
@@ -267,16 +281,16 @@
   return `<article class="review-rank-card ${tone}"><span>${E(reviewRowName(row))}</span><div class="review-rank-metrics">${progress}<p>${E(reviewMetricSentence('全盘',row.met,row.stock,row.met_rate))}</p><p>${E(reviewMetricSentence('门店TOP',row.store_top_met,row.store_top_stock,row.store_top_rate))}</p><p>${E(reviewMetricSentence('户型TOP',row.unit_top_met,row.unit_top_stock,row.unit_top_rate))}</p></div>${reviewSavedNotesHtml(ctx,row,false,tone)}</article>`;
  }
  function reviewSingleTone(ctx,row){
-  if(!row)return 'neutral';const all=reviewCompanyStoreRows(ctx);if(!all.length)return 'neutral';
-  if(reviewOrganizationRank(all,3,true,true).some(item=>item.store===row.store))return 'benchmark';
+  if(!row)return 'neutral';const edition=reviewPracticeEdition(ctx);if(edition&&reviewApprovedPractice(ctx,row))return 'benchmark';const all=reviewCompanyStoreRows(ctx);if(!all.length)return 'neutral';
+  if(!edition&&reviewOrganizationRank(all,3,true,true).some(item=>item.store===row.store))return 'benchmark';
   if(reviewOrganizationRank(all,3,false).some(item=>item.store===row.store))return 'reminder';
   return 'neutral';
  }
  function reviewHighlightsHtml(ctx){
-  const sets=reviewRankSets(ctx),groups=reviewGroupAnalysisHtml(ctx);
-  if(sets.single){const row=sets.single,tone=reviewSingleTone(ctx,row),status=tone==='benchmark'?'本月面见率标杆门店':tone==='reminder'?'本月面见率进展偏慢门店':'本店月度表现';return `<div class="review-report"><div class="review-rank-grid">${reviewRankCard(ctx,row,tone,status+'：'+reviewRankReason(row,tone))}</div>${groups}${reviewOpportunityHtml(ctx)}</div>`;}
-  const limit=ctx.view.scope==='region'?1:3,rule='统一依据：月度全盘面见率优先；同率依次按面见套数、面见次数排序；相同保留并列。目标完成率与双TOP覆盖单独呈现，不改变排名。';
-  return `<div class="review-report"><div class="review-rank-section"><h3>标杆门店｜月度全盘面见率${limit===1?'第一名':'TOP3'}</h3><p class="review-footnote">${E(rule)}</p><div class="review-rank-grid">${sets.bench.map(row=>reviewRankCard(ctx,row,'benchmark',reviewRankReason(row,'benchmark'))).join('')||'<p class="ops-muted">当前范围暂无已有面见的标杆门店。</p>'}</div></div><div class="review-rank-section"><h3>进展偏慢门店｜月度全盘面见率${limit===1?'最后一名':'倒数3家'}</h3><div class="review-rank-grid">${sets.remind.map(row=>reviewRankCard(ctx,row,'reminder',reviewRankReason(row,'reminder'))).join('')||'<p class="ops-muted">当前范围暂无可独立列出的进展偏慢门店。</p>'}</div></div>${groups}${reviewOpportunityHtml(ctx)}</div>`;
+  const sets=reviewHighlightSets(ctx),groups=reviewGroupAnalysisHtml(ctx);
+  if(sets.single){const row=sets.single,tone=reviewSingleTone(ctx,row),status=tone==='benchmark'?(sets.practiceEdition?'本期标杆做法分享':'本月面见率标杆门店'):tone==='reminder'?'本月面见率进展偏慢门店':'本店月度表现';return `<div class="review-report"><div class="review-rank-grid">${reviewRankCard(ctx,row,tone,status+'：'+reviewRankReason(row,tone))}</div>${groups}${reviewOpportunityHtml(ctx)}</div>`;}
+  const limit=ctx.view.scope==='region'?1:3,heading=sets.practiceEdition?'标杆门店｜有效做法萃取':`标杆门店｜月度全盘面见率${limit===1?'第一名':'TOP3'}`,rule=sets.practiceEdition?'本期分享目标与房商机咬合、用心服务与店总氛围带动三项做法；各店月度进展同步呈现。':'统一依据：月度全盘面见率优先；同率依次按面见套数、面见次数排序；相同保留并列。目标完成率与双TOP覆盖单独呈现，不改变排名。',empty=sets.practiceEdition?'当前范围暂无本期已发布的标杆做法。':'当前范围暂无已有面见的标杆门店。';
+  return `<div class="review-report"><div class="review-rank-section"><h3>${E(heading)}</h3><p class="review-footnote">${E(rule)}</p><div class="review-rank-grid">${sets.bench.map(row=>reviewRankCard(ctx,row,'benchmark',reviewRankReason(row,'benchmark'))).join('')||`<p class="ops-muted">${E(empty)}</p>`}</div></div><div class="review-rank-section"><h3>进展偏慢门店｜月度全盘面见率${limit===1?'最后一名':'倒数3家'}</h3><div class="review-rank-grid">${sets.remind.map(row=>reviewRankCard(ctx,row,'reminder',reviewRankReason(row,'reminder'))).join('')||'<p class="ops-muted">当前范围暂无可独立列出的进展偏慢门店。</p>'}</div></div>${groups}${reviewOpportunityHtml(ctx)}</div>`;
  }
  function reviewOpportunityScope(ctx){const op=ctx.facts?.opportunity;if(!op)return null;const storeRegion=new Map(reviewStoreRows(ctx).map(x=>[x.store,x.region]));if(ctx.view.scope==='company')return {summary:op,regions:op.regions,stores:op.stores.map(x=>[storeRegion.get(x[0])||'',...x])};if(ctx.view.scope==='region'){const region=op.regions.find(x=>x[0]===ctx.view.region),stores=op.stores.filter(x=>storeRegion.get(x[0])===ctx.view.region).map(x=>[ctx.view.region,...x]);return {summary:region?{unmet:region[1],anyTop:region[2],storeTop:region[3],unitTop:region[4]}:null,regions:[],stores};}const store=op.stores.find(x=>x[0]===(ctx.view.store||ctx.view.name));return {summary:store?{unmet:store[1],anyTop:store[2],storeTop:store[3],unitTop:store[4]}:null,regions:[],stores:store?[[ctx.view.region,...store]]:[]};}
  function reviewOpportunityHtml(ctx){const scoped=reviewOpportunityScope(ctx),op=ctx.facts?.opportunity;if(!scoped?.summary)return '';
@@ -331,11 +345,11 @@ ${r.gift.conclusion}`;
  function reviewNovemberCoverage(row){if(!row)return {whole:'—',storeTop:'—',unitTop:'—'};return {whole:Math.ceil(Number(row.stock||0)*.2),storeTop:Math.ceil(Number(row.store_top_stock||0)*.4),unitTop:Math.ceil(Number(row.unit_top_stock||0)*.4)};}
  function reviewRankText(ctx,row,tone){const progress=`目标进度：面见${row.met}套 / 目标${row._target??'待确认'}套，完成率${reviewCompletion(row)}；面见次数${meetingValue(row)}次\n`;return `${row.store}\n${progress}${reviewMetricSentence('全盘',row.met,row.stock,row.met_rate)}\n${reviewMetricSentence('门店TOP',row.store_top_met,row.store_top_stock,row.store_top_rate)}\n${reviewMetricSentence('户型TOP',row.unit_top_met,row.unit_top_stock,row.unit_top_rate)}\n${reviewSavedNotesText(ctx,row,false,tone)}`;}
  function reviewRankCopySection(ctx,sets,singleTone,bench,remind){
-  const rule='统一依据：月度全盘面见率优先；同率依次看面见套数、面见次数，相同保留并列。目标完成率与双TOP覆盖作为补充观察。';
+  const rule=sets.practiceEdition?'标杆门店｜有效做法萃取：分享目标与房商机咬合、用心服务与店总氛围带动三项做法，月度进展同步呈现。':'统一依据：月度全盘面见率优先；同率依次看面见套数、面见次数，相同保留并列。目标完成率与双TOP覆盖作为补充观察。';
   if(sets.single)return `本店月度表现：\n${reviewRankText(ctx,sets.single,singleTone)}\n\n${reviewGroupAnalysisText(ctx)}`;
   return `${rule}\n\n标杆门店：\n${bench}\n\n进展偏慢门店：\n${remind}\n\n${reviewGroupAnalysisText(ctx)}`;
  }
- function reviewText(view=currentView){const ctx=reviewContext(view);if(!ctx)return '';const r=ctx.root,q=ctx.quality?.summary||Q.summary([]),topics=Object.entries(F.labels).map(([key,label])=>({key,label,count:Number(q.topics?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count),sets=reviewRankSets(ctx),opp=reviewOpportunityScope(ctx),singleTone=reviewSingleTone(ctx,sets.single),bench=sets.single?reviewRankText(ctx,sets.single,singleTone):sets.bench.map(x=>reviewRankText(ctx,x,'benchmark')).join('\n\n')||(currentMonth==='2026-11'?'当前范围暂无本月标杆门店':'当前范围暂无可识别的标杆门店'),remind=sets.single?'':sets.remind.map(x=>reviewRankText(ctx,x,'reminder')).join('\n\n')||(currentMonth==='2026-11'?'当前范围暂无可纳入预警的在售门店':'当前范围暂无可识别的重点提醒门店');
+ function reviewText(view=currentView){const ctx=reviewContext(view);if(!ctx)return '';const r=ctx.root,q=ctx.quality?.summary||Q.summary([]),topics=Object.entries(F.labels).map(([key,label])=>({key,label,count:Number(q.topics?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count),sets=reviewHighlightSets(ctx),opp=reviewOpportunityScope(ctx),singleTone=reviewSingleTone(ctx,sets.single),bench=sets.single?reviewRankText(ctx,sets.single,singleTone):sets.bench.map(x=>reviewRankText(ctx,x,'benchmark')).join('\n\n')||(currentMonth==='2026-11'?'当前范围暂无本月标杆门店':'当前范围暂无可识别的标杆门店'),remind=sets.single?'':sets.remind.map(x=>reviewRankText(ctx,x,'reminder')).join('\n\n')||(currentMonth==='2026-11'?'当前范围暂无可纳入预警的在售门店':'当前范围暂无可识别的重点提醒门店');
   const rankSection=reviewRankCopySection(ctx,sets,singleTone,bench,remind);
   const oppText=!opp?.summary?'当前月份暂无锁定的跨月机会数据':ctx.view.scope==='company'?`9月面见${ctx.facts.opportunity.septemberMet}套，10月末仍在售${ctx.facts.opportunity.stillListed}套；10月继续面见${ctx.facts.opportunity.continued}套（${ctx.facts.opportunity.continuedRate}），跨月未持续面见${ctx.facts.opportunity.unmet}套（${ctx.facts.opportunity.unmetRate}），其中任一TOP ${ctx.facts.opportunity.anyTop}套（${ctx.facts.opportunity.topRate}）。`:`当前范围跨月未持续面见${opp.summary.unmet}套，其中任一TOP ${opp.summary.anyTop}套，门店TOP ${opp.summary.storeTop}套，户型TOP ${opp.summary.unitTop}套。`;
   const regionAnalysis=ctx.view.scope==='company'?`\n\n区域表现分析：\n${reviewRegionAnalysisText(reviewChildren(ctx.progress,ctx.view).primary)}`:'';
@@ -1231,7 +1245,7 @@ TOP重点房源
   return {month,loaded,total:totalOf(stores),regions,stores,ownerStoreCount:owners.length,missingStores:stores.filter(s=>s.target===null).map(s=>s.store),updatedAt:record?.updated_at||'',error:state.error};
  }
  function ensurePlanningTargets(){if(!C.configured||currentMonth!=='2026-11'||state.loading||state.error)return;const d=data();if(d&&d.reader===C.member)return;return refresh();}
- root.WBOperations={isMode,emptyData,render,boot,refresh,ensurePlanningTargets,saveMonthlyGoals,goalRatePreview,updateGoalRatePreview,ledgerText,reviewMonthlyRate,reviewOrganizationRank,reviewRegionAnalysis,reviewRankSets,reviewSingleTone,reviewGroupSets,reviewGroupAnalysisText,reviewHighlightsHtml,reviewContext,reviewSavedMeetingRecord,reviewSavedNotesText,reviewReportSections,reviewScopedReportField,reviewCloudForHighlights,financePersonRows,expensePayerLabel,updateExpensePeople,reviewText:reviewTextWithNovember,qualityText,novemberTargets,buildSendPackage,buildPublicationPackage,saveSendConfig,projectSendConfig,novemberMessage,novemberRankedSelection,metHouseData,metHouseTable,metHouseImage,copyMetHousePreview,companyBenchmarkData,companyBenchmarkPanel,companyBenchmarkImage,copyBenchmarkPreview,state};
+ root.WBOperations={isMode,emptyData,render,boot,refresh,ensurePlanningTargets,saveMonthlyGoals,goalRatePreview,updateGoalRatePreview,ledgerText,reviewMonthlyRate,reviewOrganizationRank,reviewRegionAnalysis,reviewRankSets,reviewPracticeEdition,reviewApprovedPractice,reviewHighlightSets,reviewSingleTone,reviewGroupSets,reviewGroupAnalysisText,reviewHighlightsHtml,reviewContext,reviewSavedMeetingRecord,reviewSavedNotesText,reviewReportSections,reviewScopedReportField,reviewCloudForHighlights,financePersonRows,expensePayerLabel,updateExpensePeople,reviewText:reviewTextWithNovember,qualityText,novemberTargets,buildSendPackage,buildPublicationPackage,saveSendConfig,projectSendConfig,novemberMessage,novemberRankedSelection,metHouseData,metHouseTable,metHouseImage,copyMetHousePreview,companyBenchmarkData,companyBenchmarkPanel,companyBenchmarkImage,copyBenchmarkPreview,state};
 })(window);
 
 
