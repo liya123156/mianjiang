@@ -106,7 +106,7 @@
   if(!check(ctx))return;if(state.pending.has(ctx.month))return state.pending.get(ctx.month);
   if(state.cache.has(ctx.month)&&!force)return;
   const actor=state.actor;const previous=cached(ctx);state.cache.set(ctx.month,{...previous,loading:true});
-  const p=(async()=>{try{const loaded=await ctx.cloud.storeReview('load',{month:ctx.month});if(state.actor!==actor)return;state.cache.set(ctx.month,{...loaded,loading:false,error:''});for(const [key,d] of state.drafts)if(key.startsWith(ctx.month+'|')){if(!d.dirty)state.drafts.delete(key);else{const row=(loaded.items||[]).find(x=>x.key===d.row?.key||(!d.row&&x.store===d.snapshot.store&&x.payload?.periodType===d.snapshot.periodType&&x.payload?.periodStart===d.snapshot.periodStart&&x.payload?.periodEnd===d.snapshot.periodEnd));if(row&&row.updated_at!==d.row?.updated_at)mergeRemote(d,row);else if(!row&&!d.row){const store=catalog().find(s=>s.store===d.snapshot.store);d.snapshot=currentSnapshot(ctx,d.snapshot,store);}}}}catch(e){if(state.actor===actor)state.cache.set(ctx.month,{...previous,loading:false,error:e.message});}finally{state.pending.delete(ctx.month);if(state.context===ctx)paint(ctx);}})();state.pending.set(ctx.month,p);return p;
+  const p=(async()=>{try{const loaded=await ctx.cloud.storeReview('load',{month:ctx.month});if(state.actor!==actor)return;state.cache.set(ctx.month,{...loaded,loading:false,error:''});for(const [key,d] of state.drafts)if(key.startsWith(ctx.month+'|')){if(!d.dirty)state.drafts.delete(key);else{const row=(loaded.items||[]).find(x=>x.key===d.row?.key||(!d.row&&x.store===d.snapshot.store&&x.payload?.periodType===d.snapshot.periodType&&x.payload?.periodStart===d.snapshot.periodStart&&x.payload?.periodEnd===d.snapshot.periodEnd));if(row&&row.updated_at!==d.row?.updated_at)mergeRemote(d,row);else if(!row&&!d.row){const store=catalog().find(s=>s.store===d.snapshot.store);d.snapshot=currentSnapshot(ctx,d.snapshot,store);}}}}catch(e){if(state.actor===actor)state.cache.set(ctx.month,{...previous,loading:false,error:e.message});}})();state.pending.set(ctx.month,p);return p.finally(()=>{if(state.pending.get(ctx.month)===p)state.pending.delete(ctx.month);const current=state.context;if(state.actor===actor&&current?.month===ctx.month)paint(current);});
  }
  async function save(form,ctx){
   if(root.WBReviewVoice?.recording&&form.contains?.(root.WBReviewVoice.activeArea))throw Error('请先结束语音并核对文字，再保存复盘');
@@ -117,16 +117,35 @@
   catch(e){note(ctx,/其他|更新|冲突/.test(e.message)?e.message+'。当前填写已保留，请先复制报告，刷新后合并修改。':e.message);}
   finally{state.saving.delete(key);if(button.isConnected)button.disabled=false;}
  }
+ function exportBusiness(ctx,snapshot){
+  const member=ctx.cloud.member,privateData=ctx.privateData,business=privateData??cached(ctx).businessData;
+  if(!member)throw Error('请先进入BP／管理入口并读取共享数据');
+  if(!business||!Array.isArray(business.housing)||!Array.isArray(business.meetings))throw Error('本店个人明细尚未读取完成，请刷新共享数据后重试');
+  if((privateData!=null||Object.hasOwn(business,'reader'))&&business.reader!==member)throw Error('个人明细不属于当前登录账号，请刷新共享数据后重试');
+  const source=business.imports?.[0],asOf=R().isoDate(source?.as_of),version=String(source?.created_at||'');
+  const sourceError=()=>Error('复盘与个人明细底表版本不一致，请先刷新共享数据并更新本期底表数据');
+  if(!asOf||!version||asOf.slice(0,7)!==snapshot.month||(business.month&&business.month!==snapshot.month)||(source.month&&source.month!==snapshot.month)||snapshot.asOf!==asOf||snapshot.sourceVersion!==version)throw sourceError();
+  const homes=M().active(M().inScope(business.housing,{region:snapshot.region,store:snapshot.store}));
+  if(!homes.length)throw Error('当前账号尚未读取本店私有房源明细，请刷新共享数据或确认已授权范围');
+  const hasName=homes.some(h=>Object.hasOwn(h,'维护人姓名')&&String(h['维护人姓名']??'').trim()&&!['—','-','/','未填写','未分配'].includes(String(h['维护人姓名']).trim()));
+  if(!hasName)throw Error('本店个人明细未读取到维护人姓名，请刷新共享数据或核实原始底表后再生成');
+  // Compare aggregate facts, never join original IDs to the review API's hashed IDs.
+  // Feedback classification availability can differ between the private and aggregate APIs.
+  const rebuilt=R().makeSnapshot({month:snapshot.month,region:snapshot.region,store:snapshot.store,periodType:snapshot.periodType,periodStart:snapshot.periodStart,periodEnd:snapshot.periodEnd,housing:business.housing,meetings:business.meetings,goals:{[snapshot.store]:snapshot.monthly.target},asOf,sourceVersion:version,qualityAvailable:false});
+  const counts=s=>({monthly:Object.fromEntries(['target','stock','met','meetingCount','storeTopStock','storeTopMet','unitTopStock','unitTopMet','gift'].map(k=>[k,s.monthly?.[k]])),period:Object.fromEntries(['met','meetingCount','storeTopMet','unitTopMet','pendingDateCount'].map(k=>[k,s.period?.[k]])),groups:[...(s.groups||[])].sort((a,b)=>M().compareGroup(a.group,b.group)).map(g=>Object.fromEntries(['group','stock','met','meetingCount','monthlyMet','storeTopStock','storeTopMet','unitTopStock','unitTopMet'].map(k=>[k,g[k]])))});
+  if(!equal(counts(snapshot),counts(rebuilt)))throw sourceError();
+  return business;
+ }
  async function image(form,ctx,preview=false){
   if(!check(ctx)||!cached(ctx).businessData)throw Error('请先进入BP／管理入口并读取共享数据');
   if(state.imageBusy)throw Error('正在生成复盘长图，请稍候');
   if(root.WBReviewVoice?.recording&&form.contains?.(root.WBReviewVoice.activeArea))throw Error('请先结束语音并核对文字，再复制长图');
   if(!root.WBStoreReviewEvidence?.image)throw Error('复盘数据图片尚未载入，请刷新后重试');
-  const {d}=readForm(form,ctx),business=cached(ctx).businessData,snapshot=clone(d.snapshot),report=reportData(d),actor=state.actor,version=business.imports?.[0]?.created_at||'',periodKey=reviewKey(selectedPeriod(ctx),snapshot.store),content=JSON.stringify({fields:d.fields,status:d.status,snapshot:d.snapshot}),buttons=[form.querySelector('[data-sr="image"]'),form.querySelector('[data-sr="preview-image"]')].filter(Boolean);
+  const {d}=readForm(form,ctx),snapshot=clone(d.snapshot),business=exportBusiness(ctx,snapshot),report=reportData(d),actor=state.actor,member=ctx.cloud.member,privateData=ctx.privateData,version=business.imports?.[0]?.created_at||'',reviewVersion=cached(ctx).businessData?.imports?.[0]?.created_at||'',periodKey=reviewKey(selectedPeriod(ctx),snapshot.store),content=JSON.stringify({fields:d.fields,status:d.status,snapshot:d.snapshot}),buttons=[form.querySelector('[data-sr="image"]'),form.querySelector('[data-sr="preview-image"]')].filter(Boolean);
   state.imageBusy=true;buttons.forEach(b=>b.disabled=true);note(ctx,'正在合成复盘正文及本店、店组、个人数据，全部内容保留在一张长图中。');
   try{
    const blob=await root.WBStoreReviewEvidence.image({report,snapshot,businessData:business,periodGoal:d.fields.periodGoal});
-   if(state.context!==ctx||state.actor!==actor||!check(ctx)||!ctx.host.isConnected||form.isConnected===false||reviewKey(selectedPeriod(ctx),snapshot.store)!==periodKey||(cached(ctx).businessData?.imports?.[0]?.created_at||'')!==version)throw Error('查看范围或底表已变化，请按当前内容重新生成长图');
+   if(state.context!==ctx||state.actor!==actor||ctx.cloud.member!==member||!check(ctx)||!ctx.host.isConnected||form.isConnected===false||reviewKey(selectedPeriod(ctx),snapshot.store)!==periodKey||(cached(ctx).businessData?.imports?.[0]?.created_at||'')!==reviewVersion||ctx.privateData!==privateData||(business.imports?.[0]?.created_at||'')!==version||exportBusiness(ctx,snapshot)!==business)throw Error('查看范围或底表已变化，请按当前内容重新生成长图');
    const latest=readForm(form,ctx).d;if(JSON.stringify({fields:latest.fields,status:latest.status,snapshot:latest.snapshot})!==content)throw Error('复盘填写已变化，已保留当前内容，请重新生成长图');
    if(!preview&&navigator.clipboard?.write&&root.ClipboardItem){try{await navigator.clipboard.write([new root.ClipboardItem({'image/png':blob})]);note(ctx,'完整复盘长图已复制，含本店、店组和个人数据，可直接粘贴给管理者。');return;}catch{}}
    showImage(blob,d,ctx);

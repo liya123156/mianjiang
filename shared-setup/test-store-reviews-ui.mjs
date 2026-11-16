@@ -14,7 +14,7 @@ for(const name of ['core','quality-feed','quality-rules','quality','store-review
 const marker='root.WBStoreReviews={';
 const source=read('operations/store-reviews.js');
 assert.ok(source.includes(marker),'private test seam remains explicit');
-vm.runInContext(source.replace(marker,'root.testStoreReviews={catalog,draftKey,fieldsDefault,existing,draft,currentSnapshot,storeHtml,paint,check,load,save,dirty,mergeRemote,conflictHtml,synthesis,reportData,image,showImage};'+marker),x,{filename:'store-reviews.js'});
+vm.runInContext(source.replace(marker,'root.testStoreReviews={catalog,draftKey,fieldsDefault,existing,draft,currentSnapshot,storeHtml,paint,check,load,save,dirty,mergeRemote,conflictHtml,synthesis,reportData,exportBusiness,image,showImage};'+marker),x,{filename:'store-reviews.js'});
 const U=x.testStoreReviews,S=x.WBStoreReviews.state,R=x.WBStoreReviewModel;
 const store={region:'黄浦大区',store:'新天地一店'};
 const period={periodType:'weekly',periodStart:'2026-11-09',periodEnd:'2026-11-15'};
@@ -24,7 +24,7 @@ const cell=()=>({textContent:'',innerHTML:'',disabled:false,isConnected:true});
 function host(){const notice=cell(),summary=cell();return {isConnected:true,innerHTML:'',notice,summary,querySelector(s){return s==='[data-sr-notice]'?notice:s==='[data-sr-synthesis]'?summary:null;}};}
 function business(month='2026-11',version='source-v1',met=1){
  const date=month+'-12';return {month,imports:[{as_of:date,created_at:version}],items:[{key:month+'|goals|monthly',kind:'goals',payload:{[store.store]:13}}],
-  housing:[{'房源编号':'h1','大区':store.region,'门店':store.store,'店组':store.store+'A组','细分在售户数':1,'本月是否面见':met,'门店top户数':1,'户型top户数':1}],
+  housing:[{'房源编号':'h1','大区':store.region,'门店':store.store,'店组':store.store+'A组','维护人姓名':'维护人甲','细分在售户数':1,'本月是否面见':met,'门店top户数':1,'户型top户数':1}],
   meetings:met?[{'房源编号':'h1','面见id':'event1','面见时间':date+' 10:00'}]:[]};
 }
 function context({member={login_id:'0921',display_name:'张亚玲'},view={},month='2026-11',cloudCall=async()=>({items:[],businessData:business(month)})}={}){
@@ -90,6 +90,47 @@ const loadingPromise=U.load(ctx);assert.equal(calls,1);assert.equal(S.cache.get(
 assert.match(U.storeHtml(ctx,period,store),/<fieldset disabled>/);
 loading.resolve({items:[],businessData:business()});await loadingPromise;
 assert.doesNotMatch(U.storeHtml(ctx,period,store),/<fieldset disabled>/);
+
+// A shared pending load repaints the latest same-month host after scope changes.
+reset();const scopeLoad=deferred();let scopeCalls=0;
+const scopeCloud=()=>{scopeCalls++;return scopeLoad.promise;};
+const wholeContext=context({cloudCall:scopeCloud});S.context=wholeContext;
+const wholeLoad=U.load(wholeContext);
+const storeContext=context({view:store,cloudCall:scopeCloud});S.context=storeContext;U.paint(storeContext);
+const storeLoad=U.load(storeContext);
+assert.equal(scopeCalls,1,'same-month scope changes reuse the pending read');
+assert.match(storeContext.host.innerHTML,/正在读取共享复盘/);
+assert.match(storeContext.host.innerHTML,/<fieldset disabled>/);
+scopeLoad.resolve({items:[],businessData:business()});await Promise.all([wholeLoad,storeLoad]);
+assert.equal(S.cache.get(storeContext.month).loading,false);
+assert.doesNotMatch(storeContext.host.innerHTML,/正在读取共享复盘|<fieldset disabled>/);
+assert.equal((storeContext.host.innerHTML.match(/class="sr-store"/g)||[]).length,1,'only the newly selected store remains visible');
+assert.ok(storeContext.host.innerHTML.includes('data-review-store="'+store.store+'"'));
+
+// Completing a prior-month read cannot repaint a different month currently open.
+reset();const oldMonthLoad=deferred();const oldMonthContext=context({cloudCall:()=>oldMonthLoad.promise});S.context=oldMonthContext;
+const oldMonthPromise=U.load(oldMonthContext);
+const nextMonthContext=context({month:'2026-12'});S.context=nextMonthContext;U.paint(nextMonthContext);
+const nextMonthHtml=nextMonthContext.host.innerHTML;
+oldMonthLoad.resolve({items:[],businessData:business()});await oldMonthPromise;
+assert.equal(nextMonthContext.host.innerHTML,nextMonthHtml);
+
+// An old actor's completion cannot clear or repaint a new actor's pending read.
+reset();const firstActorLoad=deferred();const firstActorContext=context({cloudCall:()=>firstActorLoad.promise});S.context=firstActorContext;
+const firstActorPromise=U.load(firstActorContext);
+const secondActorLoad=deferred();const secondActorContext=context({member:{login_id:'0003',display_name:'孙庆妮'},view:store,cloudCall:()=>secondActorLoad.promise});
+S.actor='0003';S.cache.clear();S.pending.clear();S.drafts.clear();S.context=secondActorContext;
+const secondActorPromise=U.load(secondActorContext);const secondPending=S.pending.get(secondActorContext.month);U.paint(secondActorContext);
+const secondActorHtml=secondActorContext.host.innerHTML;
+firstActorLoad.resolve({items:[],businessData:business('2026-11','old-actor-source',0)});await firstActorPromise;
+assert.equal(S.pending.get(secondActorContext.month),secondPending,'old finally does not delete the new pending promise');
+assert.equal(S.cache.get(secondActorContext.month).loading,true);
+assert.equal(secondActorContext.host.innerHTML,secondActorHtml,'old actor does not repaint the current host');
+secondActorLoad.resolve({items:[],businessData:business('2026-11','new-actor-source',1)});await secondActorPromise;
+assert.equal(S.pending.has(secondActorContext.month),false);
+assert.equal(S.cache.get(secondActorContext.month).businessData.imports[0].created_at,'new-actor-source');
+assert.doesNotMatch(secondActorContext.host.innerHTML,/正在读取共享复盘|<fieldset disabled>/);
+
 // Even a programmatic draft entered before load retains words while adopting safe data.
 reset();const boot=deferred();ctx=context({cloudCall:()=>boot.promise});S.context=ctx;
 d=U.draft(ctx,period,store);d.fields.actions='读取期间保留的输入';d.dirty=true;
@@ -186,3 +227,59 @@ reset();ctx=context();ready(ctx);d=U.draft(ctx,period,store);f=form(d);
 x.WBStoreReviewEvidence.image=async()=>{throw Error('复盘与数据明细底表版本不一致，请先更新本期底表数据');};
 await assert.rejects(U.image(f,ctx),/版本不一致/);assert.equal(f.image.disabled,false);
 console.log('PASS: one PNG clipboard item, one-image preview/download fallback, source/period/prose guards and no partial-export success');
+
+// Original signed data provides maintainer identities without joining anonymized IDs.
+function anonymizedBusiness(){const b=business();b.housing[0]['房源编号']='hashed-house-key';delete b.housing[0]['维护人姓名'];b.meetings[0]['房源编号']='hashed-house-key';return b;}
+reset();ctx=context();ready(ctx,anonymizedBusiness());d=U.draft(ctx,period,store);f=form(d);
+const frozenBefore=JSON.stringify(d.snapshot);
+ctx.privateData={...business(),reader:ctx.cloud.member};
+let privateImageInput;
+x.WBStoreReviewEvidence.image=async input=>{privateImageInput=input;return singleBlob;};
+let privateWrites=0;x.navigator.clipboard.write=async()=>{privateWrites++;};
+await U.image(f,ctx);
+assert.equal(privateImageInput.businessData,ctx.privateData);
+assert.equal(privateImageInput.businessData.housing[0]['房源编号'],'h1','original source IDs are kept, never stitched to hashed IDs');
+assert.equal(privateImageInput.businessData.housing[0]['维护人姓名'],'维护人甲');
+assert.equal(privateWrites,1);assert.equal(JSON.stringify(d.snapshot),frozenBefore,'export never writes private identities into a shared frozen snapshot');
+// PostgreSQL jsonb field ordering does not change the meaning of group aggregates.
+const reorder=object=>Object.fromEntries(Object.entries(object).reverse());
+d.snapshot.groups=d.snapshot.groups.map(reorder);
+assert.equal(U.exportBusiness(ctx,d.snapshot),ctx.privateData);
+
+// A redacted or incomplete cache cannot silently manufacture an all-unknown personal table.
+for(const change of ['absent','wrong-reader','wrong-version','wrong-date','wrong-month','missing-store','missing-names','wrong-counts','wrong-group']){
+ reset();ctx=context();ready(ctx,anonymizedBusiness());d=U.draft(ctx,period,store);f=form(d);
+ ctx.privateData={...business(),reader:ctx.cloud.member};
+ if(change==='absent')delete ctx.privateData;
+ if(change==='wrong-reader')ctx.privateData.reader={...ctx.cloud.member};
+ if(change==='wrong-version')ctx.privateData.imports[0].created_at='source-v2';
+ if(change==='wrong-date')ctx.privateData.imports[0].as_of='2026-11-13';
+ if(change==='wrong-month')ctx.privateData.month='2026-12';
+ if(change==='missing-store')ctx.privateData.housing[0]['门店']='复兴香园店';
+ if(change==='missing-names')ctx.privateData.housing[0]['维护人姓名']='';
+ if(change==='wrong-counts')ctx.privateData.housing[0]['本月是否面见']=0;
+ if(change==='wrong-group')ctx.privateData.housing[0]['店组']=store.store+'B组';
+ let called=0;x.WBStoreReviewEvidence.image=async()=>{called++;return singleBlob;};
+ await assert.rejects(U.image(f,ctx),/维护人姓名|当前登录账号|底表版本|私有房源明细/);
+ assert.equal(called,0,change+' is rejected before rendering or copying');
+ assert.equal(S.imageBusy,false);assert.equal(f.image.disabled,false);
+}
+
+// An identity-bearing legacy review cache remains supported when no privateData is mounted.
+reset();ctx=context();ready(ctx);d=U.draft(ctx,period,store);
+assert.equal(U.exportBusiness(ctx,d.snapshot),S.cache.get(ctx.month).businessData);
+
+// Reader/source replacement during drawing cannot release stale private names to the clipboard.
+for(const change of ['private-reader','private-replacement','private-version','member']){
+ reset();ctx=context();ready(ctx,anonymizedBusiness());d=U.draft(ctx,period,store);f=form(d);
+ ctx.privateData={...business(),reader:ctx.cloud.member};
+ const drawing=deferred();x.WBStoreReviewEvidence.image=()=>drawing.promise;let writes=0;x.navigator.clipboard.write=async()=>{writes++;};
+ const generating=U.image(f,ctx);
+ if(change==='private-reader')ctx.privateData.reader={...ctx.cloud.member};
+ if(change==='private-replacement')ctx.privateData={...ctx.privateData};
+ if(change==='private-version')ctx.privateData.imports[0].created_at='source-v2';
+ if(change==='member')ctx.cloud.member={...ctx.cloud.member};
+ drawing.resolve(singleBlob);await assert.rejects(generating,/变化|当前登录账号|底表版本/);
+ assert.equal(writes,0);assert.equal(S.imageBusy,false);assert.equal(f.image.disabled,false);
+}
+console.log('PASS: signed maintainer source, exact reader/month/import matching, complete aggregate reconciliation, redacted-cache rejection and private-source async isolation');
