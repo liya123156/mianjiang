@@ -169,6 +169,9 @@ const complete=await api.buildSendPackage(storeView(catalog[0]),{allScopes:true}
 assert.equal(completeManifest.scopeCount,24);assert.equal(completeManifest.stores.length,18);assert.equal(completeManifest.publications.length,6);assert.equal(completeManifest.recipientsComplete,false);
 assert.match(complete.filename,/全司_5大区_18门店_24范围公示资料包/);
 assert.equal([...completeFiles.keys()].filter(name=>name.endsWith('/话术.txt')).length,24);
+const approvedClosing='把感恩化为行动💗 多面见 多服务｜让每一次服务更有温度✨';
+for(const path of [...completeManifest.stores,...completeManifest.publications].map(row=>row.message)){const message=read(completeFiles,path);assert.ok(message.endsWith(approvedClosing),path+' ends with the approved value-led gratitude line');assert.equal(message.split(approvedClosing).length-1,1,path+' includes the closing once');assert.ok(!message.includes('请结合进展明确重点业主的面见安排'));}
+for(const [files,result] of [[companyFiles,companyPublication],[regionFiles,regionPublication]])assert.ok(read(files,result.manifest.message).endsWith(approvedClosing),'standalone publication uses the same approved ending');
 assert.equal(read(completeFiles,'全部群名配置.csv').split('\r\n').length,25);assert.ok(read(completeFiles,'全部群名配置.csv').includes('全司☀️店总群'));assert.ok(read(completeFiles,'全部群名配置.csv').includes('待配置'));
 for(const row of completeManifest.stores){assert.ok(read(completeFiles,row.message).startsWith('各位战友，大家好☀️\n'));}
 for(const publication of completeManifest.publications){assert.ok(read(completeFiles,publication.message).startsWith((publication.scope==='company'?'各位梦想合伙人':'各位战友')+'，大家好☀️\n'));assert.equal(publication.images.length,publication.scope==='company'?1:2);assert.ok(completeFiles.has(publication.message));assert.ok(completeFiles.has(publication.images[0]));assert.equal(publication.asOf,completeManifest.asOf);assert.equal(publication.sourceVersion,completeManifest.sourceVersion);}

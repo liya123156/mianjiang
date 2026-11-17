@@ -798,6 +798,7 @@ async function metHouseImage(preview=false){
   const level=view.scope==='store'?'group':'store',rows=(progress.rows||[]).filter(r=>r._level===level&&Number(r.stock)>0&&Number(r.met)>0),best=reviewOrganizationRank(rows,3,true,true);
   return best.map(r=>`👍 ${level==='group'?r.group:r.store}：面见${r.met}套，面见率${r.met_rate}。`);
  }
+ const novemberAnnouncementClosing='把感恩化为行动💗 多面见 多服务｜让每一次服务更有温度✨';
  function novemberMessage(view,progress,m,goal,cutoff){
   const rows=progress.rows||[],owner=m._ownerApplicable!==false;
   const selections=(view.scope==='region'?['store','group']:[view.scope==='store'?'group':'store']).map(level=>novemberRankedSelection(rows,level));
@@ -808,7 +809,7 @@ async function metHouseImage(preview=false){
   const ownerProgress=owner?`全盘面见目标：${goal==null?'待确认':goal+'套'}\n全盘面见：${m.met}套（${m.met_rate}）\n门店TOP：${m.store_top_met}套（${m.store_top_rate}）\n户型TOP：${m.unit_top_met}套（${m.unit_top_rate}）`:'业主面见：/（本店无在售房源）';
   const giftRows=rows.filter(r=>r._level==='store'&&Number(r.met)>0&&Number(r.gift)/Number(r.met)<.2);
   const giftText=giftRows.length?`🎁 伴手礼提醒\n${giftRows.map(r=>r.store).join('、')}\n以上门店系统送礼登记覆盖率低于20%，请核实伴手礼准备、使用及补录情况。`:'';
-  return [`${view.scope==='company'?'各位梦想合伙人':'各位战友'}，大家好☀️`,`🍁 11月感恩月｜${view.name}面见进展\n${cutoff}`,`🎯 本月目标与进展\n${ownerProgress}`,...(owner?[`🏅 标杆${view.scope==='region'?'门店与店组':view.scope==='store'?'店组':'门店'}\n${lines('best')}`,`⚠️ 重点提醒${view.scope==='region'?'门店与店组':view.scope==='store'?'店组':'门店'}\n${lines('low')}`,`🔎 面见质量\n${novemberQualityMessage(qualityData(view))}`,giftText]:[]),owner?'请结合进展明确重点业主的面见安排，让主动沟通带回有用信息、支持下一步服务。':'请持续主动连接顾客、了解需求，记录真实反馈。'].filter(Boolean).join('\n\n');
+  return [`${view.scope==='company'?'各位梦想合伙人':'各位战友'}，大家好☀️`,`🍁 11月感恩月｜${view.name}面见进展\n${cutoff}`,`🎯 本月目标与进展\n${ownerProgress}`,...(owner?[`🏅 标杆${view.scope==='region'?'门店与店组':view.scope==='store'?'店组':'门店'}\n${lines('best')}`,`⚠️ 重点提醒${view.scope==='region'?'门店与店组':view.scope==='store'?'店组':'门店'}\n${lines('low')}`,`🔎 面见质量\n${novemberQualityMessage(qualityData(view))}`,giftText]:[]),novemberAnnouncementClosing].filter(Boolean).join('\n\n');
  }
  function makeMessage(view,progress,m,goal,cutoff,risks,praises){if(currentMonth==='2026-11')return novemberMessage(view,progress,m,goal,cutoff,praises);const name=view.name,month=Number(currentMonth.slice(5)),gap=goal==null?'待确认':Math.max(0,goal-m.met),detailLevel=view.scope==='region'?'store':view.scope==='store'?'group':'region',detailRows=progress.rows.filter(r=>r._level===detailLevel);const groupText=detailRows.map(r=>{const label=detailLevel==='store'?r.store:detailLevel==='group'?r.group:r.region;return `${label}：全盘${r.met}套（${r.met_rate}）｜门店TOP ${r.store_top_met}套（${r.store_top_rate}）｜户型TOP ${r.unit_top_met}套（${r.unit_top_rate}）`;}).join('\n');const scene=sceneRaw(view),analysis=sceneAnalysis(view);
   const qt=qualityData(view);const publicRisks=risks.filter(t=>!String(t).includes('结合实际')).slice(0,5);const topText=`
