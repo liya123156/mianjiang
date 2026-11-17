@@ -37,7 +37,7 @@ function closedDetailsContaining(html,className){const match=html.match(new RegE
 // A single company board replaces the older local interview shortlist in every daily scope.
 for(const view of [company,region,store]){
  const {data,html,nav,before}=install({view});
- assert.match(html,/id="daily-benchmark"/);assert.match(html,/全司面见标杆榜/);
+ assert.match(html,/id="daily-benchmark"/);assert.match(html,/全司在售业主面见标杆榜/);
  assert.doesNotMatch(html,/interview-shortlist|查看当前范围的标杆采访候选|<h3>店面TOP3<\/h3>|<h3>店组TOP5<\/h3>|<h3>个人TOP5<\/h3>/);
  assert.doesNotMatch(nav,/daily-actions/);assert.match(nav,/daily-package/);
  const message=section(html,'daily-message');assert.match(message,/id="ops-message"/);assert.match(message,/data-ops="copy-message"/);

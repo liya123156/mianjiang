@@ -2,6 +2,7 @@
 (function(root){
   'use strict';
   const text=v=>String(v??'').trim(), number=v=>Number.isFinite(Number(v))?Number(v):0;
+  const groupBenchmarkMinimum=5;
   function uuid(){if(root.crypto.randomUUID)return root.crypto.randomUUID();const b=root.crypto.getRandomValues(new Uint8Array(16));b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;return [...b].map((n,i)=>([4,6,8,10].includes(i)?'-':'')+n.toString(16).padStart(2,'0')).join('');}
   const flag=v=>v===true||['1','是','true'].includes(text(v).toLowerCase());
   const sum=(a,f)=>a.reduce((n,x)=>n+f(x),0), unique=a=>[...new Set(a)], pct=(n,d)=>d?`${(n/d*100).toFixed(2)}%`:'—';
@@ -293,7 +294,7 @@
     }
     return {received,refunded,companyReceived,balances:[...balances].filter(([,amount])=>amount!==0).map(([name,amount])=>({name,amount}))};
   }
-  root.WBModel={text,number,flag,pct,unique,canonicalStore,storeCatalog,compareText,compareRegion,compareStore,compareGroup,sortRegions,orderProgress,active,inScope,metrics,meetingCountValue,meetingCountLabel,table,withRateRanks,rateRankSymbol,rateRankLabel,snapshot,delta,validateImport,validateCustomerImport,split,ledger,expenseId,expenseQuantity,expenseAmount,expensePersonName,expenseManagerKey,expensePeople,findExpenseDuplicates,expenseCandidates,expenseRecords,cashSettlement,uuid};
+  root.WBModel={text,number,flag,pct,unique,canonicalStore,storeCatalog,groupBenchmarkMinimum,compareText,compareRegion,compareStore,compareGroup,sortRegions,orderProgress,active,inScope,metrics,meetingCountValue,meetingCountLabel,table,withRateRanks,rateRankSymbol,rateRankLabel,snapshot,delta,validateImport,validateCustomerImport,split,ledger,expenseId,expenseQuantity,expenseAmount,expensePersonName,expenseManagerKey,expensePeople,findExpenseDuplicates,expenseCandidates,expenseRecords,cashSettlement,uuid};
   if(typeof module==='object')module.exports=root.WBModel;
 })(typeof window==='object'?window:globalThis);
 

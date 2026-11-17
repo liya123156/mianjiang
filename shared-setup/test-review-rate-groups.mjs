@@ -32,6 +32,11 @@ const daily=U.novemberRankedSelection(stores,'store');
 assert.equal(daily.best[0].store,'御翠园店');assert.equal(daily.low[0].store,'仁恒河滨城店');
 const tied=U.novemberRankedSelection([metric('甲',1,10,2),metric('乙',1,10,2),metric('丙',0,10)],'store');
 assert.deepEqual(plain(tied.best.map(row=>row.store)),['甲','乙']);assert.equal(tied.low[0].store,'丙');
+const groupRows=[metric('三套高率',3,3,3,{_level:'group',group:'三套高率组'}),metric('四套高率',4,4,4,{_level:'group',group:'四套高率组'}),metric('五套达标',5,10,5,{_level:'group',group:'五套达标组'}),metric('零面见',0,20,0,{_level:'group',group:'零面见组'})];
+assert.equal(M.groupBenchmarkMinimum,5);
+assert.deepEqual(plain(U.reviewOrganizationRank(groupRows,5,true,true).map(row=>row.group)),['五套达标组'],'group benchmarks require five distinct monthly homes, even if a smaller group has a higher rate');
+const groupDaily=U.novemberRankedSelection(groupRows,'group');assert.deepEqual(plain(groupDaily.best.map(row=>row.group)),['五套达标组']);assert.equal(groupDaily.low[0].group,'零面见组','the benchmark gate does not filter warnings');
+assert.equal(U.novemberRankedSelection(groupRows.slice(0,2),'group').best.length,0,'no fallback below the five-home floor');
 
 // Complete company inventory is the source of TOP5 even when the user is looking at one region or store.
 const housing=[],meetings=[];
@@ -50,8 +55,8 @@ const d={reader:member,housing,meetings,items:[],imports:[{as_of:'2026-11-15',cr
 U.state.cache['2026-11']=d;
 const ctx=view=>({view,d,s:{region:view.region||'',store:view.scope==='store'?view.store:''},progress:M.table(housing,{region:view.region||'',store:view.scope==='store'?view.store:''},{},'2026-11',meetings,{showCustomer:false}),quality:{groups:[]}});
 const original=JSON.stringify(d),global=U.reviewGroupSets(ctx(company));
-assert.equal(global.benchmarkReady,true);assert.equal(global.benchmark.length,6,'fifth place numerical tie is preserved');
-assert.deepEqual(plain(global.benchmark.map(row=>row.group)),['碧云店A组','星河湾店A组','浦东别墅旗舰店A组','御翠园店A组','仁恒河滨城店E组','碧云店B组']);
+assert.equal(global.benchmarkReady,true);assert.equal(global.benchmark.length,1,'fewer eligible groups are shown without filling slots from groups below five');
+assert.deepEqual(plain(global.benchmark.map(row=>row.group)),['星河湾店A组']);
 const store={scope:'store',name:'仁恒河滨城店',store:'仁恒河滨城店',region:'花木大区'},region={scope:'region',name:'花木大区',region:'花木大区'};
 for(const view of [region,store])assert.deepEqual(plain(U.reviewGroupSets(ctx(view)).benchmark),plain(global.benchmark));
 const local=U.reviewGroupSets(ctx(store));
@@ -63,7 +68,7 @@ assert.ok(global.slow.every(row=>row.group!=='未分组'));assert.equal(JSON.str
 
 // A saved complete companyProgress can back a scoped source; incomplete data must not claim global TOP5.
 const scoped={...d,housing:housing.filter(home=>home['门店']===store.store),companyProgress:d};
-assert.equal(U.reviewGroupSets({...ctx(store),d:scoped}).benchmark.length,6);
+assert.equal(U.reviewGroupSets({...ctx(store),d:scoped}).benchmark.length,1);
 const incomplete={...d,housing:housing.filter(home=>home['门店']!==catalog.at(-1).store)};
 const missing=U.reviewGroupSets({...ctx(store),d:incomplete});assert.equal(missing.benchmarkReady,false);assert.equal(missing.benchmark.length,0);
 assert.match(U.reviewGroupAnalysisText({...ctx(store),d:incomplete}),/全司18家门店数据未完整/);
@@ -95,7 +100,8 @@ const reviewCloud=U.reviewCloudForHighlights(),loaded=await reviewCloud.storeRev
 rs.cache.set('2026-11',loaded);while(timers.length)timers.shift()();
 assert.equal(calls,1,'the bridge reuses the review request rather than issuing an extra fetch');
 assert.match(notesHost.innerHTML,/标杆萃取｜目标与房商机咬合/,'the existing load refreshes the approved public case cards');
-const star=global.benchmark.find(row=>row.store==='星河湾店'),groupE=global.benchmark.find(row=>row.group==='仁恒河滨城店E组');
+// Field scoping is tested on a complete detail row even when that group is not a benchmark.
+const star=global.benchmark.find(row=>row.store==='星河湾店'),groupE=M.table(housing,{}, {},'2026-11',meetings,{includeAllLevels:true}).rows.find(row=>row._level==='group'&&row.group==='仁恒河滨城店E组');
 let sections=U.reviewReportSections(reportCtx,metric('星河湾店',5,6,5,{region:'陆家嘴大区'}),'benchmark');
 assert.deepEqual(plain(sections.map(section=>section.title)),['有效做法与可借鉴之处']);
 assert.ok(sections[0].paragraphs.includes(longHighlight));assert.doesNotMatch(JSON.stringify(sections),/绝不展示|访谈待核实|已保存草稿|待BP确认|周会复盘与本周安排/);

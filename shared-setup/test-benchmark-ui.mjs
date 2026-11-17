@@ -18,7 +18,7 @@ function install(){
  writes.length=0;notices.length=0;elements.clear();return U.state.cache['2026-11'];
 }
 install();const board=U.companyBenchmarkData(),signature=JSON.stringify(board);
-assert.equal(board.summary.stores,18);assert.equal(board.summary.met,18);assert.equal(board.title,'全司面见标杆榜');
+assert.equal(board.summary.stores,18);assert.equal(board.summary.met,18);assert.equal(board.title,'全司在售业主面见标杆榜');
 for(const view of [region,store]){x.currentView=view;assert.equal(JSON.stringify(U.companyBenchmarkData()),signature,'region/store filters do not change the complete company board');}
 let html=U.companyBenchmarkPanel();
 assert.equal((html.match(/<table\b/g)||[]).length,3);assert.match(html,/<th scope="col">经理<\/th>/);assert.match(html,/<th scope="col">姓名<\/th>/);assert.ok(!html.includes('经理姓名'),'manager and maintainer have separate fields');assert.equal((html.match(/<th scope="col">面见后正反馈<\/th>/g)||[]).length,3);assert.equal((html.match(/<th scope="col">面见率<\/th>/g)||[]).length,2,'organizational coverage is visible');assert.ok(html.includes('100.00%'));for(const cell of html.matchAll(/<td class="cb-feedbackText">([\s\S]*?)<\/td>/g))assert.ok(!cell[1].includes('%'),'positive-feedback cells contain counts only');assert.ok(html.includes('私有标杆伙伴0'));assert.ok(html.includes('卢海威'),'directory manager is rendered separately');

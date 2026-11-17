@@ -133,7 +133,7 @@
  }
  function reviewOrganizationEqual(a,b){return reviewMonthlyRate(a)===reviewMonthlyRate(b)&&Number(a.met||0)===Number(b.met||0)&&Number(meetingValue(a)||0)===Number(meetingValue(b)||0);}
  function reviewOrganizationRank(rows,limit=3,descending=true,positiveOnly=false){
-  const sorted=rows.filter(row=>reviewMonthlyRate(row)!==null&&(!positiveOnly||Number(row.met)>0)).sort((a,b)=>reviewOrganizationCompare(a,b,descending));
+  const sorted=rows.filter(row=>reviewMonthlyRate(row)!==null&&(!positiveOnly||Number(row.met)>0&&(row._level!=='group'||Number(row.met)>=M.groupBenchmarkMinimum))).sort((a,b)=>reviewOrganizationCompare(a,b,descending));
   let priorRank=0;return sorted.map((row,i)=>{const rank=i&&reviewOrganizationEqual(row,sorted[i-1])?priorRank:i+1;priorRank=rank;return {...row,reviewRank:rank};}).filter(row=>row.reviewRank<=limit);
  }
  function reviewRegionAnalysis(rows){
@@ -258,14 +258,14 @@
  }
  function reviewGroupAnalysisText(ctx){
   const sets=reviewGroupSets(ctx),describe=row=>`${row.group}｜经理${managerName(row)}：面见${row.met}/${row.stock}套，面见率${row.met_rate}；在售占本店${M.pct(row.stock,row.storeStock)}（${row.stock}/${row.storeStock}套）`;
-  return `标杆店组｜全司店组排名TOP5（按月度全盘面见率）：\n${sets.benchmarkReady?sets.benchmark.map(row=>`第${row.reviewRank}名 ${describe(row)}${reviewSavedNotesText(ctx,row,true,'benchmark')?'\n'+reviewSavedNotesText(ctx,row,true,'benchmark'):''}`).join('\n')||'当前暂无已有面见的上榜店组。':'全司18家门店数据未完整，暂不生成全司排名。'}\n\n进展偏慢店组｜在售占本店≥25%且本月0面见：\n${sets.slow.map(row=>describe(row)+(reviewSavedNotesText(ctx,row,true,'reminder')?'\n'+reviewSavedNotesText(ctx,row,true,'reminder'):'')).join('\n')||'当前范围暂无符合条件的店组。'}`;
+  return `标杆店组｜全司店组排名TOP5（月度面见至少${M.groupBenchmarkMinimum}套，按全盘面见率排序）：\n${sets.benchmarkReady?sets.benchmark.map(row=>`第${row.reviewRank}名 ${describe(row)}${reviewSavedNotesText(ctx,row,true,'benchmark')?'\n'+reviewSavedNotesText(ctx,row,true,'benchmark'):''}`).join('\n')||'当前暂无达到'+M.groupBenchmarkMinimum+'套入选门槛的店组。':'全司18家门店数据未完整，暂不生成全司排名。'}\n\n进展偏慢店组｜在售占本店≥25%且本月0面见：\n${sets.slow.map(row=>describe(row)+(reviewSavedNotesText(ctx,row,true,'reminder')?'\n'+reviewSavedNotesText(ctx,row,true,'reminder'):'')).join('\n')||'当前范围暂无符合条件的店组。'}`;
  }
  function reviewGroupAnalysisHtml(ctx){
   const sets=reviewGroupSets(ctx),table=(title,rows,benchmark)=>`<div class="review-table-card"><h3>${E(title)}</h3><div class="review-table-scroll"><table class="review-tier-table" aria-label="${E(title)}"><thead><tr>${benchmark?'<th>排名</th>':''}<th>大区</th><th>门店</th><th>店组</th><th>经理</th><th>面见量／在售</th><th>全盘面见率</th><th>在售占本店</th></tr></thead><tbody>${rows.map(row=>`<tr>${benchmark?`<td>${row.reviewRank}</td>`:''}<td>${E(row.region)}</td><td>${E(row.store)}</td><td>${E(row.group)}</td><td>${E(managerName(row))}</td><td>${row.met}/${row.stock}套</td><td>${E(row.met_rate)}</td><td>${E(M.pct(row.stock,row.storeStock))}（${row.stock}/${row.storeStock}套）</td></tr>`).join('')}</tbody></table></div></div>`;
-  const benchmark=sets.benchmarkReady?sets.benchmark.length?table('标杆店组｜全司店组排名TOP5',sets.benchmark,true):'<p class="ops-muted">当前暂无已有面见的上榜店组。</p>':'<p class="ops-notice">全司18家门店数据未完整，暂不生成全司店组排名。</p>';
+  const benchmark=sets.benchmarkReady?sets.benchmark.length?table('标杆店组｜全司店组排名TOP5',sets.benchmark,true):'<p class="ops-muted">当前暂无达到'+M.groupBenchmarkMinimum+'套入选门槛的店组。</p>':'<p class="ops-notice">全司18家门店数据未完整，暂不生成全司店组排名。</p>';
   const slow=sets.slow.length?table('进展偏慢店组',sets.slow,false):'<p class="ops-muted">当前范围暂无符合“在售占本店≥25%且本月0面见”的店组。</p>';
   const notes=(rows,tone)=>rows.map(row=>{const note=reviewSavedNotesHtml(ctx,row,true,tone);return note?`<article class="review-rank-card ${tone}"><span>${E(row.group)}</span>${note}</article>`:'';}).join('');
-  return `<div class="review-group-analysis"><div class="review-subhead"><h3>店组表现分析</h3><p>标杆店组按全司月度全盘面见率排序；同率依次看面见套数、面见次数，相同保留并列。进展偏慢店组须同时满足“店组在售套数÷本店在售套数≥25%”与“本月累计0面见”。</p></div>${benchmark}<div class="review-rank-grid">${notes(sets.benchmark,'benchmark')}</div>${slow}<div class="review-rank-grid">${notes(sets.slow,'reminder')}</div></div>`;
+  return `<div class="review-group-analysis"><div class="review-subhead"><h3>店组表现分析</h3><p>标杆店组月度面见至少${M.groupBenchmarkMinimum}套，再按全司月度全盘面见率排序；同率依次看面见套数、面见次数，相同保留并列，达标不足5组按实际数量展示。进展偏慢店组须同时满足“店组在售套数÷本店在售套数≥25%”与“本月累计0面见”。</p></div>${benchmark}<div class="review-rank-grid">${notes(sets.benchmark,'benchmark')}</div>${slow}<div class="review-rank-grid">${notes(sets.slow,'reminder')}</div></div>`;
  }
  function reviewStoreDetail(ctx,row){if(!ctx.reviewStoreDetails)ctx.reviewStoreDetails=new Map();if(!ctx.reviewStoreDetails.has(row.store))ctx.reviewStoreDetails.set(row.store,M.table(ctx.d.housing,{region:row.region,store:row.store},goals(),currentMonth,ctx.d.meetings||[],customerOptions(ctx.d)).rows);return ctx.reviewStoreDetails.get(row.store);}
  function reviewTopTopics(ctx,row,limit=2){const q=reviewQualityGroup(ctx,row);return Object.entries(F.labels).map(([key,label])=>({label,count:Number(q?.topics?.[key]||0)})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count).slice(0,limit).map(x=>`${x.label}${x.count}套`);}
@@ -774,7 +774,7 @@ async function metHouseImage(preview=false){
   let risks=[],praises=[];const children=progress.rows.filter(r=>r._level===(view.scope==='company'?'region':view.scope==='region'?'store':'group'));
   risks=priorityFacts(view,children);
   if(currentMonth==='2026-11')praises=novemberPraises(view,progress);
-  const best=children.filter(r=>r.met>0).sort((a,b)=>b.met-a.met)[0];if(currentMonth!=='2026-11'&&best){const name=best._level==='group'?best.group:best.store!=='/'?best.store:best.region;praises.push(`👏 ${name}已面见${best.met}套，当前面见量在同范围内领先，可进一步核对具体收获和可复制做法。感谢大家持续走近业主、认真做好维护；让每次面见都带回具体信息，支撑下一步服务。`);}
+  const best=children.filter(r=>r.met>0&&(r._level!=='group'||r.met>=M.groupBenchmarkMinimum)).sort((a,b)=>b.met-a.met)[0];if(currentMonth!=='2026-11'&&best){const name=best._level==='group'?best.group:best.store!=='/'?best.store:best.region;praises.push(`👏 ${name}已面见${best.met}套，当前面见量在同范围内领先，可进一步核对具体收获和可复制做法。感谢大家持续走近业主、认真做好维护；让每次面见都带回具体信息，支撑下一步服务。`);}
   state.messageContext={risks,praises};const message=makeMessage(view,progress,metric,goal,cutoff,risks,praises);
   const cards=ownerApplicable?[['本月目标',goal==null?'待设置':goal+'套','按当月确认目标'],['面见量',metric.met+'套','按房源去重'],['面见次数',meetingValue(metric)+'次',meetingLabel(metric)],['本月剩余差距',gap==null?'待设置':gap+'套','按本月目标计算'],['送礼登记',metric.gift+'套','已面见覆盖 '+metric.gift_rate]]:[['业主面见','/','本店无在售房源，不涉及业主管理指标']];
 
@@ -784,9 +784,9 @@ async function metHouseImage(preview=false){
   block('daily-progress','面见及礼物进展',renderTable(progress))+
   block('daily-unmet-top','本月未面见TOP房明细',unmetTopTable(view),'仅纳入本月仍在售、属于门店TOP或户型TOP且尚未面见的房源。')+
   block('daily-met-houses','当月面见房源与正反馈',ownerApplicable?metHouseTable(view):'<div class="ops-notice">本店无在售房源，业主面见指标不适用。</div>','房源明细与面见反馈合并展示，复制为一张完整图片。')+
-  block('daily-message','公示话术',`<div class="block ops-panel"><textarea id="ops-message" class="ops-message" aria-label="当前范围推动话术">${E(message)}</textarea><div class="ops-actions"><button class="btn primary" data-ops="copy-message">复制话术</button></div>${currentMonth==='2026-11'?'<details class="ops-secondary"><summary>查看公示口径</summary><p class="ops-muted">公示口径：月度全盘面见率优先；同率依次看面见套数、面见次数。门店／店组各自比较，仅展示首末并保留并列。</p></details>':''}</div>`)+
+  block('daily-message','公示话术',`<div class="block ops-panel"><textarea id="ops-message" class="ops-message" aria-label="当前范围推动话术">${E(message)}</textarea><div class="ops-actions"><button class="btn primary" data-ops="copy-message">复制话术</button></div>${currentMonth==='2026-11'?'<details class="ops-secondary"><summary>查看公示口径</summary><p class="ops-muted">公示口径：月度全盘面见率优先；同率依次看面见套数、面见次数。门店／店组各自比较，仅展示首末并保留并列；店组标杆月度面见至少5套。</p></details>':''}</div>`)+
   block('daily-package','公示资料包',publicationPanel(view))+
-  block('daily-benchmark','全司面见标杆榜',companyBenchmarkPanel(),'按全司月度累计计算，门店TOP3、店组TOP5、个人TOP5；筛选大区或单店时榜单保持全司范围。')+parkedRecords(view);
+  block('daily-benchmark','全司在售业主面见标杆榜',companyBenchmarkPanel(),`按全司月度累计计算，门店TOP3、店组TOP5、个人TOP5；店组月度面见至少${M.groupBenchmarkMinimum}套入选。筛选大区或单店时榜单保持全司范围。`)+parkedRecords(view);
 
  }
  function novemberRankedSelection(rows,level){
