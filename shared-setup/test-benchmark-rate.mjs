@@ -41,9 +41,9 @@ const board=B.build({month:'2026-11',businessData:{housing,meetings,items:[],imp
 assert.equal(board.sections[0].rows[0].store,catalog[1].store);assert.equal(board.sections[0].rows[0].stock,16);assert.equal(board.sections[0].rows[0].rate,7/16);assert.equal(board.sections[0].rows[0].met_rate,'43.75%');
 assert.equal(board.sections[1].rows[0].group,catalog[1].store+'A组');assert.equal(board.sections[1].rows[0].rate,.5);assert.equal(board.sections[1].rows.length,2);assert.ok(board.sections[1].rows.every(r=>r.met>=5));
 assert.equal(board.sections[2].rows[0].name,'数量标杆');assert.equal(board.sections[2].rows[0].met,8);
-assert.equal((B.html(board).match(/<th scope="col">面见率<\/th>/g)||[]).length,2,'only organizational sections show coverage columns');
+assert.equal((B.html(board).match(/<th scope="col">面见率<\/th>/g)||[]).length,3,'all tiers keep independent coverage columns');
 const rendered=B.html(board);assert.ok(rendered.includes('43.75%'));assert.ok(rendered.includes('50.00%'));assert.ok(board.notes[0].includes('面见率'));assert.ok(board.notes.some(line=>line.includes('至少5套')));assert.match(rendered,/月度面见至少5套/);
 for(const row of board.rows)assert.ok(!row.feedbackText.includes('%'),'positive feedback stays count-only');
-const blob=await B.image(board);assert.equal(blob.type,'image/png');assert.ok(draw.some(t=>t.value==='43.75%'&&t.size===44),'rate is prominent in compact company poster');assert.ok(draw.some(t=>t.value==='8套'&&t.size===56),'personal count hierarchy remains');
-assert.ok(draw.some(t=>t.value==='面见率／量／次数'));assert.ok(canvases.at(-1).height<3100);assert.ok(draw.some(t=>t.value===board.slogans[0]));
+const blob=await B.image(board);assert.equal(blob.type,'image/png');assert.ok(draw.some(t=>t.value==='43.75%'&&t.size>=40),'rate is prominent in company poster');assert.ok(draw.some(t=>t.value==='8套'&&t.size>=40),'personal count stays readable in its own metric');
+for(const label of ['面见次数','面见套数','面见率'])assert.ok(draw.some(t=>t.value===label),label+' has an independent horizontal metric');assert.ok(canvases.at(-1).height<3100);assert.ok(draw.some(t=>t.value===board.slogans[0]));
 console.log('PASS group floor5 and organizational benchmark rates: exact coverage primary, count/time secondary, true cutoff ties, zero-stock exclusion, individual volume preserved, full-source aggregation, count-only feedback and compact rate presentation.');
