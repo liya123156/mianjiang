@@ -50,8 +50,8 @@
     Object.freeze({prefix:'store_top_head',topField:'门店top户数',companionField:'本月最近一次面见是否店总陪同',role:'店总',topLabel:'门店TOP'}),
     Object.freeze({prefix:'unit_top_manager',topField:'户型top户数',companionField:'本月最近一次面见是否店经理陪同',role:'店经理',topLabel:'户型TOP'})
   ]);
-  const accompanimentNote='按本月最近一次面见是否陪同统计，按房源编号去重；陪同面见率＝陪同套数÷对应TOP在售套数，已面见中的陪同占比＝陪同套数÷对应TOP已面见套数。两类TOP分别展示，不能直接相加。';
-  const accompanimentColumns=definition=>[['met','陪同面见套数'],['rate','陪同面见率'],['share','已面见中的陪同占比']].map(([suffix,label])=>({key:definition.prefix+'_'+suffix,label,role:definition.role}));
+  const accompanimentNote='按本月最近一次面见是否陪同统计，按房源编号去重；陪同面见率＝陪同面见套数÷对应TOP已面见套数。两类TOP分别展示，不能直接相加。';
+  const accompanimentColumns=definition=>[['met','陪同面见套数'],['share','陪同面见率']].map(([suffix,label])=>({key:definition.prefix+'_'+suffix,label,role:definition.role}));
   function progressColumns(month){return columns.flatMap(column=>[column,...(month==='2026-11'&&column.key==='store_top_rate'?accompanimentColumns(accompanimentDefinitions[0]):month==='2026-11'&&column.key==='unit_top_rate'?accompanimentColumns(accompanimentDefinitions[1]):[])]);}
   const groups=month=>[{label:`${Number(month.slice(5))}月目标制定`,keys:['target','target_rate'],tone:'target'},{label:'全盘（月度进展）',keys:['stock','met','met_count','met_rate','gift','gift_rate'],tone:'whole'},{label:month==='2026-11'?'门店TOP业主（月度进展 · 店总陪同）':'门店Top业主（月度进展）',keys:['store_top_stock','store_top_met','store_top_met_count','store_top_rate',...(month==='2026-11'?accompanimentColumns(accompanimentDefinitions[0]).map(column=>column.key):[])],tone:'store-top'},{label:month==='2026-11'?'户型TOP业主（月度进展 · 店经理陪同）':'户型Top业主（月度进展）',keys:['unit_top_stock','unit_top_met','unit_top_met_count','unit_top_rate',...(month==='2026-11'?accompanimentColumns(accompanimentDefinitions[1]).map(column=>column.key):[])],tone:'unit-top'}];
   function active(rows){return rows.filter(r=>flag(r['细分在售户数']??r['在售户数']));}
@@ -124,7 +124,7 @@
       const m=metrics(g,meetings),t=target(g,level,name,goals),applicable=!(customerEnabled&&identity.store!=='/'&&catalogByStore.get(identity.store)?.ownerApplicable===false);
       const row={...identity,...m,target:t??'—',target_rate:t==null?'—':pct(t,m.stock),_level:level,_target:t,_ownerApplicable:applicable,_tone:level==='company'||level==='region'?'purple':''};
       if(level==='group'||level==='advisor')row.manager=root.WBManagerDirectory?.lookup(identity)||'待补充';
-      if(!applicable){for(const column of progressColumns(month).slice(4))row[column.key]='/';row._target=null;for(const key of ['met_count','store_top_met_count','unit_top_met_count']){row[key+'_confirmed']=0;row[key+'_pending']=0;}for(const definition of accompanimentDefinitions)for(const suffix of ['confirmed','pending','met_confirmed','met_pending','stock','met_base'])row[definition.prefix+'_'+suffix]=0;}
+      if(!applicable){for(const column of progressColumns(month).slice(4))row[column.key]='/';row._target=null;for(const key of ['met_count','store_top_met_count','unit_top_met_count']){row[key+'_confirmed']=0;row[key+'_pending']=0;}for(const definition of accompanimentDefinitions){for(const suffix of ['met','rate','share'])row[definition.prefix+'_'+suffix]='/';for(const suffix of ['confirmed','pending','met_confirmed','met_pending','stock','met_base'])row[definition.prefix+'_'+suffix]=0;}}
       if(customerEnabled){
         const hasAggregate=aggregateRows.some(r=>level==='company'||(level==='region'?r.region===identity.region:r.store===identity.store));
         const unavailable=hasAggregate&&(!!scope.group||level==='group'||level==='advisor');

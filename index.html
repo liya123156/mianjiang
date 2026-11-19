@@ -174,7 +174,7 @@
 <script src="project-plan.js?v=20261116-plan-goals-01"></script>
 <script src="operations/cloud-config.js?v=20261027-11"></script>
 <script src="operations/manager-directory.js?v=20261116-finance-identity-01"></script>
-<script src="operations/core.js?v=20261119-top-accompaniment-01"></script>
+<script src="operations/core.js?v=20261119-top-accompaniment-02"></script>
 <script src="operations/xlsx-reader.js?v=20261027-11"></script>
 <script src="operations/cloud.js?v=20261116-public-week-report-01"></script>
 <script src="operations/proof-paste.js?v=20261027-11"></script>
@@ -195,7 +195,7 @@
 <script src="operations/met-house-feedback.js?v=20261116-manager-board-01"></script>
 <script src="operations/store-publication-image.js?v=20261116-combined-poster-01"></script>
 <script src="operations/benchmark-board.js?v=20261119-single-row-poster-01"></script>
-<script src="operations/ui.js?v=20261119-top-accompaniment-01"></script>
+<script src="operations/ui.js?v=20261119-top-accompaniment-02"></script>
 <script>
 'use strict';
 let progressImageUrl = '';
@@ -211,6 +211,8 @@ function progressRateValue(row, key) {
 function hasProgressRanks(block) { return (block.rows || []).some(row => ['met_rate','store_top_rate','unit_top_rate'].some(key => progressRateSymbol(row, key))); }
 function progressHasAccompaniment(block) { return (block.columns || []).some(c=>c.key==='store_top_head_met'||c.key==='unit_top_manager_met'); }
 function progressColumnLabel(column) {
+  if(column.key==='store_top_head_share')return '店总陪同面见率';
+  if(column.key==='unit_top_manager_share')return '经理陪同面见率';
   if(column.key.startsWith('store_top_head_'))return '门店TOP店总'+column.label;
   if(column.key.startsWith('unit_top_manager_'))return '户型TOP经理'+column.label;
   return column.label;
@@ -221,7 +223,7 @@ function progressColumnWidth(column) {
 }
 function progressNotes(block, forImage=false) {
   if(!progressHasAccompaniment(block))return [];
-  const notes=['管理者陪同按本月最近一次面见记录统计；两类TOP分别展示，不能直接相加。'];
+  const notes=['管理者陪同按本月最近一次面见记录统计；两类TOP分别展示，不能直接相加。','陪同面见率＝陪同面见套数÷对应TOP已面见套数。'];
   if(forImage)notes.push('📌 店总牵头邀约及面见门店TOP','📌经理重点邀约及陪同面见户型TOP','📌伙伴持续开展全盘邀约，逐位业主明确邀约和面见安排');
   return notes;
 }

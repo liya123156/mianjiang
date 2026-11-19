@@ -176,7 +176,7 @@ const fullData=install(project);fullData.sendConfigItem={key:'2000-01|rules|@@co
 const complete=await api.buildSendPackage(storeView(catalog[0]),{allScopes:true}),completeFiles=unzip(await complete.blob.arrayBuffer()),completeManifest=complete.manifest;
 assert.equal(completeManifest.scopeCount,24);assert.equal(completeManifest.stores.length,18);assert.equal(completeManifest.publications.length,6);assert.equal(completeManifest.recipientsComplete,false);
 assert.match(complete.filename,/全司_5大区_18门店_24范围公示资料包/);
-for(const result of [pilot,sharedAll,companyPublication,regionPublication,complete])assert.ok(result.filename.endsWith('_管理者陪同面见版.zip'),'November downloads distinguish the updated report reminder from older packages');
+for(const result of [pilot,sharedAll,companyPublication,regionPublication,complete])assert.ok(result.filename.endsWith('_陪同面见率更新版.zip'),'November downloads distinguish the updated report reminder from older packages');
 assert.equal([...completeFiles.keys()].filter(name=>name.endsWith('/话术.txt')).length,24);
 const approvedClosing='#今天杨博针对《向上向前》的上海城市报告已做价值解读\n接下来我们要对我们所有的客户、业主做专业的讲解💪\n报告预计在本周日/下周一到店，大家可以提前预约业主面见时间，提前做好专业&感性的服务准备哦';
 for(const path of [...completeManifest.stores,...completeManifest.publications].map(row=>row.message)){const message=read(completeFiles,path);assert.ok(message.endsWith(approvedClosing),path+' ends with the approved city-report reminder');assert.equal(message.split(approvedClosing).length-1,1,path+' includes the closing once');assert.ok(!message.includes('请结合进展明确重点业主的面见安排'));assert.ok(!message.includes('把感恩化为行动💗 多面见 多服务｜让每一次服务更有温度✨'),path+' removes the previous closing');}

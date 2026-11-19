@@ -73,9 +73,10 @@ assert.equal(unmet.store_top_head_met,0);assert.equal(unmet.store_top_head_rate,
 assert.equal(unmet.store_top_head_pending,0,'unmet houses do not create missing accompaniment flags');
 
 const november=M.table(rows,{},goals,'2026-11'),october=M.table(rows,{},goals,'2026-10');
-assert.equal(november.columns.length,october.columns.length+6);
+assert.equal(november.columns.length,october.columns.length+4);
 for(const definition of M.accompanimentDefinitions){
- for(const suffix of ['met','rate','share'])assert.ok(november.columns.some(column=>column.key===definition.prefix+'_'+suffix));
+ for(const suffix of ['met','share'])assert.ok(november.columns.some(column=>column.key===definition.prefix+'_'+suffix));
+ assert.ok(!november.columns.some(column=>column.key===definition.prefix+'_rate'),'the ratio against TOP inventory is removed from the display');
  assert.ok(!october.columns.some(column=>column.key.startsWith(definition.prefix)));
 }
 assert.match(november.columnGroups.find(group=>group.tone==='store-top').label,/店总陪同/);
@@ -86,4 +87,4 @@ assert.equal(customerOnly._ownerApplicable,false);
 for(const definition of M.accompanimentDefinitions)for(const suffix of ['met','rate','share'])assert.equal(customerOnly[definition.prefix+'_'+suffix],'/');
 assert.match(M.accompanimentNote,/最近一次/);assert.match(M.accompanimentNote,/不能直接相加/);
 assert.equal(JSON.stringify(rows),before,'metrics and table do not mutate the imported rows');
-console.log('PASS accompaniment model: exact latest-visit flags, distinct-property counts, weighted scope rates, separate dual TOPs, missing/conflicting flags, zero bases, six November-only columns, customer-only applicability and unchanged base data.');
+console.log('PASS accompaniment model: exact latest-visit flags, distinct-property counts, weighted scope rates, separate dual TOPs, missing/conflicting flags, zero bases, four November-only columns, customer-only applicability and unchanged base data.');

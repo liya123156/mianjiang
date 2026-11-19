@@ -802,7 +802,7 @@ async function metHouseImage(preview=false){
  const novemberAnnouncementClosing='#今天杨博针对《向上向前》的上海城市报告已做价值解读\n接下来我们要对我们所有的客户、业主做专业的讲解💪\n报告预计在本周日/下周一到店，大家可以提前预约业主面见时间，提前做好专业&感性的服务准备哦';
  function accompanimentMessage(m){
   const count=key=>typeof m[key]==='number'?m[key]+'套':String(m[key]??'待核实');
-  const share=(key,top)=>typeof m[key]==='string'&&m[key].endsWith('%')?'占已面见'+top+'的'+m[key]:'已面见'+top+'中的陪同占比'+String(m[key]??'待核实');
+  const share=(key,top)=>typeof m[key]==='string'&&m[key].endsWith('%')?'占已面见'+top+'的'+m[key]:top+'陪同面见率'+String(m[key]??'待核实');
   return `👥 管理者陪同面见\n店总陪同门店TOP：${count('store_top_head_met')}｜${share('store_top_head_share','门店TOP')}\n经理陪同户型TOP：${count('unit_top_manager_met')}｜${share('unit_top_manager_share','户型TOP')}\n（按本月最近一次面见记录统计；两类TOP分别展示，不能直接相加。）\n\n${topRoleReminders}`;
  }
  function novemberMessage(view,progress,m,goal,cutoff){
@@ -892,7 +892,7 @@ TOP重点房源
    manifest.operatorRole=reader.role;
    files.push({name:'manifest.json',data:JSON.stringify(manifest,null,2)},{name:'门店群配置.csv',data:P.groupTemplate(manifest.stores)},{name:'使用说明.txt',data:'本包已生成，尚未发送到微信。\n'+(allScopes?'包含全司1份、5个大区及18家门店，共24个范围。全司包含一段话术和一张进展图；每个大区另附全司面见标杆榜。\n':'')+'每店的面见礼物进展与全部未面见TOP房明细合为一张完整图片；真实反馈另列，项目负责人生成的版本再附同一张全司标杆海报。通常每店三张图；真实反馈原文较长时分页，保留全部内容。当前范围授权版本的全司榜由项目负责人统一提供。\n真实反馈按同一房源的面见时间连续呈现，分类为规则建议，仍需结合原文核对。请按清单中的images顺序取图；未面见TOP明细已在第一张合并图中，无需重复发送。\n'+(pilot?'本包仅含试行名单中的门店，完整群名已写入门店群配置.csv。\n':'已知群名已写入配置CSV；空白群名标为待配置，可下载但不能发送到未知群。\n')+'下载资料包不会发送消息。\n数据截至：'+asOf+'\n源数据版本：'+source.created_at+'\n生成时间：'+preparedAt});
    const blob=await P.zip(files);assertCurrent();
-   return {blob,manifest,filename:month+'_'+asOf+'_'+(allScopes?'全司_5大区_18门店_24范围公示资料包':stores.length+'店'+(pilot?'试行':'微信')+'资料包')+(month==='2026-11'?'_管理者陪同面见版':'')+'.zip'};
+   return {blob,manifest,filename:month+'_'+asOf+'_'+(allScopes?'全司_5大区_18门店_24范围公示资料包':stores.length+'店'+(pilot?'试行':'微信')+'资料包')+(month==='2026-11'?'_陪同面见率更新版':'')+'.zip'};
   }finally{state.exporting=false;}
  }
  function publicationKpis(metric){
@@ -918,7 +918,7 @@ TOP重点房源
    const extraFiles=[],images=['01_面见及礼物进展.png'];if(view.scope==='region'&&C.project){const board=companyBenchmarkData(),boardImage=await root.WBCompanyBenchmark.image(board);assertCurrent();images.push('02_全司面见标杆榜.png');extraFiles.push({name:images[1],data:boardImage});}
    const manifest={recordType:'publication-package',schemaVersion:1,month,asOf:source.as_of,sourceVersion:source.created_at,preparedAt:new Date().toISOString(),status:'prepared',scope:view.scope,name:view.name,levels,operatorRole:reader.role,message:'话术.txt',images};
    const blob=await P.zip([{name:manifest.message,data:message},{name:manifest.images[0],data:image},...extraFiles,{name:'manifest.json',data:JSON.stringify(manifest,null,2)},{name:'使用说明.txt',data:'本包为当前范围的公示图文，包含一段话术和面见及礼物进展图；项目负责人生成的大区版本另附全司面见标杆榜，其他版本由项目负责人统一提供全司榜。\n仅下载，不会发送到微信；群名与转发由项目负责人处理。'}]);assertCurrent();
-   return {blob,manifest,filename:month+'_'+source.as_of+'_'+view.name+'公示资料包'+(month==='2026-11'?'_管理者陪同面见版':'')+'.zip'};
+   return {blob,manifest,filename:month+'_'+source.as_of+'_'+view.name+'公示资料包'+(month==='2026-11'?'_陪同面见率更新版':'')+'.zip'};
   }finally{state.exporting=false;}
  }
  async function downloadPublicationPackage(button){
