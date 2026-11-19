@@ -154,7 +154,7 @@ assert.match(companyText,/户型TOP房源已面见：41套/);
 assert.match(companyText,/店总陪同门店TOP：5套｜占已面见门店TOP的12\.20%/);
 assert.match(companyText,/经理陪同户型TOP：10套｜占已面见户型TOP的24\.39%/);
 assert.ok(companyText.indexOf('👥 管理者陪同面见')>companyText.indexOf('🔎 面见质量'));
-assert.ok(companyText.includes('两类TOP分别展示，不能直接相加'));
+assert.doesNotMatch(companyText,/（全盘包含两类TOP|（按本月最近一次面见/,'explanatory parentheses are omitted from announcements');
 for(const reminder of ['📌 店总牵头邀约及面见门店TOP','📌经理重点邀约及陪同面见户型TOP','📌伙伴持续开展全盘邀约，逐位业主明确邀约和面见安排'])assert.ok(companyText.includes(reminder));
 assert.match(companyText,/🎯 本月目标与进展/);assert.match(companyText,/🏅 标杆门店/);assert.match(companyText,/⚠️ 重点提醒门店/);assert.match(companyText,/🔎 面见质量/);
 assert.doesNotMatch(companyText,/各店进展|各组进展|💡|👏|公示口径|等权综合排名/);
@@ -176,12 +176,13 @@ const fullData=install(project);fullData.sendConfigItem={key:'2000-01|rules|@@co
 const complete=await api.buildSendPackage(storeView(catalog[0]),{allScopes:true}),completeFiles=unzip(await complete.blob.arrayBuffer()),completeManifest=complete.manifest;
 assert.equal(completeManifest.scopeCount,24);assert.equal(completeManifest.stores.length,18);assert.equal(completeManifest.publications.length,6);assert.equal(completeManifest.recipientsComplete,false);
 assert.match(complete.filename,/全司_5大区_18门店_24范围公示资料包/);
-for(const result of [pilot,sharedAll,companyPublication,regionPublication,complete])assert.ok(result.filename.endsWith('_陪同面见率更新版.zip'),'November downloads distinguish the updated report reminder from older packages');
+for(const result of [pilot,sharedAll,companyPublication,regionPublication,complete])assert.ok(result.filename.endsWith('_公示话术精简版.zip'),'November downloads distinguish the updated report reminder from older packages');
 assert.equal([...completeFiles.keys()].filter(name=>name.endsWith('/话术.txt')).length,24);
 const approvedClosing='#今天杨博针对《向上向前》的上海城市报告已做价值解读\n接下来我们要对我们所有的客户、业主做专业的讲解💪\n报告预计在本周日/下周一到店，大家可以提前预约业主面见时间，提前做好专业&感性的服务准备哦';
 for(const path of [...completeManifest.stores,...completeManifest.publications].map(row=>row.message)){const message=read(completeFiles,path);assert.ok(message.endsWith(approvedClosing),path+' ends with the approved city-report reminder');assert.equal(message.split(approvedClosing).length-1,1,path+' includes the closing once');assert.ok(!message.includes('请结合进展明确重点业主的面见安排'));assert.ok(!message.includes('把感恩化为行动💗 多面见 多服务｜让每一次服务更有温度✨'),path+' removes the previous closing');}
 for(const row of completeManifest.stores)assert.ok(!read(completeFiles,row.message).includes('👥 管理者陪同面见'),'single-store messages retain their agreed scope');
-for(const row of completeManifest.publications){const message=read(completeFiles,row.message);assert.ok(message.includes('👥 管理者陪同面见'),'company and region messages include manager participation');assert.ok(message.indexOf('👥 管理者陪同面见')>message.indexOf('🔎 面见质量'));}
+for(const row of completeManifest.publications){const message=read(completeFiles,row.message);assert.ok(message.includes('👥 管理者陪同面见'),'company and region messages include manager participation');assert.ok(message.indexOf('👥 管理者陪同面见')>message.indexOf('🔎 面见质量'));const section=message.match(/👥 管理者陪同面见[\s\S]*?(?=\n\n|$)/)[0];assert.equal(section.split('\n').length,6,'manager statistics and three reminders are six consecutive lines');assert.ok(section.includes('\n📌 店总牵头邀约及面见门店TOP\n📌经理重点邀约及陪同面见户型TOP\n📌伙伴持续开展全盘邀约，逐位业主明确邀约和面见安排'));}
+for(const row of [...completeManifest.stores,...completeManifest.publications])assert.doesNotMatch(read(completeFiles,row.message),/（全盘包含两类TOP|（按本月最近一次面见/,'all 24 exported messages omit the explanatory parentheses');
 for(const [files,result] of [[companyFiles,companyPublication],[regionFiles,regionPublication]])assert.ok(read(files,result.manifest.message).endsWith(approvedClosing),'standalone publication uses the same approved ending');
 const storeAttachmentLines=['#附1️⃣店组、个人名下房源及面见占比&本月TOP房未面见明细（重点邀约）','#附2️⃣面见质量（已面见房源面见反馈）','#附3️⃣全司面见标杆（店面、店组、个人）'];
 for(const row of completeManifest.stores){const message=read(completeFiles,row.message);assert.ok(message.includes(storeAttachmentLines.join('\n')),row.store+' retains all exact attachment lines in order');for(const line of storeAttachmentLines)assert.equal(message.split(line).length-1,1);assert.ok(message.indexOf(storeAttachmentLines[0])>message.indexOf('🔎 面见质量'));assert.ok(message.indexOf(storeAttachmentLines[2])<message.indexOf(approvedClosing));if(message.includes('🎁 伴手礼提醒'))assert.ok(message.indexOf(storeAttachmentLines[2])<message.indexOf('🎁 伴手礼提醒'));}
