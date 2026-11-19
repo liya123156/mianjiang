@@ -103,6 +103,19 @@
 @media print{.candidate-page-actions{display:none}.candidate-cards{display:none}.candidate-desktop{display:block}.candidate-detail-table td,.candidate-detail-table th{font-size:8pt}.candidate-detail-table tr{break-inside:avoid}}
 
 .progress-table .progress-identity-col-4{width:5.5%}.progress-table .progress-identity-col-3{width:5.5%}
+/* The November accompaniment columns keep readable widths instead of shrinking the full table. */
+.progress-accompaniment-scroll{overflow:auto;scrollbar-gutter:stable}
+.progress-accompaniment-table{width:100%;min-width:var(--progress-readable-width);font-size:12px}
+.progress-accompaniment-table th{font-size:12px}
+.progress-accompaniment-table .progress-identity-col-0{width:135px}
+.progress-accompaniment-table .progress-identity-col-1{width:180px}
+.progress-accompaniment-table .progress-identity-col-2{width:190px}
+.progress-accompaniment-table .progress-identity-col-3,.progress-accompaniment-table .progress-identity-col-4{width:100px}
+.progress-accompaniment-table .progress-metric-col{width:95px}
+.progress-accompaniment-table .progress-accompaniment-col{width:145px}
+.progress-accompaniment-table .progress-leaf-row th{height:82px;line-height:1.55}
+.progress-accompaniment-table .progress-accompaniment-value{line-height:1.65}
+@media print{.progress-accompaniment-table{min-width:0;width:100%;font-size:6.2pt}.progress-accompaniment-table th{font-size:6.2pt}.progress-accompaniment-table .progress-identity-col,.progress-accompaniment-table .progress-metric-col,.progress-accompaniment-table .progress-accompaniment-col{width:auto}.progress-accompaniment-table .progress-leaf-row th{height:auto}.progress-accompaniment-scroll{overflow:visible}}
 </style>
 <link rel="stylesheet" href="project-plan.css?v=20261030-execution-01">
 <link rel="stylesheet" href="operations/november-plan.css?v=20261105-ruby-01">
@@ -161,7 +174,7 @@
 <script src="project-plan.js?v=20261116-plan-goals-01"></script>
 <script src="operations/cloud-config.js?v=20261027-11"></script>
 <script src="operations/manager-directory.js?v=20261116-finance-identity-01"></script>
-<script src="operations/core.js?v=20261117-group-min-five-01"></script>
+<script src="operations/core.js?v=20261119-top-accompaniment-01"></script>
 <script src="operations/xlsx-reader.js?v=20261027-11"></script>
 <script src="operations/cloud.js?v=20261116-public-week-report-01"></script>
 <script src="operations/proof-paste.js?v=20261027-11"></script>
@@ -182,7 +195,7 @@
 <script src="operations/met-house-feedback.js?v=20261116-manager-board-01"></script>
 <script src="operations/store-publication-image.js?v=20261116-combined-poster-01"></script>
 <script src="operations/benchmark-board.js?v=20261119-single-row-poster-01"></script>
-<script src="operations/ui.js?v=20261119-report-reminder-03"></script>
+<script src="operations/ui.js?v=20261119-top-accompaniment-01"></script>
 <script>
 'use strict';
 let progressImageUrl = '';
@@ -196,34 +209,52 @@ function progressRateValue(row, key) {
   return `<span class="progress-ranked-value"><span>${value}</span><span class="progress-rank-mark" role="img" aria-label="${label}" title="${label}">${symbol}</span></span>`;
 }
 function hasProgressRanks(block) { return (block.rows || []).some(row => ['met_rate','store_top_rate','unit_top_rate'].some(key => progressRateSymbol(row, key))); }
-function progressNotes() { return []; }
+function progressHasAccompaniment(block) { return (block.columns || []).some(c=>c.key==='store_top_head_met'||c.key==='unit_top_manager_met'); }
+function progressColumnLabel(column) {
+  if(column.key.startsWith('store_top_head_'))return '门店TOP店总'+column.label;
+  if(column.key.startsWith('unit_top_manager_'))return '户型TOP经理'+column.label;
+  return column.label;
+}
+function progressColumnWidth(column) {
+  const identities={region:135,store:180,group:190,manager:100,name:100};
+  return identities[column.key] || (/^(store_top_head_|unit_top_manager_)/.test(column.key)?145:95);
+}
+function progressNotes(block, forImage=false) {
+  if(!progressHasAccompaniment(block))return [];
+  const notes=['管理者陪同按本月最近一次面见记录统计；两类TOP分别展示，不能直接相加。'];
+  if(forImage)notes.push('📌 店总牵头邀约及面见门店TOP','📌经理重点邀约及陪同面见户型TOP','📌伙伴持续开展全盘邀约，逐位业主明确邀约和面见安排');
+  return notes;
+}
 
 
 function progressImagePlan(view, block, month, meta) {
   block = window.WBModel.orderProgress(block);
   const identityKeys = new Set(['region','store','group','manager','name']);
-  const columns = (block.columns || []).filter(c => !(view.scope === 'company' && ['group','manager','name'].includes(c.key)));
+  const columns = (block.columns || []).filter(c => !(view.scope === 'company' && ['group','manager','name'].includes(c.key))).map(c=>({...c,label:progressColumnLabel(c)}));
   const identityCount = columns.filter(c => identityKeys.has(c.key)).length;
-  const width = 2000, padding = 28, tableWidth = width - padding * 2;
+  const expanded = progressHasAccompaniment(block), padding = 28;
+  const width = expanded ? Math.max(2000,columns.reduce((n,c)=>n+progressColumnWidth(c),0)+padding*2) : 2000, tableWidth = width - padding * 2;
   const identityWidths={region:.065,store:.095,group:.105,manager:.055,name:.055};
   const fixed = identityCount === 2 ? [.12,.15] : columns.slice(0,identityCount).map(c=>identityWidths[c.key]||.06);
   const rest = Math.max(1, columns.length - identityCount);
   const proportions = [...fixed,...Array(rest).fill((1 - fixed.reduce((a,b)=>a+b,0)) / rest)];
-  const widths = proportions.map(x => x * tableWidth);
+  const widths = expanded ? columns.map(progressColumnWidth) : proportions.map(x => x * tableWidth);
   const x = [padding]; widths.forEach(w => x.push(x[x.length-1] + w));
-  return {width,padding,tableWidth,widths,x,title:monthLabel(month) + '面见及礼物进展',scope:view.name,subtitle:[meta.cutoff,block.subtitle].filter(Boolean).join(' · '),columns,identityCount,groups:block.columnGroups,rows:block.rows,kpis:view.kpis};
+  return {width,padding,tableWidth,widths,x,expanded,title:monthLabel(month) + '面见及礼物进展',scope:view.name,subtitle:[meta.cutoff,block.subtitle].filter(Boolean).join(' · '),columns,identityCount,groups:block.columnGroups,rows:block.rows,kpis:view.kpis};
 }
 function createProgressImage(view, block, month, meta) {
   const plan = progressImagePlan(view,block,month,meta);
   const canvas = document.createElement('canvas');
   const scale = 1.5, headerTop = 178, groupHeight = 48, leafHeight = 72;
-  const rowHeight = 44, tableBottom = headerTop + groupHeight + leafHeight + plan.rows.length * rowHeight;
-  const notes = progressNotes(block);
-  const height = tableBottom + (hasProgressRanks(block) ? 102 : 74) + notes.length * 28;
-  canvas.width = plan.width * scale; canvas.height = height * scale;
-  const ctx = canvas.getContext('2d'); if (!ctx) throw Error('canvas unavailable');
-  ctx.scale(scale,scale); ctx.fillStyle = '#fffefa'; ctx.fillRect(0,0,plan.width,height);
+  const notes = progressNotes(block,true);
+  let ctx = canvas.getContext('2d'); if (!ctx) throw Error('canvas unavailable');
   const font = '"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif';
+  const rowHeights=plan.rows.map(row=>plan.expanded?Math.max(44,...plan.columns.map((col,ci)=>wrapped(String(window.WBModel?.meetingCountValue?.(row,col.key) ?? row[col.key] ?? '')+progressRateSymbol(row,col.key),plan.widths[ci]-14,ci<plan.identityCount?17:18).length*(ci<plan.identityCount?17:18)*1.25+12)):44);
+  const tableBottom = headerTop + groupHeight + leafHeight + rowHeights.reduce((n,h)=>n+h,0);
+  const height = tableBottom + (hasProgressRanks(block) ? 102 : 74) + notes.length * 28;
+  canvas.width = Math.ceil(plan.width * scale); canvas.height = Math.ceil(height * scale);
+  ctx=canvas.getContext('2d'); if (!ctx) throw Error('canvas unavailable');
+  ctx.scale(scale,scale); ctx.fillStyle = '#fffefa'; ctx.fillRect(0,0,plan.width,height);
   function fontStyle(size,bold=false) { ctx.font = (bold ? '600 ' : '400 ') + size + 'px ' + font; }
   function wrapped(text,maxWidth,size,bold=false) {
     fontStyle(size,bold); const lines = []; let line = '';
@@ -258,9 +289,10 @@ function createProgressImage(view, block, month, meta) {
     for(const i of indices)cell(plan.columns[i].label,plan.x[i],headerTop+groupHeight,plan.widths[i],leafHeight,fill,'#44334e',18,true);
   }
   const rowFills={company:'#ece0f1',region:'#f5e9ee',store:'#f0edf7',group:'#eef5e8',advisor:'#fffefa'};
-  const rateKeys=new Set(['target_rate','met_rate','gift_rate','store_top_rate','unit_top_rate']);
+  const rateKeys=new Set(['target_rate','met_rate','gift_rate','store_top_rate','unit_top_rate','store_top_head_rate','store_top_head_share','unit_top_manager_rate','unit_top_manager_share']);
+  let rowY=headerTop+groupHeight+leafHeight;
   for(let ri=0;ri<plan.rows.length;ri++){
-    const row=plan.rows[ri],y=headerTop+groupHeight+leafHeight+ri*rowHeight;
+    const row=plan.rows[ri],y=rowY,rowHeight=rowHeights[ri];rowY+=rowHeight;
     for(let ci=0;ci<plan.columns.length;ci++){
       const col=plan.columns[ci],value=row[col.key],x=plan.x[ci],w=plan.widths[ci];
       const fill=rowFills[row._level]||'#fffefa';ctx.fillStyle=fill;ctx.fillRect(x,y,w,rowHeight);
@@ -467,7 +499,7 @@ function renderTable(block) {
   tableModels.set(id, {block,tabs,active:0,expanded:false});
   const max = Number(block.maxRows);
   const isProgress = block.variant === 'progress';
-  const rateKeys = new Set(['target_rate','met_rate','gift_rate','store_top_rate','unit_top_rate']);
+  const rateKeys = new Set(['target_rate','met_rate','gift_rate','store_top_rate','unit_top_rate','store_top_head_rate','store_top_head_share','unit_top_manager_rate','unit_top_manager_share']);
   const zeroBases = {met:'stock', store_top_met:'store_top_stock', unit_top_met:'unit_top_stock'};
   const allowedLevels = ['company','region','store','group','advisor'];
   const defaultGroups = [
@@ -485,6 +517,7 @@ function renderTable(block) {
     const hideCompanyIdentity = currentView?.scope === 'company';
     const cols = arr(tab.columns || block.columns).filter(c => !String(c.key).startsWith('_') && !(hideCompanyIdentity && ['group','manager','name'].includes(c.key)));
     const progress = isProgress && (cols.length >= 15);
+    const accompaniment = progress && progressHasAccompaniment({columns:cols});
     const headers = cols.map((c,j) => `${id}-p${i}-h${j}`);
     const groups = arr(tab.columnGroups || block.columnGroups).length ? arr(tab.columnGroups || block.columnGroups) : defaultGroups;
     const identityCount = cols.filter(c=>['region','store','group','manager','name'].includes(c.key)).length;
@@ -493,19 +526,19 @@ function renderTable(block) {
     function columnClass(c,j) {
       if (!progress) return '';
       const group = groupByKey.get(c.key);
-      return ['progress-col', j < identityCount ? 'progress-identity' : 'progress-metric', j < 2 ? `progress-fixed-${j}` : '', rateKeys.has(c.key) ? 'progress-rate' : '', group ? 'progress-section-' + groupTone(group.tone) : ''].filter(Boolean).join(' ');
+      return ['progress-col', j < identityCount ? 'progress-identity' : 'progress-metric', j < 2 ? `progress-fixed-${j}` : '', rateKeys.has(c.key) ? 'progress-rate' : '', /^(store_top_head_|unit_top_manager_)/.test(c.key)?'progress-accompaniment-value':'', group ? 'progress-section-' + groupTone(group.tone) : ''].filter(Boolean).join(' ');
     }
     let head;
     if (progress) {
-      // All 17 leaf columns remain in block.columns for text and Word exports.
-      // The first four identities span both header rows; metadata groups the rest.
+      // Every leaf column remains in block.columns for text, Word and image exports.
+      // Identity columns span both header rows; metadata groups the remaining columns.
       const identity = cols.slice(0,identityCount).map((c,j) => `<th id="${headers[j]}" scope="col" rowspan="2" class="${columnClass(c,j)}">${esc(c.label)}</th>`).join('');
       const groupHeads = groups.map((g,gi) => {
         const keys = arr(g.keys).filter(k => cols.slice(identityCount).some(c => c.key === k));
         const span = keys.length || Math.max(1,Number(g.colspan) || 1);
         return `<th id="${id}-p${i}-g${gi}" scope="colgroup" colspan="${span}" class="progress-group-head progress-section-${groupTone(g.tone)}">${esc(g.label)}</th>`;
       }).join('');
-      const leaves = cols.slice(identityCount).map((c,j) => `<th id="${headers[j+identityCount]}" scope="col" class="${columnClass(c,j+identityCount)}">${esc(c.label)}</th>`).join('');
+      const leaves = cols.slice(identityCount).map((c,j) => `<th id="${headers[j+identityCount]}" scope="col" class="${columnClass(c,j+identityCount)}">${esc(progressColumnLabel(c))}</th>`).join('');
       head = `<thead><tr class="progress-group-row">${identity}${groupHeads}</tr><tr class="progress-leaf-row">${leaves}</tr></thead>`;
     } else {
       head = `<thead><tr>${cols.map(c => `<th scope="col">${esc(c.label)}</th>`).join('')}</tr></thead>`;
@@ -526,12 +559,13 @@ function renderTable(block) {
       }).join('');
       return `<tr class="${classes}" data-row="${j}" ${progress ? `data-level="${level}"` : ''} ${max > 0 && j >= max ? 'hidden' : ''}>${cells}</tr>`;
     }).join('');
-    const colgroup = progress ? `<colgroup>${cols.map((c,j) => `<col class="${j < identityCount ? 'progress-identity-col progress-identity-col-' + j : 'progress-metric-col'}">`).join('')}</colgroup>` : '';
-    return `<div class="tab-panel" id="${id}-panel-${i}" ${i ? 'hidden' : ''} ${tabs.length > 1 ? `role="tabpanel" aria-labelledby="${id}-tab-${i}"` : ''}><div class="table-scroll${progress ? ' progress-scroll' : ''}"${progress ? ' role="region" tabindex="0" aria-label="' + esc((block.title || '进展表') + '，完整展示' + cols.length + '个字段') + '"' : ''}><table${progress ? ' class="progress-table"' : ''}>${colgroup}${head}<tbody>${rows}${!arr(tab.rows).length ? `<tr class="empty-row"><td colspan="${Math.max(1,cols.length)}">当前范围暂无记录</td></tr>` : ''}</tbody></table></div></div>`;
+    const colgroup = progress ? `<colgroup>${cols.map((c,j) => `<col class="${j < identityCount ? 'progress-identity-col progress-identity-col-' + j : 'progress-metric-col'}${/^(store_top_head_|unit_top_manager_)/.test(c.key)?' progress-accompaniment-col':''}">`).join('')}</colgroup>` : '';
+    const tableStyle=accompaniment?' style="--progress-readable-width:'+cols.reduce((n,c)=>n+progressColumnWidth(c),0)+'px"':'';
+    return `<div class="tab-panel" id="${id}-panel-${i}" ${i ? 'hidden' : ''} ${tabs.length > 1 ? `role="tabpanel" aria-labelledby="${id}-tab-${i}"` : ''}><div class="table-scroll${progress ? ' progress-scroll' : ''}${accompaniment?' progress-accompaniment-scroll':''}"${progress ? ' role="region" tabindex="0" aria-label="' + esc((block.title || '进展表') + '，完整展示' + cols.length + '个字段') + '"' : ''}><table${progress ? ' class="progress-table'+(accompaniment?' progress-accompaniment-table':'')+'"'+tableStyle : ''}>${colgroup}${head}<tbody>${rows}${!arr(tab.rows).length ? `<tr class="empty-row"><td colspan="${Math.max(1,cols.length)}">当前范围暂无记录</td></tr>` : ''}</tbody></table></div></div>`;
   }).join('');
   const mobile = isProgress ? `<div class="progress-mobile">${arr(block.rows).map(row => {
     const title = row._level === 'company' ? '全司' : row._level === 'region' ? row.region : row._level === 'advisor' ? row.name + ' · ' + row.group : row._level === 'group' ? row.group : row.store;
-    const field = col => `<div><dt>${esc(col.label)}</dt><dd>${progressRateValue(row,col.key)}</dd></div>`;
+    const field = col => `<div><dt>${esc(progressColumnLabel(col))}</dt><dd>${progressRateValue(row,col.key)}</dd></div>`;
     return `<article class="progress-mobile-row level-${esc(row._level)}"><h4>${esc(title)}</h4><dl class="progress-mobile-identity">${block.columns.filter(c=>['region','store','group','manager','name'].includes(c.key)).map(field).join('')}</dl>${arr(block.columnGroups).map(group => `<h5>${esc(group.label)}</h5><dl class="progress-mobile-metrics">${block.columns.filter(c => group.keys.includes(c.key)).map(field).join('')}</dl>`).join('')}</article>`;
   }).join('')}</div>` : '';
   const candidateHint = tabs.some(t => arr(t.rows).some(row => row._candidate)) && Array.isArray(DATA.candidate_details) ? '<div class="candidate-table-hint">点击候选套数，查看项目、房间号、店组和维护人</div>' : '';

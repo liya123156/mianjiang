@@ -37,7 +37,7 @@ for(const [index,s] of catalog.entries()){
   const count=index===0?50:1;
   for(let i=0;i<count;i++){
     const id=index+'-'+i,met=index===1||index===0&&i>=25?0:1;
-    housing.push({大区:s.region,门店:s.store,店组:s.store+'A组',维护人姓名:'伙伴'+index,房源编号:id,细分在售户数:1,本月是否面见:met,门店top户数:1,户型top户数:1,分盘:'楼盘哨兵'+index,房间号:id});
+    housing.push({大区:s.region,门店:s.store,店组:s.store+'A组',维护人姓名:'伙伴'+index,房源编号:id,细分在售户数:1,本月是否面见:met,门店top户数:1,户型top户数:1,'本月最近一次面见是否店总陪同':Number(met&&index===0&&i<5),'本月最近一次面见是否店经理陪同':Number(met&&index===0&&i<10),分盘:'楼盘哨兵'+index,房间号:id});
     if(met)meetings.push({房源编号:id,面见id:id,面见时间:'2026-11-08',面见反馈:index===0&&i===0?'第一条原文起点'+('完整原文保留 ORIGINAL-FEEDBACK-'.repeat(2500))+'第一条原文终点':'已反馈客户，看房后确认底价'});
   }
 }
@@ -67,7 +67,7 @@ assert.equal(manifest.schemaVersion,2);assert.equal(manifest.stores[0].modules.d
 assert.ok(manifest.stores[0].modules.quality.length>1,'complete long feedback must paginate');
 assert.deepEqual(manifest.stores[0].moduleLabels,{progress:'面见及礼物进展＋未面见TOP房明细',details:'已合并至进展图',quality:'业主面见真实反馈',benchmark:'全司面见标杆榜'});
 assert.equal(manifest.stores[0].metrics.met,25);assert.equal(manifest.stores[0].metrics.meetingCount,26);
-assert.match(read(entries,manifest.stores[0].message),/全盘面见：25套（50\.00%）/,'current announcement template uses owner coverage; the manifest retains meeting counts');
+assert.match(read(entries,manifest.stores[0].message),/全盘在售房源已面见：25套｜面见率50\.00%/,'current announcement explicitly labels met property coverage; the manifest retains meeting counts');
 assert.equal(manifest.stores[1].metrics.met,0);assert.equal(manifest.stores[1].images.length,3,'zero meetings yields merged overview, feedback state and global benchmark');
 assert.equal(read(entries,'门店群配置.csv').split('\r\n').length,19);
 assert.ok(manifest.stores.every(s=>s.groupName===''),'never infer or prefill a WeChat recipient');
@@ -148,6 +148,14 @@ assert.equal(companyPublication.manifest.images.length,1);
 assert.deepEqual(Array.from(companyPublication.manifest.levels),['company','region','store']);
 assert.ok(!('groupName' in companyPublication.manifest));assert.ok(!companyFiles.has('门店群配置.csv'));
 const companyText=read(companyFiles,'话术.txt');
+assert.match(companyText,/全盘在售房源已面见：41套/);
+assert.match(companyText,/门店TOP房源已面见：41套/);
+assert.match(companyText,/户型TOP房源已面见：41套/);
+assert.match(companyText,/店总陪同门店TOP：5套｜占已面见门店TOP的12\.20%/);
+assert.match(companyText,/经理陪同户型TOP：10套｜占已面见户型TOP的24\.39%/);
+assert.ok(companyText.indexOf('👥 管理者陪同面见')>companyText.indexOf('🔎 面见质量'));
+assert.ok(companyText.includes('两类TOP分别展示，不能直接相加'));
+for(const reminder of ['📌 店总牵头邀约及面见门店TOP','📌经理重点邀约及陪同面见户型TOP','📌伙伴持续开展全盘邀约，逐位业主明确邀约和面见安排'])assert.ok(companyText.includes(reminder));
 assert.match(companyText,/🎯 本月目标与进展/);assert.match(companyText,/🏅 标杆门店/);assert.match(companyText,/⚠️ 重点提醒门店/);assert.match(companyText,/🔎 面见质量/);
 assert.doesNotMatch(companyText,/各店进展|各组进展|💡|👏|公示口径|等权综合排名/);
 const qualitySection=companyText.split('🔎 面见质量\n')[1].split('\n\n')[0];
@@ -168,10 +176,12 @@ const fullData=install(project);fullData.sendConfigItem={key:'2000-01|rules|@@co
 const complete=await api.buildSendPackage(storeView(catalog[0]),{allScopes:true}),completeFiles=unzip(await complete.blob.arrayBuffer()),completeManifest=complete.manifest;
 assert.equal(completeManifest.scopeCount,24);assert.equal(completeManifest.stores.length,18);assert.equal(completeManifest.publications.length,6);assert.equal(completeManifest.recipientsComplete,false);
 assert.match(complete.filename,/全司_5大区_18门店_24范围公示资料包/);
-for(const result of [pilot,sharedAll,companyPublication,regionPublication,complete])assert.ok(result.filename.endsWith('_报告解读提醒版.zip'),'November downloads distinguish the updated report reminder from older packages');
+for(const result of [pilot,sharedAll,companyPublication,regionPublication,complete])assert.ok(result.filename.endsWith('_管理者陪同面见版.zip'),'November downloads distinguish the updated report reminder from older packages');
 assert.equal([...completeFiles.keys()].filter(name=>name.endsWith('/话术.txt')).length,24);
 const approvedClosing='#今天杨博针对《向上向前》的上海城市报告已做价值解读\n接下来我们要对我们所有的客户、业主做专业的讲解💪\n报告预计在本周日/下周一到店，大家可以提前预约业主面见时间，提前做好专业&感性的服务准备哦';
 for(const path of [...completeManifest.stores,...completeManifest.publications].map(row=>row.message)){const message=read(completeFiles,path);assert.ok(message.endsWith(approvedClosing),path+' ends with the approved city-report reminder');assert.equal(message.split(approvedClosing).length-1,1,path+' includes the closing once');assert.ok(!message.includes('请结合进展明确重点业主的面见安排'));assert.ok(!message.includes('把感恩化为行动💗 多面见 多服务｜让每一次服务更有温度✨'),path+' removes the previous closing');}
+for(const row of completeManifest.stores)assert.ok(!read(completeFiles,row.message).includes('👥 管理者陪同面见'),'single-store messages retain their agreed scope');
+for(const row of completeManifest.publications){const message=read(completeFiles,row.message);assert.ok(message.includes('👥 管理者陪同面见'),'company and region messages include manager participation');assert.ok(message.indexOf('👥 管理者陪同面见')>message.indexOf('🔎 面见质量'));}
 for(const [files,result] of [[companyFiles,companyPublication],[regionFiles,regionPublication]])assert.ok(read(files,result.manifest.message).endsWith(approvedClosing),'standalone publication uses the same approved ending');
 const storeAttachmentLines=['#附1️⃣店组、个人名下房源及面见占比&本月TOP房未面见明细（重点邀约）','#附2️⃣面见质量（已面见房源面见反馈）','#附3️⃣全司面见标杆（店面、店组、个人）'];
 for(const row of completeManifest.stores){const message=read(completeFiles,row.message);assert.ok(message.includes(storeAttachmentLines.join('\n')),row.store+' retains all exact attachment lines in order');for(const line of storeAttachmentLines)assert.equal(message.split(line).length-1,1);assert.ok(message.indexOf(storeAttachmentLines[0])>message.indexOf('🔎 面见质量'));assert.ok(message.indexOf(storeAttachmentLines[2])<message.indexOf(approvedClosing));if(message.includes('🎁 伴手礼提醒'))assert.ok(message.indexOf(storeAttachmentLines[2])<message.indexOf('🎁 伴手礼提醒'));}

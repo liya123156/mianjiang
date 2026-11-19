@@ -37,7 +37,9 @@ BEGIN
  '店组',h.payload->'店组','维护人姓名',h.payload->'维护人姓名',
  '细分在售户数',coalesce(h.payload->'细分在售户数',h.payload->'在售户数'),
  '本月是否面见',h.payload->'本月是否面见','本月是否送礼物',h.payload->'本月是否送礼物',
- '门店top户数',h.payload->'门店top户数','户型top户数',h.payload->'户型top户数'))
+ '门店top户数',h.payload->'门店top户数','户型top户数',h.payload->'户型top户数',
+ '本月最近一次面见是否店总陪同',h.payload->'本月最近一次面见是否店总陪同',
+ '本月最近一次面见是否店经理陪同',h.payload->'本月最近一次面见是否店经理陪同'))
  FROM public.wb_housing h WHERE h.month=p_month),'[]'::jsonb),
  'meetings','[]'::jsonb,'items',coalesce((SELECT jsonb_agg(to_jsonb(i)) FROM public.wb_items i WHERE month=p_month AND kind='goals'),'[]'::jsonb),
  'imports',coalesce((SELECT jsonb_agg(jsonb_build_object('as_of',i.as_of,'created_at',i.created_at,'housing_count',i.housing_count) ORDER BY i.as_of DESC,i.created_at DESC) FROM public.wb_imports i WHERE month=p_month),'[]'::jsonb),
