@@ -758,7 +758,7 @@ async function metHouseImage(preview=false){
   try{const blob=await root.WBCompanyBenchmark.image(board);assertCurrent();
    if(!preview&&navigator.clipboard?.write&&root.ClipboardItem&&isSecureContext){try{await navigator.clipboard.write([new root.ClipboardItem({'image/png':blob})]);notify('全司面见标杆榜已复制，包含门店、店组及个人标杆。');return;}catch{}}
    if(state.benchmarkUrl)URL.revokeObjectURL(state.benchmarkUrl);state.benchmarkUrl=URL.createObjectURL(blob);state.benchmarkPreview={blob,assertCurrent};
-   dialog('<h2>全司在售业主面见标杆榜</h2><p>门店、店组、个人分层展示，榜单卡片横向排布；次数、套数、面见率横向展示，正反馈按类型逐行呈现。各范围共用同一份全司榜单。</p><div class="ops-actions"><button class="btn" data-ops="benchmark-copy-image">复制整张榜单</button><a class="btn primary" href="'+state.benchmarkUrl+'" download="'+E(month+'_'+asOf)+'_全司面见标杆榜.png">下载整张榜单</a></div><img alt="全司面见标杆榜完整图片" src="'+state.benchmarkUrl+'" style="width:100%;margin-top:16px">');
+   dialog('<h2>全司在售业主面见标杆榜</h2><p>一行一个标杆；面见次数、面见套数、面见率横向分列，正反馈按类型逐行呈现。各范围共用同一份全司榜单。</p><div class="ops-actions"><button class="btn" data-ops="benchmark-copy-image">复制整张榜单</button><a class="btn primary" href="'+state.benchmarkUrl+'" download="'+E(month+'_'+asOf)+'_全司面见标杆榜.png">下载整张榜单</a></div><img alt="全司面见标杆榜完整图片" src="'+state.benchmarkUrl+'" style="width:100%;margin-top:16px">');
   }finally{state.benchmarkBusy=false;}
  }
  async function copyBenchmarkPreview(){const p=state.benchmarkPreview;if(!p)throw Error('请重新生成全司标杆榜');p.assertCurrent();try{await navigator.clipboard.write([new root.ClipboardItem({'image/png':p.blob})]);notify('整张全司标杆榜已复制。');}catch{notify('浏览器未允许复制，请下载这张榜单。');}}

@@ -45,8 +45,8 @@ const manyOutcomes={...board,sections:[{...board.sections[0],rows:[{...board.sec
 const image=await B.image(manyOutcomes);assert.ok(image instanceof Blob);assert.equal(image.type,'image/png');assert.equal(exports,1,'one PNG output, no image pages');assert.ok(canvases.every(c=>c.height<=30000));assert.ok(canvases.at(-1).width*canvases.at(-1).height<=64000000);for(const label of Object.values(B.posterFeedbackLabels))assert.ok(drawn.join('').includes(label),label+' retained');assert.ok(drawn.includes('100.00%'),'organizational rate is rendered');const outcomeDraws=placements.filter(p=>Object.values(B.posterFeedbackLabels).some(label=>p.text.includes(label)));assert.ok(outcomeDraws.every(p=>Object.values(B.posterFeedbackLabels).filter(label=>p.text.includes(label)).length===1),'feedback types are never joined into one drawn paragraph');assert.ok(outcomeDraws.every(p=>!p.text.includes('%')),'feedback remains count-only');assert.ok(drawn.includes(board.slogans[0]));assert.ok(drawn.includes(board.slogans[1]));
 const png=await B.image(board);assert.equal(exports,2);assert.ok(drawn.some(line=>line.includes('店组月度面见至少5套')),'exported poster states the same group eligibility');assert.ok(drawn.includes('当前暂无月度面见达到5套的店组，待数据更新后呈现。'),'exported empty group state names the threshold');
 assert.equal(board.title,'全司在售业主面见标杆榜');assert.equal(board.heroNote,'让每一次用心服务都被看见，感恩每一位伙伴的主动与付出。');assert.ok(html.includes(board.heroNote));assert.ok(!html.includes('让每一次主动走近，都被看见'));assert.ok(drawn.includes(board.heroNote));
-const titleMeasure=createCanvas().getContext('2d');titleMeasure.font='600 88px sans-serif';assert.ok(titleMeasure.measureText(board.title).width<=3448,'the longer approved title stays inside the poster content width');
-const centeredTexts=[board.title,board.heroNote,...board.slogans,...board.sections.map(s=>s.title)];for(const label of centeredTexts){const matches=placements.filter(p=>p.text===label);assert.ok(matches.length,label+' is drawn');assert.ok(matches.every(p=>p.x===1800&&p.align==='center'),label+' is centered across the poster');}
+const titleMeasure=createCanvas().getContext('2d');titleMeasure.font='600 72px sans-serif';assert.ok(titleMeasure.measureText(board.title).width<=2672,'the longer approved title stays inside the poster content width');
+const centeredTexts=[board.title,board.heroNote,...board.slogans,...board.sections.map(s=>s.title)];for(const label of centeredTexts){const matches=placements.filter(p=>p.text===label);assert.ok(matches.length,label+' is drawn');assert.ok(matches.every(p=>p.x===1400&&p.align==='center'),label+' is centered across the poster');}
 assert.ok(placements.some(p=>p.align==='left'&&Object.values(B.posterFeedbackLabels).some(label=>p.text.includes(label))),'full feedback stays left aligned inside each honor card');
 // All 17 honors, including ties, keep readable type and every category on a separate line.
 const compactRows=[3,6,8].map((n,sectionIndex)=>Array.from({length:n},(_,i)=>{
@@ -55,15 +55,21 @@ const compactRows=[3,6,8].map((n,sectionIndex)=>Array.from({length:n},(_,i)=>{
 }));
 const compactBoard={...board,sections:board.sections.map((s,i)=>({...s,rows:compactRows[i]}))};
 const compactPlan=B.posterLayout(compactBoard,createCanvas().getContext('2d'));
-assert.equal(compactPlan.outputWidth,3600);assert.equal(compactPlan.scale,1,'normal data never shrinks to fit');
-assert.ok(compactPlan.outputHeight<=3600,'3 stores, 6 groups and 8 people fit a balanced full board: '+compactPlan.outputHeight);
-assert.ok(compactPlan.bodyFontSize>=44,'feedback type remains readable');
+assert.equal(compactPlan.outputWidth,2800);assert.equal(compactPlan.scale,1,'normal data never shrinks to fit');
+assert.ok(compactPlan.outputHeight<=6000,'all 17 benchmarks remain readable on individual full-width rows: '+compactPlan.outputHeight);
+assert.ok(compactPlan.bodyFontSize>=32,'feedback type remains readable');
 assert.equal(compactPlan.sections.flatMap(s=>s.cards).length,17,'ties remain fully represented');
 const fullPlan=B.posterLayout(manyOutcomes,createCanvas().getContext('2d'));
 assert.ok(fullPlan.sections[0].cards[0].feedbackLines.join('').includes('其他需求'),'the last of all seven categories remains present');
-assert.deepEqual(Array.from(compactPlan.sections,s=>s.gridRows.length),[1,2,3],'each tier uses three columns without a long empty panel');
-for(const section of compactPlan.sections)for(const gridRow of section.gridRows){assert.ok(gridRow.cards.length<=3);for(const card of gridRow.cards){assert.ok(card.x>=compactPlan.pad);assert.ok(card.x+compactPlan.cardWidth<=compactPlan.width-compactPlan.pad+1);assert.ok(card.feedbackLines.every(line=>Object.values(B.posterFeedbackLabels).filter(label=>line.includes(label)).length<=1));}}
+assert.deepEqual(Array.from(compactPlan.sections,s=>s.cards.length),[3,6,8],'one full-width row for each benchmark, including ties');
+for(const section of compactPlan.sections){
+ assert.ok(!section.gridRows,'benchmark rows never use a multi-column card grid');
+ const metricColumns=section.columns.filter(c=>['meetingCount','met','met_rate'].includes(c.key));assert.deepEqual(Array.from(metricColumns,c=>c.key),['meetingCount','met','met_rate']);
+ for(let i=1;i<section.columns.length;i++)assert.ok(section.columns[i].x>=section.columns[i-1].x+section.columns[i-1].width-.01,'table columns do not overlap');
+ for(const card of section.cards){assert.equal(card.x,compactPlan.pad);assert.equal(card.width,compactPlan.contentWidth,'every benchmark takes the full table width');assert.ok(card.feedbackLines.every(line=>Object.values(B.posterFeedbackLabels).filter(label=>line.includes(label)).length<=1));for(const key of ['meetingCount','met','met_rate'])assert.equal(card.cellLines[key].length,1,key+' stays in its own single-line metric cell');}
+}
+
 const layoutStart=placements.length;await B.image(manyOutcomes);const cardLabels=placements.slice(layoutStart).filter(p=>['面见次数','面见套数','面见率'].includes(p.text));assert.equal(cardLabels.length,3);assert.equal(new Set(cardLabels.map(p=>p.y)).size,1,'the three metric labels are on one horizontal line');assert.equal(new Set(cardLabels.map(p=>p.x)).size,3,'each metric has its own horizontal column');assert.ok(cardLabels[0].x<cardLabels[1].x&&cardLabels[1].x<cardLabels[2].x);
-assert.equal(B.posterTemplate,'landscape-honor-grid-v2');
+assert.equal(B.posterTemplate,'full-width-honor-rows-v3');
 assert.match(html,/cb-honor/);assert.match(html,/荣誉时刻/);assert.match(fs.readFileSync(new URL('../operations/benchmark-board.css',import.meta.url),'utf8'),/\.cb-hero\{[^}]*text-align:center/);if(real&&process.env.PREVIEW_PATH){fs.writeFileSync(process.env.PREVIEW_PATH,Buffer.from(await png.arrayBuffer()));console.log('RENDER '+process.env.PREVIEW_PATH+' '+canvases.at(-1).width+'x'+canvases.at(-1).height);}
 console.log('PASS company benchmark: complete18 global source, monthly fact deduplication, primary observed outcomes, all categories with counts only, maintainer attribution, missing identity/data, managers, true ties, exact slogans and one bounded PNG.');
