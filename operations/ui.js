@@ -798,7 +798,7 @@ async function metHouseImage(preview=false){
   const level=view.scope==='store'?'group':'store',rows=(progress.rows||[]).filter(r=>r._level===level&&Number(r.stock)>0&&Number(r.met)>0),best=reviewOrganizationRank(rows,3,true,true);
   return best.map(r=>`👍 ${level==='group'?r.group:r.store}：面见${r.met}套，面见率${r.met_rate}。`);
  }
- const novemberAnnouncementClosing='把感恩化为行动💗 多面见 多服务｜让每一次服务更有温度✨';
+ const novemberAnnouncementClosing='#今天杨博针对《向上向前》的上海城市报告已做价值解读\n接下来我们要对我们所有的客户、业主做专业的讲解💪\n报告预计在本周日、下周一到店，大家可以提前预约业主面见时间，提前做好准备';
  function novemberMessage(view,progress,m,goal,cutoff){
   const rows=progress.rows||[],owner=m._ownerApplicable!==false;
   const selections=(view.scope==='region'?['store','group']:[view.scope==='store'?'group':'store']).map(level=>novemberRankedSelection(rows,level));
