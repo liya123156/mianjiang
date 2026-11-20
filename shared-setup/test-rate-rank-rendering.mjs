@@ -3,8 +3,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 const source=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const core=fs.readFileSync(new URL('../operations/core.js',import.meta.url),'utf8');
-const drawn=[],positions=[],canvases=[];
-const ctx={scale(){},fillRect(){},strokeRect(){},measureText(t){return {width:[...String(t)].length*7};},fillText(t,x,y){drawn.push(String(t));positions.push({text:String(t),x,y});}};
+const drawn=[],positions=[],canvases=[],fills=[];
+const ctx={scale(){},fillRect(x,y,w,h){fills.push({color:this.fillStyle,x,y,w,h});},strokeRect(){},measureText(t){return {width:[...String(t)].length*7};},fillText(t,x,y){drawn.push(String(t));positions.push({text:String(t),x,y,color:this.fillStyle});}};
 const sandbox={console,window:{},document:{createElement(){const canvas={getContext(){return ctx},toBlob(fn){fn({type:'image/png'})}};canvases.push(canvas);return canvas;}},URL,Promise,Map,Set};
 sandbox.globalThis=sandbox.window;
 vm.createContext(sandbox);
@@ -60,3 +60,17 @@ const oldBlock=M.table(accompanied,{}, {},'2026-10');sandbox.block=oldBlock;
 assert.equal(vm.runInContext("progressImagePlan({scope:'company',name:'全司',kpis:[]},block,'2026-10',{cutoff:'测试'}).width",sandbox),2000,'archived image dimensions remain unchanged');
 assert.equal(vm.runInContext('progressNotes(block).length',sandbox),0,'archived tables do not gain November notes');
 console.log('PASS: four role-specific accompaniment columns, readable scrolling widths, unknown-value wrapping, complete PNG reminders and unchanged historical rendering.');
+
+// Only confirmed zero participation is red; positive and unresolved participation keep their normal styling.
+sandbox.block=M.table(housing.map((row,index)=>({...row,'本月是否面见':true,'本月最近一次面见是否店总陪同':index===0?0:1,'本月最近一次面见是否店经理陪同':index===0?0:''})),{}, {},'2026-11');
+const zeroHtml=vm.runInContext('renderTable(block)',sandbox);
+const zeroCells=[...zeroHtml.matchAll(/<td class="[^"]*\bprogress-accompaniment-zero\b[^"]*"[^>]*>([\s\S]*?)<\/td>/g)];
+assert.equal(zeroCells.length,2,'only the two zero accompaniment percentages have red desktop cells');
+assert.ok(zeroCells.every(match=>match[1].includes('0.00%')));
+assert.equal((zeroHtml.match(/<div class="progress-accompaniment-zero">/g)||[]).length,2,'mobile uses the same two zero indicators');
+assert.ok(zeroHtml.includes('待核实')&&zeroHtml.includes('100.00%'),'unresolved and positive participation remain visible');
+const fillStart=fills.length,textStart=positions.length;
+await vm.runInContext("createProgressImage({scope:'company',name:'全司',kpis:[]},block,'2026-11',{cutoff:'测试'})",sandbox);
+assert.equal(fills.slice(fillStart).filter(fill=>fill.color==='#f9caca').length,2,'exported PNG highlights exactly the same two cells');
+assert.equal(positions.slice(textStart).filter(item=>item.color==='#9d222c'&&item.text==='0.00%').length,2,'red cells retain readable dark red percentages');
+console.log('PASS: confirmed zero accompaniment percentages have red backgrounds in desktop, mobile and PNG; positive, unavailable and pending values stay neutral.');

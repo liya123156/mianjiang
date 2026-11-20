@@ -64,6 +64,9 @@
 .progress-ranked-value{display:inline-flex;align-items:center;justify-content:center;gap:1px;white-space:nowrap}.progress-rank-mark{font-size:.9em;line-height:1}.progress-rank-legend{color:var(--muted);font-size:11px;margin-top:6px}@media(min-width:1001px) and (max-width:1250px){.progress-ranked-value{flex-wrap:wrap;column-gap:0}}
 .progress-table .progress-rate-bar{position:absolute;inset:7px;background:linear-gradient(to right,var(--progress-bar) 0,var(--progress-bar) var(--progress-value),transparent var(--progress-value),transparent 100%);border-radius:3px;pointer-events:none}
 .progress-table tbody .progress-zero .progress-cell-value{color:#b24148;font-weight:650}
+.progress-table tbody td.progress-accompaniment-zero,.progress-mobile-metrics .progress-accompaniment-zero{background:#f9caca;color:#9d222c;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.progress-table .progress-accompaniment-zero .progress-cell-value,.progress-mobile-metrics .progress-accompaniment-zero dd{color:#9d222c;font-weight:700}
+.progress-mobile-metrics .progress-accompaniment-zero{padding:5px 7px;border-radius:4px}
 @media(max-width:760px){
  .progress-box{--progress-fixed-first:94px;--progress-fixed-second:116px}
  .progress-table{min-width:1612px;font-size:11px}
@@ -210,6 +213,9 @@ function progressRateValue(row, key) {
 }
 function hasProgressRanks(block) { return (block.rows || []).some(row => ['met_rate','store_top_rate','unit_top_rate'].some(key => progressRateSymbol(row, key))); }
 function progressHasAccompaniment(block) { return (block.columns || []).some(c=>c.key==='store_top_head_met'||c.key==='unit_top_manager_met'); }
+function progressAccompanimentZero(row,key) {
+  return ['store_top_head_share','unit_top_manager_share'].includes(key) && /^0(?:\.0+)?\s*%$/.test(String(row[key] ?? '').trim());
+}
 function progressColumnLabel(column) {
   if(column.key==='store_top_head_share')return '店总陪同面见率';
   if(column.key==='unit_top_manager_share')return '经理陪同面见率';
@@ -297,10 +303,10 @@ function createProgressImage(view, block, month, meta) {
     const row=plan.rows[ri],y=rowY,rowHeight=rowHeights[ri];rowY+=rowHeight;
     for(let ci=0;ci<plan.columns.length;ci++){
       const col=plan.columns[ci],value=row[col.key],x=plan.x[ci],w=plan.widths[ci];
-      const fill=rowFills[row._level]||'#fffefa';ctx.fillStyle=fill;ctx.fillRect(x,y,w,rowHeight);
+      const zero=progressAccompanimentZero(row,col.key),fill=zero?'#f9caca':rowFills[row._level]||'#fffefa';ctx.fillStyle=fill;ctx.fillRect(x,y,w,rowHeight);
       if(rateKeys.has(col.key)&&/^\d+(\.\d+)?%$/.test(String(value))){ctx.fillStyle=col.key.startsWith('unit_')?'#dce9bd':col.key.startsWith('store_')?'#cbe5d5':'#d9e3ee';ctx.fillRect(x+5,y+8,(w-10)*Math.min(100,parseFloat(value))/100,rowHeight-16);}
       ctx.strokeStyle='#d9d1dd';ctx.lineWidth=.65;ctx.strokeRect(x,y,w,rowHeight);
-      const size=ci<plan.identityCount?17:18;const displayValue=String(window.WBModel?.meetingCountValue?.(row,col.key) ?? value ?? '')+progressRateSymbol(row,col.key);textIn(displayValue,x,y,w,rowHeight,size,'#3d3045',['company','region','store'].includes(row._level));
+      const size=ci<plan.identityCount?17:18;const displayValue=String(window.WBModel?.meetingCountValue?.(row,col.key) ?? value ?? '')+progressRateSymbol(row,col.key);textIn(displayValue,x,y,w,rowHeight,size,zero?'#9d222c':'#3d3045',zero||['company','region','store'].includes(row._level));
     }
   }
   fontStyle(15);ctx.fillStyle='#86768d';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('上海丽兹行 · 面见项目   |   业主面见量按房源套数统计；“/”为不适用或未设目标。',plan.padding,tableBottom+23);
@@ -553,6 +559,7 @@ function renderTable(block) {
         const group = groupByKey.get(c.key);
         const classes = [columnClass(c,ci)];
         if (zeroBases[c.key] && Number(row[c.key]) === 0 && Number(row[zeroBases[c.key]]) > 0) classes.push('progress-zero');
+        if (progressAccompanimentZero(row,c.key)) classes.push('progress-accompaniment-zero');
         const value = row[c.key];
         const percent = rateKeys.has(c.key) ? parsedPercent(value) : null;
         const bar = percent == null ? '' : `<span class="progress-rate-bar" style="--progress-value:${percent}%" aria-hidden="true"></span>`;
@@ -567,7 +574,7 @@ function renderTable(block) {
   }).join('');
   const mobile = isProgress ? `<div class="progress-mobile">${arr(block.rows).map(row => {
     const title = row._level === 'company' ? '全司' : row._level === 'region' ? row.region : row._level === 'advisor' ? row.name + ' · ' + row.group : row._level === 'group' ? row.group : row.store;
-    const field = col => `<div><dt>${esc(progressColumnLabel(col))}</dt><dd>${progressRateValue(row,col.key)}</dd></div>`;
+    const field = col => `<div${progressAccompanimentZero(row,col.key)?' class="progress-accompaniment-zero"':''}><dt>${esc(progressColumnLabel(col))}</dt><dd>${progressRateValue(row,col.key)}</dd></div>`;
     return `<article class="progress-mobile-row level-${esc(row._level)}"><h4>${esc(title)}</h4><dl class="progress-mobile-identity">${block.columns.filter(c=>['region','store','group','manager','name'].includes(c.key)).map(field).join('')}</dl>${arr(block.columnGroups).map(group => `<h5>${esc(group.label)}</h5><dl class="progress-mobile-metrics">${block.columns.filter(c => group.keys.includes(c.key)).map(field).join('')}</dl>`).join('')}</article>`;
   }).join('')}</div>` : '';
   const candidateHint = tabs.some(t => arr(t.rows).some(row => row._candidate)) && Array.isArray(DATA.candidate_details) ? '<div class="candidate-table-hint">点击候选套数，查看项目、房间号、店组和维护人</div>' : '';
