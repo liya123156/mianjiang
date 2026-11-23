@@ -17,25 +17,25 @@ assert.equal(report.totalMet,187);assert.equal(report.totalGap,163);
 assert.equal(report.regions.find(row=>row.region==='滨江古北大区').targetCoverage,'40.54%');
 assert.equal(report.regions.find(row=>row.region==='黄浦大区').targetCoverage,'26.35%');
 assert.equal(report.regions.find(row=>row.region==='陆家嘴大区').contribution,'36.90%');
-assert.match(report.observations.join(''),/面见量贡献：陆家嘴大区 69套/);
-assert.match(report.observations.join(''),/覆盖表现：滨江古北大区 22\/74套/);
-assert.match(report.reminder.join(''),/合计98套，占全司剩余差距60.12%/);
-assert.match(report.reminder.join(''),/自然月时间进度参考73.33%/);
-assert.match(report.reminder.join(''),/先核对漏录、标签和真实陪同情况/);
-assert.ok(!report.reminder.find(line=>line.startsWith('目标进度待追赶')).includes('滨江古北大区'),'being on pace must not become a behind-pace warning');
+assert.equal(report.weekly.met,36);assert.equal(report.weekly.count,43);assert.equal(report.weekly.previousMet,22);
+assert.equal(report.weekly.stores.reduce((n,[,before,after])=>n+after-before,0),28);
+assert.match(report.observations.join(''),/较前一周22套增加14套（63.64%）/);
+for(const [name,before,after] of [['陆家嘴滨江店A组',0,5],['陆家嘴旗舰店A组',1,5],['陆家嘴金融中心店A组',0,4],['顶级豪宅部B组',0,3]])assert.ok(report.observations.join('').includes(name+'单周'+before+'→'+after+'套'));
+for(const token of ['房源供应链','每日外显','日、周复盘'])assert.ok(report.observations.join('').includes(token));
+for(const token of ['滨江古北大区店总陪同门店TOP 0/9套（0.00%）','黄浦大区店总陪同门店TOP 0/12套（0.00%）','徐汇大区店总陪同门店TOP 1/6套（16.67%）','系统TOP标签是否准确','伙伴是否漏录或错录','亲自陪同面见','本周二（11月24日）','每天看目标、看进度、看差距'])assert.ok(report.reminder.join('').includes(token),token);
+assert.match(report.reminder.join(''),/陆家嘴大区56套、黄浦大区42套/);
 assert.equal(JSON.stringify(rows),original);
-const localStores=[{_level:'store',region:'滨江古北大区',store:'融创滨江壹号院店',stock:53,met:18,_target:20},{_level:'store',region:'滨江古北大区',store:'长宁古北店',stock:21,met:4,_target:10}];
-const differentiated=U.reviewRegionAnalysis(rows,'2026-11-22',localStores);
-assert.match(differentiated.observations.join(''),/融创滨江壹号院店贡献18套，占本区81.82%/);
-assert.match(differentiated.observations.join(''),/长宁古北店完成4\/10套（40.00%）/);
-assert.ok(!U.reviewRegionAnalysis(rows,'2026-11-22',localStores.slice(0,1)).observations.some(line=>line.startsWith('区内分布')),'an incomplete store slice cannot explain regional concentration');
-
-
+// Weekly facts cannot leak into a different import date, changed cohort, or partial regional slice.
+for(const [cohort,day] of [[rows,'2026-11-15'],[rows,'2026-11-23'],[rows.slice(0,4),'2026-11-22'],[rows.map((r,i)=>i?{...r}:{...r,met:37}),'2026-11-22']]){
+ const other=U.reviewRegionAnalysis(cohort,day);assert.equal(other.weekly,null);assert.doesNotMatch(other.observations.join(''),/上周提升：11月16—22日/);
+}
+const uncertain=rows.map(r=>r.region==='徐汇大区'?{...r,store_top_head_met_pending:1}:r);
+assert.doesNotMatch(U.reviewRegionAnalysis(uncertain,'2026-11-22').reminder.join(''),/徐汇大区店总陪同门店TOP/);
 const html=x.testRegion.reviewRegionAnalysisHtml(rows,'2026-11-22');
 const text=x.testRegion.reviewRegionAnalysisText(rows,'2026-11-22');
 for(const output of [html,text]){
-  for(const token of ['目标覆盖率','全司贡献','40.54%','36.90%','60.12%','具体可借鉴做法'])assert.ok(output.includes(token),token);
-  assert.doesNotMatch(output,/标杆大区|黑洞大区|面见率最高组织|面见率最低组织/);
+ for(const token of ['目标覆盖率','全司贡献','40.54%','36.90%','陆家嘴滨江店A组单周0→5套','本周二（11月24日）','日复盘、日跟进'])assert.ok(output.includes(token),token);
+ assert.doesNotMatch(output,/标杆大区|黑洞大区|主要补差承接|区内分布|面见率最高组织|面见率最低组织/);
 }
 assert.match(html,/五大区多维对照/);assert.match(html,/结果观察/);assert.match(html,/重点跟进/);
 
@@ -43,10 +43,10 @@ const unknown=rows.map(row=>({...row,_target:null,store_top_head_met_pending:1})
 const incomplete=U.reviewRegionAnalysis(unknown,'not-a-date');
 assert.equal(incomplete.totalGap,null);assert.equal(incomplete.pace,null);
 assert.match(incomplete.reminder.join(''),/目标尚未完整/);
-assert.doesNotMatch(incomplete.reminder.join(''),/陪同登记待核实/,'unresolved companionship fields are not known zero');
+assert.doesNotMatch(incomplete.reminder.join(''),/大区店总陪同门店TOP/,'unresolved companionship fields are not known zero');
 assert.ok(!x.testRegion.reviewRegionAnalysisHtml(unknown).includes('NaN'));
 assert.equal(U.reviewRegionAnalysis([{stock:0,met:0}]),null);
 const untrusted=[{...rows[0],region:'<script>alert(1)</script>'}];
 assert.ok(x.testRegion.reviewRegionAnalysisHtml(untrusted).includes('&lt;script&gt;'));
 assert.ok(!x.testRegion.reviewRegionAnalysisHtml(untrusted).includes('<script>'));
-console.log('PASS regional context: fair target intensity, independent contribution and coverage, gap ownership, pace checks, verified-zero reminders, no automatic awards/black-hole labels, shared page/text semantics, missing-data guards and escaped prose.');
+console.log('PASS regional review: dated weekly store/group improvements, verified management methods, three-region TOP follow-up, stale-source guards, shared page/text output, unknown companionship and escaped prose.');

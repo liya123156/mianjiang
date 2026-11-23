@@ -136,29 +136,41 @@
   const sorted=rows.filter(row=>reviewMonthlyRate(row)!==null&&(!positiveOnly||Number(row.met)>0&&(row._level!=='group'||Number(row.met)>=M.groupBenchmarkMinimum))).sort((a,b)=>reviewOrganizationCompare(a,b,descending));
   let priorRank=0;return sorted.map((row,i)=>{const rank=i&&reviewOrganizationEqual(row,sorted[i-1])?priorRank:i+1;priorRank=rank;return {...row,reviewRank:rank};}).filter(row=>row.reviewRank<=limit);
  }
+ // Weekly review approved from dated meeting records, frozen snapshots and Liya's management review.
+ // Only aggregate facts are published, and the edition is hidden if the source cohort changes.
+ const REVIEW_REGION_WEEKLY={
+  asOf:'2026-11-22',periodStart:'2026-11-16',periodEnd:'2026-11-22',region:'陆家嘴大区',met:36,count:43,previousMet:22,
+  cohort:[['花木大区',225,36],['陆家嘴大区',524,69],['徐汇大区',189,24],['滨江古北大区',74,22],['黄浦大区',296,36]],
+  stores:[['陆家嘴旗舰店',5,13],['陆家嘴滨江店',8,15],['顶级豪宅部',12,18],['陆家嘴金融中心店',4,8],['星河湾店',12,15]],
+  groups:[['陆家嘴滨江店A组',0,5],['陆家嘴旗舰店A组',1,5],['陆家嘴旗舰店C组',1,3],['陆家嘴金融中心店A组',0,4],['顶级豪宅部B组',0,3]]
+ };
  function reviewRegionAnalysis(rows,asOf='',stores=[]){
   const eligible=rows.filter(row=>reviewMonthlyRate(row)!==null);if(!eligible.length)return null;
   const totalMet=eligible.reduce((n,r)=>n+Number(r.met),0),targetOf=row=>row._target!==null&&row._target!==undefined&&Number.isFinite(Number(row._target))&&Number(row._target)>=0?Number(row._target):null;
   const date=/^20\d{2}-\d{2}-\d{2}$/.test(asOf)?new Date(asOf+'T00:00:00Z'):null,validDate=date&&Number.isFinite(date.valueOf())&&date.toISOString().slice(0,10)===asOf,pace=validDate?date.getUTCDate()/new Date(Date.UTC(date.getUTCFullYear(),date.getUTCMonth()+1,0)).getUTCDate():null;
   const regions=eligible.map(row=>{const target=targetOf(row),stock=Number(row.stock),met=Number(row.met);return {...row,assessmentTarget:target,targetCoverage:target===null?'待确认':M.pct(target,stock),contribution:M.pct(met,totalMet),completionValue:target>0?met/target:null,remainingGap:target===null?null:Math.max(0,target-met)};}).sort((a,b)=>M.compareRegion(a.region,b.region));
   const allTargetsKnown=regions.every(r=>r.assessmentTarget!==null),totalGap=allTargetsKnown?regions.reduce((n,r)=>n+r.remainingGap,0):null;
-  const observations=[];
-  if(totalMet>0){
+  const weekly=asOf===REVIEW_REGION_WEEKLY.asOf&&regions.length===REVIEW_REGION_WEEKLY.cohort.length&&REVIEW_REGION_WEEKLY.cohort.every(([name,stock,met])=>regions.some(r=>r.region===name&&r.stock===stock&&r.met===met))?REVIEW_REGION_WEEKLY:null,observations=[];
+  if(weekly){
+   observations.push('上周提升：11月16—22日，陆家嘴大区面见'+weekly.met+'套、'+weekly.count+'次，较前一周'+weekly.previousMet+'套增加'+(weekly.met-weekly.previousMet)+'套（'+M.pct(weekly.met-weekly.previousMet,weekly.previousMet)+'）；月累计由41套增至69套，净增28套。');
+   observations.push('主要提升门店：'+weekly.stores.map(([store,before,after])=>store+'月累计'+before+'→'+after+'套（增加'+(after-before)+'套）').join('；')+'。');
+   observations.push('主要提升店组：'+weekly.groups.map(([name,before,after])=>name+'单周'+before+'→'+after+'套').join('；')+'。顶级豪宅部D组上周面见6套，是主要出量店组之一。');
+   observations.push('可借鉴的管理做法：目标分解与房源供应链经营结合，每日外显目标进度和活动量，固定开展日、周复盘；店总、经理持续关注重点房源邀约，逐套讨论卡点。结合BP复盘和本次管理反馈，这些持续的管理动作是陆家嘴提升的重要推动因素。');
+  }else if(totalMet>0){
    const maxMet=Math.max(...regions.map(r=>Number(r.met))),volume=regions.filter(r=>Number(r.met)===maxMet);
    observations.push('面见量贡献：'+volume.map(r=>r.region+' '+r.met+'套，占全司'+r.contribution+'；月度目标'+(r.assessmentTarget??'待确认')+'套，完成'+reviewCompletion(r)).join('；')+'。');
-   const maxRate=Math.max(...regions.map(reviewMonthlyRate)),coverage=regions.filter(r=>reviewMonthlyRate(r)===maxRate);
-   observations.push('覆盖表现：'+coverage.map(r=>r.region+' '+r.met+'/'+r.stock+'套，面见率'+r.met_rate+'；目标'+(r.assessmentTarget??'待确认')+'套，目标覆盖率'+r.targetCoverage+'，目标完成'+reviewCompletion(r)+'；门店TOP '+r.store_top_rate+'、户型TOP '+r.unit_top_rate).join('；')+'。具体可借鉴做法需结合本期复盘核实。');
-   for(const region of coverage){const local=stores.filter(r=>r._level==='store'&&r.region===region.region);if(local.length<2||local.reduce((n,r)=>n+Number(r.stock||0),0)!==Number(region.stock)||local.reduce((n,r)=>n+Number(r.met||0),0)!==Number(region.met))continue;const leading=[...local].sort((a,b)=>Number(b.met)-Number(a.met)||M.compareStore(a.store,b.store))[0];observations.push('区内分布：'+region.region+'中，'+leading.store+'贡献'+leading.met+'套，占本区'+M.pct(leading.met,region.met)+'；'+local.map(r=>r.store+'完成'+r.met+'/'+(targetOf(r)??'待确认')+'套（'+reviewCompletion(r)+'）').join('、')+'。需分别核实各店做法与卡点。');}
-  }else observations.push('当前尚无面见登记，先核对各区资源规模、目标设置与实际邀约情况。');
+   observations.push('提升原因要看到具体门店和店组：结合本期面见明细与上期复盘，查看哪些组织增加、店总和经理做了什么，再提炼可借鉴的管理做法。');
+  }else observations.push('当前尚无面见登记，先核对各区目标、重点房源与实际邀约情况。');
   const reminder=[],gaps=regions.filter(r=>r.remainingGap>0).sort((a,b)=>b.remainingGap-a.remainingGap||M.compareRegion(a.region,b.region)).slice(0,2);
-  if(gaps.length){const gap=gaps.reduce((n,r)=>n+r.remainingGap,0);reminder.push('主要补差承接：'+gaps.map(r=>r.region+'尚差'+r.remainingGap+'套').join('、')+'，合计'+gap+'套'+(totalGap!==null?'，占全司剩余差距'+M.pct(gap,totalGap):'')+'。需逐店确认本周目标、重点房源、责任人和面见时间。');}
-  const behind=pace===null?[]:regions.filter(r=>r.completionValue!==null&&r.completionValue<pace).sort((a,b)=>a.completionValue-b.completionValue||M.compareRegion(a.region,b.region));
-  if(behind.length)reminder.push('目标进度待追赶：'+behind.map(r=>r.region+' '+reviewCompletion(r)).join('、')+'；自然月时间进度参考'+M.pct(pace,1)+'。请结合实际服务排期核实机会与卡点。');
-  if(!allTargetsKnown)reminder.push('部分大区月度目标尚未完整，先核对目标，再判断完成进度与剩余任务。');
-  const zeros=regions.filter(r=>Number(r.store_top_head_met_base)>0&&r.store_top_head_met_confirmed===0&&r.store_top_head_met_pending===0);
-  if(zeros.length)reminder.push('陪同登记待核实：'+zeros.map(r=>r.region).join('、')+'的门店TOP最近一次店总陪同登记为0。先核对漏录、标签和真实陪同情况，再确定管理动作。');
-  if(!reminder.length)reminder.push('继续结合TOP覆盖、顾客反馈及具体管理动作复查，不仅依据单一排名判断整体表现。');
-  return {regions,totalMet,totalGap,pace,observations,reminder};
+  const focused=weekly?['滨江古北大区','黄浦大区','徐汇大区'].map(name=>regions.find(r=>r.region===name)).filter(r=>r&&Number(r.store_top_head_met_base)>0&&Number.isFinite(r.store_top_head_met_confirmed)&&r.store_top_head_met_pending===0):regions.filter(r=>Number(r.store_top_head_met_base)>0&&r.store_top_head_met_confirmed===0&&r.store_top_head_met_pending===0);
+  if(focused.length){
+   reminder.push('TOP房分层管理：'+focused.map(r=>r.region+'店总陪同门店TOP '+r.store_top_head_met_confirmed+'/'+r.store_top_head_met_base+'套（'+M.pct(r.store_top_head_met_confirmed,r.store_top_head_met_base)+'）').join('、')+'。需要逐套查清：系统TOP标签是否准确，伙伴是否漏录或错录，店总是否围绕TOP房重点管理并亲自陪同面见。');
+   reminder.push((weekly?'本周二（11月24日）':'本周')+'，BP与店总逐店核实。若实际未落实分层管理，要共识店总负责门店TOP、经理负责户型TOP及七必卖，确定重点房源、亲自陪同安排和改进动作。');
+  }
+  reminder.push('双TOP逐套跟进：BP提供门店TOP、户型TOP未面见明细，店总、经理每天在房商机或固定沟通时间逐套打开房源，讨论邀约卡点、需要的支持和下一步面见安排。店总每天看目标、看进度、看差距，形成日复盘、日跟进。');
+  if(gaps.length)reminder.push('月度目标还差：'+gaps.map(r=>r.region+r.remainingGap+'套').join('、')+'。将本周目标落实到各店、店组和具体房源，每日更新进度，及时协调需要的管理支持。');
+  if(!allTargetsKnown)reminder.push('部分大区月度目标尚未完整，先核对目标，再确认完成进度。');
+  return {regions,totalMet,totalGap,pace,weekly,observations,reminder};
  }
  function reviewRegionAnalysisText(rows,asOf='',stores=[]){
   const d=reviewRegionAnalysis(rows,asOf,stores);if(!d)return '';
@@ -168,7 +180,7 @@
  function reviewRegionAnalysisHtml(rows,asOf='',stores=[]){
   const d=reviewRegionAnalysis(rows,asOf,stores);if(!d)return '';
   const table=reviewDetailTable('五大区多维对照',['大区','目标／在售','目标覆盖率','面见量／全司贡献','完成率／剩余差距','门店TOP／户型TOP'],d.regions.map(r=>[r.region,(r.assessmentTarget??'待确认')+'／'+r.stock+'套',r.targetCoverage,r.met+'套／'+r.contribution,reviewCompletion(r)+'／'+(r.remainingGap??'待确认')+'套',r.store_top_rate+'／'+r.unit_top_rate]));
-  return '<div class="review-region-analysis"><h3>区域表现分析</h3><p class="review-footnote">同时看资源规模、目标强度、完成进度、实际贡献与TOP覆盖；综合标杆需有经核实的管理动作、顾客反馈与业务变化支撑。</p>'+table+'<div class="review-region-analysis-grid"><article><span>结果观察</span>'+d.observations.map(x=>'<p>'+E(x)+'</p>').join('')+'</article><article class="reminder"><span>重点跟进</span>'+d.reminder.map(x=>'<p>'+E(x)+'</p>').join('')+'</article></div><p class="review-footnote">目标覆盖率＝月度目标÷在售套数；面见贡献＝本区面见量÷全司面见量。陪同按本月最近一次面见记录统计，零值需先核实。</p></div>';
+  return '<div class="review-region-analysis"><h3>区域表现分析</h3><p class="review-footnote">结合目标进展、上周提升和具体管理做法，看到门店、店组；重点跟进TOP房分层管理。</p>'+table+'<div class="review-region-analysis-grid"><article><span>结果观察</span>'+d.observations.map(x=>'<p>'+E(x)+'</p>').join('')+'</article><article class="reminder"><span>重点跟进</span>'+d.reminder.map(x=>'<p>'+E(x)+'</p>').join('')+'</article></div><p class="review-footnote">目标覆盖率＝月度目标÷在售套数；面见贡献＝本区面见量÷全司面见量。店总陪同比例按本月最近一次面见记录统计。</p></div>';
  }
  function reviewProgressHtml(ctx){
   const r=ctx.root,c=reviewChildren(ctx.progress,ctx.view),target=r._target,completion=reviewCompletion(r),gap=reviewGap(r),average=r.met?`${(r.met_count/r.met).toFixed(2)}次`:'—';
