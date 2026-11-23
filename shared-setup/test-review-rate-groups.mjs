@@ -10,11 +10,14 @@ for(const name of ['manager-directory','core','quality-feed','quality-rules','qu
 const U=x.WBOperations,M=x.WBModel,catalog=M.storeCatalog.filter(store=>store.ownerApplicable!==false),plain=value=>JSON.parse(JSON.stringify(value));
 const metric=(store,met,stock,met_count=met,extra={})=>({_level:'store',store,region:'测试大区',met,stock,met_count,met_rate:M.pct(met,stock),_target:100,store_top_rate:'0.00%',unit_top_rate:'0.00%',...extra});
 
-// A larger numerator cannot outrank better inventory coverage; small stores cannot be warned for size alone.
-const regions=[metric('/',41,543,54,{_level:'region',region:'陆家嘴大区'}),metric('/',12,75,19,{_level:'region',region:'滨江古北大区'}),metric('/',24,306,29,{_level:'region',region:'黄浦大区'})];
-const analysis=U.reviewRegionAnalysis(regions);
-assert.match(analysis.benchmark.join(''),/滨江古北大区/);assert.doesNotMatch(analysis.benchmark.join(''),/陆家嘴大区/);
-assert.match(analysis.reminder.join(''),/陆家嘴大区/);assert.doesNotMatch(analysis.reminder.join(''),/黄浦大区/);
+// Regional evaluation separates volume contribution, inventory coverage and target responsibility.
+const regions=[metric('/',41,543,54,{_level:'region',region:'陆家嘴大区',_target:125}),metric('/',12,75,19,{_level:'region',region:'滨江古北大区',_target:30}),metric('/',24,306,29,{_level:'region',region:'黄浦大区',_target:78})];
+const analysis=U.reviewRegionAnalysis(regions,'2026-11-15');
+assert.match(analysis.observations.join(''),/面见量贡献：陆家嘴大区/);
+assert.match(analysis.observations.join(''),/覆盖表现：滨江古北大区/);
+assert.match(analysis.reminder.join(''),/陆家嘴大区尚差84套、黄浦大区尚差54套/);
+assert.equal(analysis.regions.find(row=>row.region==='滨江古北大区').targetCoverage,'40.00%');
+assert.equal(analysis.benchmark,undefined,'inventory coverage alone must not award a comprehensive regional benchmark');
 const stores=[metric('仁恒河滨城店',2,73),metric('长宁古北店',3,23),metric('新天地二店',3,70),metric('御翠园店',13,59),metric('顶级豪宅部',12,87),metric('星河湾店',12,137),metric('浦东别墅旗舰店',10,76)];
 const ranks=U.reviewRankSets({view:company,progress:{rows:stores}});
 assert.deepEqual(plain(ranks.bench.map(row=>row.store)),['御翠园店','顶级豪宅部','浦东别墅旗舰店']);
