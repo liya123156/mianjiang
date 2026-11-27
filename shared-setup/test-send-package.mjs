@@ -132,7 +132,7 @@ storage.clear();
 const projectConfig={recordType:'wechat-send-config',version:2,mode:'pilot',pilotStores:pilotStores.map(s=>s.store),stores:catalog.map(s=>({...s,groupName:pilotStores.find(p=>p.store===s.store)?'项目共享'+pilotStores.find(p=>p.store===s.store).groupName:''}))};
 const shared=install(project);shared.sendConfigItem={key:'2000-01|rules|@@company|wechat-send-config-v1',kind:'rules',payload:projectConfig};
 api.render(company);const projectPanel=elements.get('report').innerHTML;
-assert.ok(projectPanel.includes('项目负责人统一操作 · 全司＋5大区＋18门店'));assert.match(projectPanel,/公示口径：月度全盘面见率优先；同率依次看面见套数、面见次数。门店／店组各自比较，仅展示首末并保留并列；店组标杆月度面见至少5套。/);assert.ok(projectPanel.includes('门店已配置 <b>2/18</b> 店，待配置 16 店'));assert.equal((projectPanel.match(/name="(?:companyGroupName|regionGroup_\d+|storeGroup_\d+)"/g)||[]).length,24);assert.doesNotMatch(projectPanel,/data-ops="pilot-import"/);
+assert.ok(projectPanel.includes('项目负责人统一操作 · 全司＋5大区＋18门店'));assert.ok(projectPanel.includes('公示口径：门店按本期确认的标杆与重点提醒名单展示，数据随底表更新'));assert.ok(projectPanel.includes('门店已配置 <b>2/18</b> 店，待配置 16 店'));assert.equal((projectPanel.match(/name="(?:companyGroupName|regionGroup_\d+|storeGroup_\d+)"/g)||[]).length,24);assert.doesNotMatch(projectPanel,/data-ops="pilot-import"/);
 const sharedPilot=await api.buildSendPackage(company,{pilot:true});assert.equal(sharedPilot.manifest.stores.length,2);assert.equal(sharedPilot.manifest.recipientsComplete,true);assert.equal(sharedPilot.manifest.operatorRole,'project');assert.ok(sharedPilot.manifest.stores.every(s=>s.groupName.startsWith('项目共享')));
 if(process.env.PILOT_ZIP_PATH){assert.ok(realCanvas,'runner interoperability fixture must contain real PNGs');fs.writeFileSync(process.env.PILOT_ZIP_PATH,Buffer.from(await sharedPilot.blob.arrayBuffer()));}
 const sharedAll=await api.buildSendPackage(company);assert.equal(sharedAll.manifest.stores.length,18);assert.equal(sharedAll.manifest.stores.filter(s=>s.groupName).length,2);assert.equal(sharedAll.manifest.recipientsComplete,false);
@@ -176,10 +176,10 @@ const fullData=install(project);fullData.sendConfigItem={key:'2000-01|rules|@@co
 const complete=await api.buildSendPackage(storeView(catalog[0]),{allScopes:true}),completeFiles=unzip(await complete.blob.arrayBuffer()),completeManifest=complete.manifest;
 assert.equal(completeManifest.scopeCount,24);assert.equal(completeManifest.stores.length,18);assert.equal(completeManifest.publications.length,6);assert.equal(completeManifest.recipientsComplete,false);
 assert.match(complete.filename,/全司_5大区_18门店_24范围公示资料包/);
-for(const result of [pilot,sharedAll,companyPublication,regionPublication,complete])assert.ok(result.filename.endsWith('_日常话术版.zip'),'November downloads identify the restored daily announcement');
+for(const result of [pilot,sharedAll,companyPublication,regionPublication,complete])assert.ok(result.filename.endsWith('_标杆TOP提醒版.zip'),'November downloads distinguish the updated store spotlight template');
 assert.equal([...completeFiles.keys()].filter(name=>name.endsWith('/话术.txt')).length,24);
 const approvedClosing='把感恩化为行动💗 多面见 多服务｜让每一次服务更有温度✨';
-for(const path of [...completeManifest.stores,...completeManifest.publications].map(row=>row.message)){const message=read(completeFiles,path);assert.ok(message.endsWith(approvedClosing),path+' restores the daily announcement closing');assert.equal(message.split(approvedClosing).length-1,1,path+' includes the closing once');assert.ok(!message.includes('请结合进展明确重点业主的面见安排'));assert.doesNotMatch(message,/今天杨博|本周日\/下周一到店/,path+' removes the day-specific report reminder');}
+for(const path of [...completeManifest.stores,...completeManifest.publications].map(row=>row.message)){const message=read(completeFiles,path);assert.ok(message.endsWith(approvedClosing),path+' restores the daily announcement closing');assert.equal(message.split(approvedClosing).length-1,1,path+' includes the closing once');assert.ok(!message.includes('请结合进展明确重点业主的面见安排'));assert.doesNotMatch(message,/今天杨博|本周日\/下周一到店/,path+' removes the day-specific report reminder');assert.doesNotMatch(message,/伴手礼提醒|系统送礼登记覆盖率低于20%|核实伴手礼准备/,path+' removes the gift reminder');}
 for(const row of completeManifest.stores)assert.ok(!read(completeFiles,row.message).includes('👥 管理者陪同面见'),'single-store messages retain their agreed scope');
 for(const row of completeManifest.publications){const message=read(completeFiles,row.message);assert.ok(message.includes('👥 管理者陪同面见'),'company and region messages include manager participation');assert.ok(message.indexOf('👥 管理者陪同面见')>message.indexOf('🔎 面见质量'));const section=message.match(/👥 管理者陪同面见[\s\S]*?(?=\n\n|$)/)[0];assert.equal(section.split('\n').length,6,'manager statistics and three reminders are six consecutive lines');assert.ok(section.includes('\n📌 店总牵头邀约及面见门店TOP\n📌经理重点邀约及陪同面见户型TOP\n📌伙伴持续开展全盘邀约，逐位业主明确邀约和面见安排'));}
 for(const row of [...completeManifest.stores,...completeManifest.publications])assert.doesNotMatch(read(completeFiles,row.message),/（全盘包含两类TOP|（按本月最近一次面见/,'all 24 exported messages omit the explanatory parentheses');
@@ -217,16 +217,30 @@ install({role:'region',region:catalog[0].region});await assert.rejects(api.saveS
 install(project);api.state.exporting=true;await assert.rejects(api.saveSendConfig({}),/正在生成/);api.state.exporting=false;
 console.log('PASS complete 24-scope package: all-company + 5 regions + 18 stores, exact scope directories, blank-recipient CSV, pagination, scoped access, missing-store errors and source-version isolation.');
 console.log('PASS shared recipient editing: 24 inputs, legacy two-store compatibility, exact emoji names, global private rules persistence, optimistic conflicts and project-only writes.');
-// Gift prompts use registered coverage; no warning at 20%, no inference about preparation.
+// Gift reminders are no longer part of public announcements at any coverage level.
 install(project);
 const base={_level:'store',store:catalog[0].store,stock:100,met:10,met_rate:'10.00%',_target:20,store_top_met:1,store_top_rate:'10.00%',unit_top_met:1,unit_top_rate:'10.00%'};
-for(const [met,gift,warning] of [[10,1,true],[10,2,false],[10,3,false],[0,0,false]]){
+for(const [met,gift] of [[10,1],[10,2],[10,3],[0,0]]){
  const metric={...base,met,gift,gift_rate:M.pct(gift,met)},text=api.novemberMessage(company,{rows:[metric]},metric,20,'业主数据截至2026-11-09');
- assert.equal(text.includes('🎁 伴手礼提醒'),warning,'gift warning boundary '+gift+'/'+met);
- if(warning){assert.match(text,/系统送礼登记覆盖率低于20%/);assert.match(text,/核实伴手礼准备、使用及补录情况/);assert.doesNotMatch(text,/没有准备|未准备|未安排/);}
+ assert.doesNotMatch(text,/伴手礼提醒|系统送礼登记覆盖率低于20%/,'no gift warning at '+gift+'/'+met);
+}
+// Confirmed store lists use current metrics, not the example's older counts or a single ranked store.
+const spotlightRows=[['融创滨江壹号院店',20,'37.04%',6],['复兴香园店',20,'24.10%',5],['顶级豪宅部',23,'26.14%',3],['仁恒河滨城店',2,'3.28%',1],['碧云店',5,'13.51%',1],['星河湾店',16,'12.40%',1],['尚海湾店',9,'13.04%',1]].map(([store,met,met_rate,store_top_met])=>({...base,region:catalog.find(s=>s.store===store).region,store,met,met_rate,store_top_met,store_top_rate:store_top_met===1?'12.50%':'50.00%'}));
+const announcement=rows=>api.novemberMessage(company,{rows},base,350,'业主数据截至2026-11-26');
+const spotlight=announcement(spotlightRows);
+assert.equal(spotlight.split('🏅 标杆门店\n')[1].split('\n\n')[0],['融创滨江壹号院店：面见20套（面见率37.04%）','复兴香园店：面见20套（面见率24.10%）','顶级豪宅部：面见23套（面见率26.14%）'].join('\n'));
+assert.equal(spotlight.split('⚠️ 重点提醒门店｜门店TOP面见率偏低\n')[1].split('\n\n')[0],['仁恒河滨城店','碧云店','星河湾店','尚海湾店'].map(store=>store+'：门店TOP面见1套').join('\n'));
+const updatedSpotlight=announcement(spotlightRows.map(row=>row.store==='融创滨江壹号院店'?{...row,met:21,met_rate:'38.89%'}:row.store==='仁恒河滨城店'?{...row,store_top_met:2}:row));
+assert.ok(updatedSpotlight.includes('融创滨江壹号院店：面见21套（面见率38.89%）'));assert.ok(updatedSpotlight.includes('仁恒河滨城店：门店TOP面见2套'));
+const scopedSpotlight=api.novemberMessage({scope:'region',name:'花木大区',region:'花木大区'},{rows:spotlightRows},base,20,'业主数据截至2026-11-26');
+for(const store of ['仁恒河滨城店','碧云店'])assert.ok(scopedSpotlight.includes(store+'：门店TOP面见1套'));
+for(const store of ['融创滨江壹号院店','复兴香园店','顶级豪宅部','星河湾店','尚海湾店'])assert.ok(!scopedSpotlight.includes(store),'regional spotlight excludes '+store);
+for(const text of [companyText,read(completeFiles,completeManifest.publications.find(row=>row.scope==='company').message)]){
+ const best=text.split('🏅 标杆门店\n')[1].split('\n\n')[0],low=text.split('⚠️ 重点提醒门店｜门店TOP面见率偏低\n')[1].split('\n\n')[0];
+ assert.equal(best.split('\n').length,3);assert.equal(low.split('\n').length,4);
 }
 console.log('PASS company/region public packages: one image, exact levels, concise messages, count-only quality, scoped access and interrupted export.');
-console.log('PASS gift reminders: below 20% only, no warning at 20% or zero meetings, registration wording avoids assuming unprepared gifts.');
+console.log('PASS updated publication: all three benchmark stores, four TOP reminder stores, live metrics, scoped regional lists and no gift reminders in all 24 messages.');
 console.log('PASS shared project configuration: one operator, 18-store directory, 2 ready/16 pending, automatic loading, private scope and changed-recipient abort.');
 console.log('PASS two-store pilot: only configured stores, exact emoji names and CSV, both stores required, scope checks, local persistence and changed-group abort.');
 console.log('PASS '+(realCanvas?'real PNG + ':'')+'18-store ZIP: CRC, Chinese filenames, combined overview, complete feedback pagination, counts, isolated recipients, role scopes, and interrupted export.');

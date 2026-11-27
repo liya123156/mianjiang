@@ -821,7 +821,7 @@ async function metHouseImage(preview=false){
   block('daily-progress','面见及礼物进展',renderTable(progress))+
   block('daily-unmet-top','本月未面见TOP房明细',(currentMonth==='2026-11'?`<div class="ops-notice"><strong>📌 重点提醒｜按组织分工推进邀约与面见</strong><p style="white-space:pre-line">${E(topRoleReminders)}</p><p>两类TOP分别展示，不能直接相加。同一房源同时属于两类TOP时，协调一次邀约与面见安排。</p></div>`:'')+unmetTopTable(view),'仅纳入本月仍在售、属于门店TOP或户型TOP且尚未面见的房源。')+
   block('daily-met-houses','当月面见房源与正反馈',ownerApplicable?metHouseTable(view):'<div class="ops-notice">本店无在售房源，业主面见指标不适用。</div>','房源明细与面见反馈合并展示，复制为一张完整图片。')+
-  block('daily-message','公示话术',`<div class="block ops-panel"><textarea id="ops-message" class="ops-message" aria-label="当前范围推动话术">${E(message)}</textarea><div class="ops-actions"><button class="btn primary" data-ops="copy-message">复制话术</button></div>${currentMonth==='2026-11'?'<details class="ops-secondary"><summary>查看公示口径</summary><p class="ops-muted">公示口径：月度全盘面见率优先；同率依次看面见套数、面见次数。门店／店组各自比较，仅展示首末并保留并列；店组标杆月度面见至少5套。</p></details>':''}</div>`)+
+  block('daily-message','公示话术',`<div class="block ops-panel"><textarea id="ops-message" class="ops-message" aria-label="当前范围推动话术">${E(message)}</textarea><div class="ops-actions"><button class="btn primary" data-ops="copy-message">复制话术</button></div>${currentMonth==='2026-11'?'<details class="ops-secondary"><summary>查看公示口径</summary><p class="ops-muted">公示口径：门店按本期确认的标杆与重点提醒名单展示，数据随底表更新；标杆展示全盘面见套数及面见率，重点提醒展示门店TOP面见套数。大区仅展示本区门店；店组按月度全盘面见率比较，首末保留并列，标杆月度面见至少5套。</p></details>':''}</div>`)+
   block('daily-package','公示资料包',publicationPanel(view))+
   block('daily-benchmark','全司在售业主面见标杆榜',companyBenchmarkPanel(),`按全司月度累计计算，门店TOP3、店组TOP5、个人TOP5；店组月度面见至少${M.groupBenchmarkMinimum}套入选。筛选大区或单店时榜单保持全司范围。`)+parkedRecords(view);
 
@@ -837,6 +837,8 @@ async function metHouseImage(preview=false){
  }
  const topRoleReminders='📌 店总牵头邀约及面见门店TOP\n📌经理重点邀约及陪同面见户型TOP\n📌伙伴持续开展全盘邀约，逐位业主明确邀约和面见安排';
  const novemberAnnouncementClosing='把感恩化为行动💗 多面见 多服务｜让每一次服务更有温度✨';
+ // The project owner's confirmed publication lists; figures always come from the current scoped progress.
+ const novemberPublicationStores={best:['融创滨江壹号院店','复兴香园店','顶级豪宅部'],low:['仁恒河滨城店','碧云店','星河湾店','尚海湾店']};
  function accompanimentMessage(m){
   const count=key=>typeof m[key]==='number'?m[key]+'套':String(m[key]??'待核实');
   const share=(key,top)=>typeof m[key]==='string'&&m[key].endsWith('%')?'占已面见'+top+'的'+m[key]:top+'陪同面见率'+String(m[key]??'待核实');
@@ -844,16 +846,16 @@ async function metHouseImage(preview=false){
  }
  function novemberMessage(view,progress,m,goal,cutoff){
   const rows=progress.rows||[],owner=m._ownerApplicable!==false;
+  const stores=new Map(rows.filter(r=>r._level==='store'&&Number(r.stock)>0&&(!view.region||r.region===view.region)).map(r=>[r.store,r]));
   const selections=(view.scope==='region'?['store','group']:[view.scope==='store'?'group':'store']).map(level=>novemberRankedSelection(rows,level));
   const lines=(kind)=>selections.map(s=>{
-   const label=s.level==='group'?'店组':'门店',list=s[kind].map(r=>`${s.name(r)}：面见${r.met}套（${r.met_rate}）`).join('\n');
+   const selected=s.level==='store'?novemberPublicationStores[kind].map(name=>stores.get(name)).filter(Boolean):s[kind];
+   const label=s.level==='group'?'店组':kind==='low'?'门店TOP面见率偏低的门店':'门店',list=selected.map(r=>s.level==='store'&&kind==='low'?`${s.name(r)}：门店TOP面见${r.store_top_met}套`:`${s.name(r)}：面见${r.met}套（面见率${r.met_rate}）`).join('\n');
    return list?(selections.length>1?label+'：\n':'')+list:'';
   }).filter(Boolean).join('\n')||(kind==='best'?'当前暂无已产生业主面见登记的对象':'当前无需要单独提示的对象');
   const ownerProgress=owner?`本月全盘面见目标：${goal==null?'待确认':goal+'套'}\n全盘在售房源已面见：${m.met}套｜面见率${m.met_rate}\n门店TOP房源已面见：${m.store_top_met}套｜面见率${m.store_top_rate}\n户型TOP房源已面见：${m.unit_top_met}套｜面见率${m.unit_top_rate}`:'业主面见：/';
-  const giftRows=rows.filter(r=>r._level==='store'&&Number(r.met)>0&&Number(r.gift)/Number(r.met)<.2);
   const attachments=view.scope==='store'?['#附1️⃣店组、个人名下房源及面见占比&本月TOP房未面见明细（重点邀约）','#附2️⃣面见质量（已面见房源面见反馈）','#附3️⃣全司面见标杆（店面、店组、个人）'].join('\n'):'';
-  const giftText=giftRows.length?`🎁 伴手礼提醒\n${giftRows.map(r=>r.store).join('、')}\n以上门店系统送礼登记覆盖率低于20%，请核实伴手礼准备、使用及补录情况。`:'';
-  return [`${view.scope==='company'?'各位梦想合伙人':'各位战友'}，大家好☀️`,`🍁 11月感恩月｜${view.name}面见进展\n${cutoff}`,`🎯 本月目标与进展\n${ownerProgress}`,...(owner?[`🏅 标杆${view.scope==='region'?'门店与店组':view.scope==='store'?'店组':'门店'}\n${lines('best')}`,`⚠️ 重点提醒${view.scope==='region'?'门店与店组':view.scope==='store'?'店组':'门店'}\n${lines('low')}`,`🔎 面见质量\n${novemberQualityMessage(qualityData(view))}`,...(['company','region'].includes(view.scope)?[accompanimentMessage(m)]:[]),attachments,giftText]:[]),novemberAnnouncementClosing].filter(Boolean).join('\n\n');
+  return [`${view.scope==='company'?'各位梦想合伙人':'各位战友'}，大家好☀️`,`🍁 11月感恩月｜${view.name}面见进展\n${cutoff}`,`🎯 本月目标与进展\n${ownerProgress}`,...(owner?[`🏅 标杆${view.scope==='region'?'门店与店组':view.scope==='store'?'店组':'门店'}\n${lines('best')}`,`⚠️ 重点提醒${view.scope==='region'?'门店与店组':view.scope==='store'?'店组':'门店｜门店TOP面见率偏低'}\n${lines('low')}`,`🔎 面见质量\n${novemberQualityMessage(qualityData(view))}`,...(['company','region'].includes(view.scope)?[accompanimentMessage(m)]:[]),attachments]:[]),novemberAnnouncementClosing].filter(Boolean).join('\n\n');
  }
  function makeMessage(view,progress,m,goal,cutoff,risks,praises){if(currentMonth==='2026-11')return novemberMessage(view,progress,m,goal,cutoff,praises);const name=view.name,month=Number(currentMonth.slice(5)),gap=goal==null?'待确认':Math.max(0,goal-m.met),detailLevel=view.scope==='region'?'store':view.scope==='store'?'group':'region',detailRows=progress.rows.filter(r=>r._level===detailLevel);const groupText=detailRows.map(r=>{const label=detailLevel==='store'?r.store:detailLevel==='group'?r.group:r.region;return `${label}：全盘${r.met}套（${r.met_rate}）｜门店TOP ${r.store_top_met}套（${r.store_top_rate}）｜户型TOP ${r.unit_top_met}套（${r.unit_top_rate}）`;}).join('\n');const scene=sceneRaw(view),analysis=sceneAnalysis(view);
   const qt=qualityData(view);const publicRisks=risks.filter(t=>!String(t).includes('结合实际')).slice(0,5);const topText=`
@@ -929,7 +931,7 @@ TOP重点房源
    manifest.operatorRole=reader.role;
    files.push({name:'manifest.json',data:JSON.stringify(manifest,null,2)},{name:'门店群配置.csv',data:P.groupTemplate(manifest.stores)},{name:'使用说明.txt',data:'本包已生成，尚未发送到微信。\n'+(allScopes?'包含全司1份、5个大区及18家门店，共24个范围。全司包含一段话术和一张进展图；每个大区另附全司面见标杆榜。\n':'')+'每店的面见礼物进展与全部未面见TOP房明细合为一张完整图片；真实反馈另列，项目负责人生成的版本再附同一张全司标杆海报。通常每店三张图；真实反馈原文较长时分页，保留全部内容。当前范围授权版本的全司榜由项目负责人统一提供。\n真实反馈按同一房源的面见时间连续呈现，分类为规则建议，仍需结合原文核对。请按清单中的images顺序取图；未面见TOP明细已在第一张合并图中，无需重复发送。\n'+(pilot?'本包仅含试行名单中的门店，完整群名已写入门店群配置.csv。\n':'已知群名已写入配置CSV；空白群名标为待配置，可下载但不能发送到未知群。\n')+'下载资料包不会发送消息。\n数据截至：'+asOf+'\n源数据版本：'+source.created_at+'\n生成时间：'+preparedAt});
    const blob=await P.zip(files);assertCurrent();
-   return {blob,manifest,filename:month+'_'+asOf+'_'+(allScopes?'全司_5大区_18门店_24范围公示资料包':stores.length+'店'+(pilot?'试行':'微信')+'资料包')+(month==='2026-11'?'_日常话术版':'')+'.zip'};
+   return {blob,manifest,filename:month+'_'+asOf+'_'+(allScopes?'全司_5大区_18门店_24范围公示资料包':stores.length+'店'+(pilot?'试行':'微信')+'资料包')+(month==='2026-11'?'_标杆TOP提醒版':'')+'.zip'};
   }finally{state.exporting=false;}
  }
  function publicationKpis(metric){
@@ -955,7 +957,7 @@ TOP重点房源
    const extraFiles=[],images=['01_面见及礼物进展.png'];if(view.scope==='region'&&C.project){const board=companyBenchmarkData(),boardImage=await root.WBCompanyBenchmark.image(board);assertCurrent();images.push('02_全司面见标杆榜.png');extraFiles.push({name:images[1],data:boardImage});}
    const manifest={recordType:'publication-package',schemaVersion:1,month,asOf:source.as_of,sourceVersion:source.created_at,preparedAt:new Date().toISOString(),status:'prepared',scope:view.scope,name:view.name,levels,operatorRole:reader.role,message:'话术.txt',images};
    const blob=await P.zip([{name:manifest.message,data:message},{name:manifest.images[0],data:image},...extraFiles,{name:'manifest.json',data:JSON.stringify(manifest,null,2)},{name:'使用说明.txt',data:'本包为当前范围的公示图文，包含一段话术和面见及礼物进展图；项目负责人生成的大区版本另附全司面见标杆榜，其他版本由项目负责人统一提供全司榜。\n仅下载，不会发送到微信；群名与转发由项目负责人处理。'}]);assertCurrent();
-   return {blob,manifest,filename:month+'_'+source.as_of+'_'+view.name+'公示资料包'+(month==='2026-11'?'_日常话术版':'')+'.zip'};
+   return {blob,manifest,filename:month+'_'+source.as_of+'_'+view.name+'公示资料包'+(month==='2026-11'?'_标杆TOP提醒版':'')+'.zip'};
   }finally{state.exporting=false;}
  }
  async function downloadPublicationPackage(button){
